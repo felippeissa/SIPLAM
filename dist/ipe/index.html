@@ -1,0 +1,1033 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <base href="../">
+    <meta charset="utf-8" />
+    <title>Consulta de IPEs | INSPINIA - Responsive Bootstrap 5 Admin Dashboard Template</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Inspinia is the #1 best-selling admin dashboard template on Wrapmarket. Perfect for building CRM, CMS, project management tools, and custom web apps with clean UI, responsive design, and powerful features." />
+    <meta name="keywords" content="Inspinia, admin dashboard, Wrapmarket, Wrapbootstrap, HTML template, Bootstrap admin, CRM template, CMS template, responsive admin, web app UI, admin theme, best admin template" />
+    <meta name="author" content="WebAppLayers" />
+
+    <!-- App favicon -->
+    <link rel="shortcut icon" href="assets/images/favicon.ico" />
+
+    <!-- Theme Config Js -->
+    <script src="assets/js/config.js"></script>
+
+    <!-- Vendor css -->
+    <link href="assets/css/vendors.min.css" rel="stylesheet" type="text/css" />
+
+    <!-- App css -->
+    <link id="app-style" href="assets/css/app.min.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+<div class="wrapper">
+    <header class="app-topbar">
+        <div class="container-fluid topbar-menu">
+            <div class="d-flex align-items-center gap-2">
+                <!-- Sidebar Menu Toggle Button -->
+                <button class="sidenav-toggle-button btn btn-default btn-icon">
+                    <i class="ti ti-menu-4"></i>
+                </button>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <!-- Light/Dark toggle -->
+                <div class="topbar-item">
+                    <button class="topbar-link" id="light-dark-mode" type="button">
+                        <i class="ti ti-moon topbar-link-icon mode-light-moon"></i>
+                        <i class="ti ti-sun topbar-link-icon mode-light-sun"></i>
+                    </button>
+                </div>
+
+                <!-- Logout -->
+                <div class="topbar-item">
+                    <button class="topbar-link" type="button" title="Sair">
+                        <i class="ti ti-logout topbar-link-icon"></i>
+                    </button>
+                </div>
+
+                <!-- Divisor -->
+                <div class="topbar-item d-none d-sm-flex">
+                    <span class="text-muted" style="font-size:20px; line-height:1">|</span>
+                </div>
+
+                <!-- Usuário -->
+                <div class="topbar-item nav-user">
+                    <span class="d-flex align-items-center gap-2 px-2">
+                        <i class="ti ti-user-circle fs-22"></i>
+                        <span class="d-none d-lg-inline fw-medium">Nome do usuário</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- Topbar End -->
+
+    <div class="sidenav-menu">
+        <!-- Brand Logo -->
+        <a href="ipe/" class="logo">
+            <span class="logo logo-light">
+                <span class="logo-lg"><img src="assets/images/logo.svg" alt="SIPLAM" height="35" /></span>
+                <span class="logo-sm"><img src="assets/images/logo-sm.svg" alt="SIPLAM" height="35" /></span>
+            </span>
+            <span class="logo logo-dark">
+                <span class="logo-lg"><img src="assets/images/logo.svg" alt="SIPLAM" height="35" /></span>
+                <span class="logo-sm"><img src="assets/images/logo-sm.svg" alt="SIPLAM" height="35" /></span>
+            </span>
+        </a>
+
+        <!-- Sidebar Hover Menu Toggle Button -->
+        <button class="button-on-hover">
+            <span class="btn-on-hover-icon"></span>
+        </button>
+
+        <!-- Full Sidebar Menu Close Button -->
+        <button class="button-close-offcanvas">
+            <i class="ti ti-menu-4 align-middle"></i>
+        </button>
+
+        <div class="scrollbar" data-simplebar="">
+            <!--- Sidenav Menu -->
+            <div id="sidenav-menu">
+                <ul class="side-nav">
+                    <li class="side-nav-title mt-2">Menu</li>
+                    <li class="side-nav-item">
+                        <a href="ipe/" class="side-nav-link">
+                            <span class="menu-icon"><i class="ti ti-link"></i></span>
+                            <span class="menu-text">IPE</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- Sidenav Menu End -->
+
+    <div class="content-page">
+        <div class="container-fluid">
+
+            <div class="page-title-head d-flex align-items-center mb-3">
+                <div class="flex-grow-1">
+                    <h4 class="page-main-title m-0">IPE — Integração Planejamento Execução</h4>
+                </div>
+                <div class="text-end">
+                    <ol class="breadcrumb m-0 py-0">
+                        <li class="breadcrumb-item"><a href="index.html">SIPLAM</a></li>
+                        <li class="breadcrumb-item active">IPE</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+
+                    <!-- Topo: contagem + botão -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <p class="text-muted small m-0" id="total-registros">10 IPEs encontrados</p>
+                        <a href="ipe/cadastrar.html" class="btn btn-sm btn-primary">
+                            <i class="ti ti-plus me-1"></i>Novo IPE
+                        </a>
+                    </div>
+
+                    <!-- Filtros básicos -->
+                    <div id="filtros-basicos">
+                        <div class="row g-2 mb-2">
+                            <div class="col-12 col-md-3">
+                                <label class="form-label mb-1 text-muted small">Nome do IPE</label>
+                                <input type="text" class="form-control form-control-sm" id="filtro-nome" placeholder="Digite">
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label mb-1 text-muted small">Órgão/Secretaria</label>
+                                <select class="form-select form-select-sm" id="filtro-orgao">
+                                    <option value="">Todos</option>
+                                    <option>UEG</option><option>SEAD</option><option>SGG</option>
+                                    <option>SEDUC</option><option>SEMAD</option><option>GoInfra</option>
+                                    <option>Economia</option><option>SEDS</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label mb-1 text-muted small">Iniciativa</label>
+                                <select class="form-select form-select-sm" id="filtro-iniciativa">
+                                    <option value="">Todas</option>
+                                    <option>Ampliação da Rede de Atendimento Hospitalar</option>
+                                    <option>Implantação de Gestão Eletrônica Documental</option>
+                                    <option>Formação Continuada de Gestores Públicos</option>
+                                    <option>Expansão da Educação Profissionalizante</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label mb-1 text-muted small">Entrega</label>
+                                <select class="form-select form-select-sm" id="filtro-entrega" disabled>
+                                    <option value="">Selecione a iniciativa</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mb-3">
+                            <button class="btn btn-sm btn-outline-secondary" id="btn-mais-filtros" type="button">
+                                <i class="ti ti-adjustments-horizontal me-1"></i>Mais filtros
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" id="btn-limpar" type="button">Limpar</button>
+                            <button class="btn btn-sm btn-primary" id="btn-filtrar" type="button">Filtrar</button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros avançados -->
+                    <div class="collapse mb-3" id="filtros-avancados">
+                        <div class="border rounded p-3 bg-light">
+                            <div class="row g-2">
+                                <div class="col-12 col-md-2">
+                                    <label class="form-label mb-1 text-muted small">Data inicial</label>
+                                    <input type="date" class="form-control form-control-sm" id="filtro-data-inicio">
+                                </div>
+                                <div class="col-12 col-md-2">
+                                    <label class="form-label mb-1 text-muted small">Data final</label>
+                                    <input type="date" class="form-control form-control-sm" id="filtro-data-fim">
+                                </div>
+                                <div class="col-12 col-md-2">
+                                    <label class="form-label mb-1 text-muted small">Fase do IPE</label>
+                                    <select class="form-select form-select-sm" id="filtro-fase">
+                                        <option value="">Todas</option>
+                                        <option>Rascunho</option><option>Planejada</option>
+                                        <option>Vinculada</option><option>Execução</option>
+                                        <option>Finalizada</option><option>Cancelada</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-2">
+                                    <label class="form-label mb-1 text-muted small">Situação</label>
+                                    <select class="form-select form-select-sm" id="filtro-situacao">
+                                        <option value="">Todas</option>
+                                        <option>Em análise</option><option>Transformado</option><option>Inexistente</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-2">
+                                    <label class="form-label mb-1 text-muted small">Tipo de Implementação</label>
+                                    <select class="form-select form-select-sm" id="filtro-tipo">
+                                        <option value="">Todos</option>
+                                        <option>Projeto</option><option>Processo</option><option>Plano de Ação</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-2">
+                                    <label class="form-label mb-1 text-muted small">Código / Item</label>
+                                    <select class="form-select form-select-sm" id="filtro-item" disabled>
+                                        <option value="">Selecione o tipo</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabela -->
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0" id="tabela-ipes">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-nowrap" style="cursor:pointer" data-col="codigo">Código <i class="ti ti-arrows-sort fs-12 ms-1 text-muted"></i></th>
+                                    <th>Nome / Apelido</th>
+                                    <th>Fase</th>
+                                    <th>Situação</th>
+                                    <th>Iniciativa / Entrega</th>
+                                    <th class="text-nowrap">Conexão PPA</th>
+                                    <th class="text-nowrap">Tipo Impl.</th>
+                                    <th>Órgão</th>
+                                    <th class="text-nowrap">Período Integralizado</th>
+                                    <th class="text-nowrap">Vínculos IPOFs</th>
+                                    <th class="text-nowrap">Saldo IPOFs</th>
+                                    <th class="text-nowrap">Total IPOFs</th>
+                                    <th class="text-nowrap">Valor Gasto</th>
+                                    <th class="text-nowrap">Av. Físico</th>
+                                    <th class="text-nowrap">Av. Financeiro</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-ipes">
+                                <tr>
+                                    <td class="fw-semibold">100001</td>
+                                    <td>Modernização da frota de ambulâncias estaduais</td>
+                                    <td><span class="badge-fase fase-execucao">Execução</span></td>
+                                    <td><span class="badge-sit sit-analise">Em análise</span></td>
+                                    <td><span class="text-muted x-small d-block">Ampliação da Rede de Atendimento Hospitalar</span><span class="x-small">Modernização da frota hospitalar</span></td>
+                                    <td><span class="badge-ppa ppa-adequada">Adequada</span></td>
+                                    <td class="x-small">Projeto</td>
+                                    <td class="text-nowrap">UEG</td>
+                                    <td class="text-nowrap x-small">01/2025 – 12/2027</td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-nowrap">R$ 5.500.000</td>
+                                    <td class="text-nowrap">R$ 1.000.000</td>
+                                    <td class="text-nowrap">R$ 3.300.000</td>
+                                    <td>60%</td><td>73%</td>
+                                    <td class="text-end"><a href="ipe/editar.html" class="btn btn-sm btn-outline-secondary py-0 px-2"><i class="ti ti-eye fs-14"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">100002</td>
+                                    <td>Digitalização de processos administrativos</td>
+                                    <td><span class="badge-fase fase-execucao">Execução</span></td>
+                                    <td><span class="badge-sit sit-transformado">Transformado</span></td>
+                                    <td><span class="text-muted x-small d-block">Implantação de Gestão Eletrônica Documental</span><span class="x-small">Digitalização de arquivos públicos</span></td>
+                                    <td><span class="badge-ppa ppa-media">Média</span></td>
+                                    <td class="x-small">Processo</td>
+                                    <td class="text-nowrap">SEAD</td>
+                                    <td class="text-nowrap x-small">06/2024 – 06/2026</td>
+                                    <td class="text-center">3</td>
+                                    <td class="text-nowrap">R$ 5.200.000</td>
+                                    <td class="text-nowrap">R$ 1.300.000</td>
+                                    <td class="text-nowrap">R$ 320.000</td>
+                                    <td>45%</td><td>64%</td>
+                                    <td class="text-end"><a href="ipe/editar.html" class="btn btn-sm btn-outline-secondary py-0 px-2"><i class="ti ti-eye fs-14"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">100003</td>
+                                    <td>Capacitação de servidores em inovação pública</td>
+                                    <td><span class="badge-fase fase-planejada">Planejada</span></td>
+                                    <td><span class="badge-sit sit-inexistente">Inexistente</span></td>
+                                    <td><span class="text-muted x-small d-block">Formação Continuada de Gestores Públicos</span><span class="x-small">Programa de capacitação anual</span></td>
+                                    <td><span class="badge-ppa ppa-adequada">Adequada</span></td>
+                                    <td class="x-small">Plano de Ação</td>
+                                    <td class="text-nowrap">SGG</td>
+                                    <td class="text-nowrap x-small">02/2025 – 12/2025</td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-nowrap">R$ 90.000</td>
+                                    <td class="text-nowrap">R$ 120.000</td>
+                                    <td class="text-nowrap">R$ 30.000</td>
+                                    <td>10%</td><td>25%</td>
+                                    <td class="text-end"><a href="ipe/editar.html" class="btn btn-sm btn-outline-secondary py-0 px-2"><i class="ti ti-eye fs-14"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">100004</td>
+                                    <td>Construção de escola técnica regional</td>
+                                    <td><span class="badge-fase fase-execucao">Execução</span></td>
+                                    <td><span class="badge-sit sit-transformado">Transformado</span></td>
+                                    <td><span class="text-muted x-small d-block">Expansão da Educação Profissionalizante</span><span class="x-small">Construção de unidade técnica</span></td>
+                                    <td><span class="badge-ppa ppa-adequada">Adequada</span></td>
+                                    <td class="x-small">Projeto</td>
+                                    <td class="text-nowrap">SEDUC</td>
+                                    <td class="text-nowrap x-small">01/2024 – 12/2028</td>
+                                    <td class="text-center">6</td>
+                                    <td class="text-nowrap">R$ 3.800.000</td>
+                                    <td class="text-nowrap">R$ 9.500.000</td>
+                                    <td class="text-nowrap">R$ 5.700.000</td>
+                                    <td>70%</td><td>60%</td>
+                                    <td class="text-end"><a href="ipe/editar.html" class="btn btn-sm btn-outline-secondary py-0 px-2"><i class="ti ti-eye fs-14"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">100005</td>
+                                    <td>Revisão do fluxo de licenciamento ambiental</td>
+                                    <td><span class="badge-fase fase-vinculada">Vinculada</span></td>
+                                    <td><span class="badge-sit sit-analise">Em análise</span></td>
+                                    <td><span class="text-muted x-small d-block">Otimização da Análise Ambiental</span><span class="x-small">Revisão de processos de licença</span></td>
+                                    <td><span class="badge-ppa ppa-fraca">Fraca</span></td>
+                                    <td class="text-muted">—</td>
+                                    <td class="text-nowrap">SEMAD</td>
+                                    <td class="text-nowrap x-small">08/2024 – 08/2026</td>
+                                    <td class="text-muted text-center">—</td>
+                                    <td class="text-muted">—</td>
+                                    <td class="text-muted">—</td>
+                                    <td class="text-muted">—</td>
+                                    <td>35%</td><td>56%</td>
+                                    <td class="text-end"><a href="ipe/editar.html" class="btn btn-sm btn-outline-secondary py-0 px-2"><i class="ti ti-eye fs-14"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">100006</td>
+                                    <td>Pavimentação de rodovias estaduais</td>
+                                    <td><span class="badge-fase fase-execucao">Execução</span></td>
+                                    <td><span class="badge-sit sit-transformado">Transformado</span></td>
+                                    <td><span class="text-muted x-small d-block">Melhoria da Infraestrutura Viária</span><span class="x-small">Pavimentação rodovias GO-010 e GO-139</span></td>
+                                    <td><span class="badge-ppa ppa-adequada">Adequada</span></td>
+                                    <td class="x-small">Projeto</td>
+                                    <td class="text-nowrap">GoInfra</td>
+                                    <td class="text-nowrap x-small">01/2025 – 12/2030</td>
+                                    <td class="text-center">8</td>
+                                    <td class="text-nowrap">R$ 12.500.000</td>
+                                    <td class="text-nowrap">R$ 25.000.000</td>
+                                    <td class="text-nowrap">R$ 12.500.000</td>
+                                    <td>55%</td><td>50%</td>
+                                    <td class="text-end"><a href="ipe/editar.html" class="btn btn-sm btn-outline-secondary py-0 px-2"><i class="ti ti-eye fs-14"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">100007</td>
+                                    <td>Programa de inclusão digital escolar</td>
+                                    <td><span class="badge-fase fase-rascunho">Rascunho</span></td>
+                                    <td><span class="badge-sit sit-inexistente">Inexistente</span></td>
+                                    <td><span class="text-muted x-small d-block">Ampliação do Acesso à Tecnologia Educacional</span><span class="x-small">Inclusão digital nas escolas públicas</span></td>
+                                    <td><span class="badge-ppa ppa-fraca">Fraca</span></td>
+                                    <td class="x-small">Plano de Ação</td>
+                                    <td class="text-nowrap">SEDUC</td>
+                                    <td class="text-muted">—</td>
+                                    <td class="text-muted text-center">—</td>
+                                    <td class="text-muted">—</td>
+                                    <td class="text-nowrap">R$ 2.000.000</td>
+                                    <td class="text-nowrap">R$ 0</td>
+                                    <td>0%</td><td>0%</td>
+                                    <td class="text-end"><a href="ipe/editar.html" class="btn btn-sm btn-outline-secondary py-0 px-2"><i class="ti ti-eye fs-14"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">100008</td>
+                                    <td>Integração de sistemas de arrecadação estadual</td>
+                                    <td><span class="badge-fase fase-execucao">Execução</span></td>
+                                    <td><span class="badge-sit sit-transformado">Transformado</span></td>
+                                    <td><span class="text-muted x-small d-block">Modernização da Gestão Fiscal</span><span class="x-small">Integração tributária estadual</span></td>
+                                    <td><span class="badge-ppa ppa-adequada">Adequada</span></td>
+                                    <td class="x-small">Processo</td>
+                                    <td class="text-nowrap">Economia</td>
+                                    <td class="text-nowrap x-small">01/2024 – 12/2026</td>
+                                    <td class="text-center">4</td>
+                                    <td class="text-nowrap">R$ 600.000</td>
+                                    <td class="text-nowrap">R$ 1.500.000</td>
+                                    <td class="text-nowrap">R$ 900.000</td>
+                                    <td>80%</td><td>60%</td>
+                                    <td class="text-end"><a href="ipe/editar.html" class="btn btn-sm btn-outline-secondary py-0 px-2"><i class="ti ti-eye fs-14"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">100009</td>
+                                    <td>Ampliação de campus universitário</td>
+                                    <td><span class="badge-fase fase-execucao">Execução</span></td>
+                                    <td><span class="badge-sit sit-analise">Em análise</span></td>
+                                    <td><span class="text-muted x-small d-block">Expansão da Estrutura da UEG</span><span class="x-small">Ampliação campus Anápolis</span></td>
+                                    <td><span class="badge-ppa ppa-adequada">Adequada</span></td>
+                                    <td class="x-small">Projeto</td>
+                                    <td class="text-nowrap">UEG</td>
+                                    <td class="text-nowrap x-small">06/2024 – 12/2029</td>
+                                    <td class="text-center">5</td>
+                                    <td class="text-nowrap">R$ 2.400.000</td>
+                                    <td class="text-nowrap">R$ 6.000.000</td>
+                                    <td class="text-nowrap">R$ 3.600.000</td>
+                                    <td>48%</td><td>60%</td>
+                                    <td class="text-end"><a href="ipe/editar.html" class="btn btn-sm btn-outline-secondary py-0 px-2"><i class="ti ti-eye fs-14"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">100010</td>
+                                    <td>Fortalecimento da segurança comunitária preventiva</td>
+                                    <td><span class="badge-fase fase-planejada">Planejada</span></td>
+                                    <td><span class="badge-sit sit-inexistente">Inexistente</span></td>
+                                    <td><span class="text-muted x-small d-block">Aumento da Presença Policial Preventiva</span><span class="x-small">Segurança comunitária nas regiões metropolitanas</span></td>
+                                    <td><span class="badge-ppa ppa-media">Média</span></td>
+                                    <td class="x-small">Plano de Ação</td>
+                                    <td class="text-nowrap">SEDS</td>
+                                    <td class="text-nowrap x-small">01/2025 – 12/2027</td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-nowrap">R$ 250.000</td>
+                                    <td class="text-nowrap">R$ 900.000</td>
+                                    <td class="text-nowrap">R$ 50.000</td>
+                                    <td>5%</td><td>8%</td>
+                                    <td class="text-end"><a href="ipe/editar.html" class="btn btn-sm btn-outline-secondary py-0 px-2"><i class="ti ti-eye fs-14"></i></a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Estado vazio -->
+                    <div id="estado-vazio" class="text-center py-5 d-none">
+                        <i class="ti ti-mood-empty fs-48 text-muted"></i>
+                        <p class="text-muted mt-2 mb-1">Nenhum IPE encontrado para os filtros aplicados.</p>
+                        <button class="btn btn-sm btn-link" id="btn-limpar-vazio">Limpar filtros</button>
+                    </div>
+
+                    <!-- Paginação -->
+                    <div class="d-flex justify-content-between align-items-center mt-3" id="paginacao">
+                        <p class="text-muted small m-0">Exibindo 1 – 10 de 10 registros</p>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item disabled"><a class="page-link" href="#">«</a></li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item disabled"><a class="page-link" href="#">»</a></li>
+                            </ul>
+                        </nav>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <!-- Footer Start -->
+        <footer class="footer">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-6 text-center text-md-start">
+                        ©
+                        <span data-current-year></span>
+                        Inspinia By
+                        <span class="fw-semibold">WebAppLayers</span>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-md-end d-none d-md-block">
+                            10GB of
+                            <span class="fw-bold">250GB</span>
+                            Free.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <!-- end Footer -->
+
+    </div>
+</div>
+<div class="offcanvas offcanvas-end overflow-hidden" tabindex="-1" id="theme-settings-offcanvas">
+    <div class="d-flex justify-content-between text-bg-primary gap-2 p-3" style="background-image: url(assets/images/settings-bg.png)">
+        <div>
+            <h5 class="mb-1 fw-bold text-white text-uppercase">Admin Customizer</h5>
+            <p class="text-white text-opacity-75 fst-italic fw-medium mb-0">Easily configure layout, styles, and preferences for your admin interface.</p>
+        </div>
+
+        <div class="flex-grow-0">
+            <button type="button" class="d-block btn btn-sm bg-white bg-opacity-25 text-white rounded-circle btn-icon" data-bs-dismiss="offcanvas">
+                <i class="ti ti-x fs-lg"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="offcanvas-body theme-customizer-bar p-0 h-100" data-simplebar="">
+        <div id="skin" class="p-3 border-bottom border-dashed">
+            <h5 class="mb-3 fw-bold">Select Theme</h5>
+            <div class="row g-3">
+                <div class="col-6" id="skin-default">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-skin" id="demo-skin-default" value="default" />
+                        <label class="form-check-label p-0 w-100" for="demo-skin-default">
+                            <img src="assets/images/layouts/skin-default.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="text-center text-muted mt-2 mb-0">Default</h5>
+                </div>
+
+                <div class="col-6" id="skin-luxe">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-skin" id="demo-skin-luxe" value="luxe" />
+                        <label class="form-check-label p-0 w-100" for="demo-skin-luxe">
+                            <img src="assets/images/layouts/skin-luxe.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="text-center text-muted mt-2 mb-0">Luxe</h5>
+                </div>
+
+                <div class="col-6" id="skin-neon">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-skin" id="demo-skin-neon" value="neon" />
+                        <label class="form-check-label p-0 w-100" for="demo-skin-neon">
+                            <img src="assets/images/layouts/skin-neon.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="text-center text-muted mt-2 mb-0">Neon</h5>
+                </div>
+
+                <div class="col-6" id="skin-retro">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-skin" id="demo-skin-retro" value="retro" />
+                        <label class="form-check-label p-0 w-100" for="demo-skin-retro">
+                            <img src="assets/images/layouts/skin-retro.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="text-center text-muted mt-2 mb-0">Retro</h5>
+                </div>
+
+                <div class="col-6" id="skin-pixel">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-skin" id="demo-skin-pixel" value="pixel" />
+                        <label class="form-check-label p-0 w-100" for="demo-skin-pixel">
+                            <img src="assets/images/layouts/skin-pixel.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="text-center text-muted mt-2 mb-0">Pixel</h5>
+                </div>
+
+                <div class="col-6" id="skin-galaxy">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-skin" id="demo-skin-galaxy" value="galaxy" />
+                        <label class="form-check-label p-0 w-100" for="demo-skin-galaxy">
+                            <img src="assets/images/layouts/skin-galaxy.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="text-center text-muted mt-2 mb-0">Galaxy</h5>
+                </div>
+
+                <div class="col-6" id="skin-material">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-skin" id="demo-skin-material" value="material" />
+                        <label class="form-check-label p-0 w-100" for="demo-skin-material">
+                            <img src="assets/images/layouts/skin-material.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="text-center text-muted mt-2 mb-0">Material</h5>
+                </div>
+
+                <div class="col-6" id="skin-minimal">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-skin" id="demo-skin-minimal" value="minimal" />
+                        <label class="form-check-label p-0 w-100" for="demo-skin-minimal">
+                            <img src="assets/images/layouts/skin-minimal.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="text-center text-muted mt-2 mb-0">Minimal</h5>
+                </div>
+
+                <div class="col-6" id="skin-modern">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-skin" id="demo-skin-modern" value="modern" />
+                        <label class="form-check-label p-0 w-100" for="demo-skin-modern">
+                            <img src="assets/images/layouts/skin-modern.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="text-center text-muted mt-2 mb-0">Modern</h5>
+                </div>
+
+                <div class="col-6" id="skin-saas">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-skin" id="demo-skin-saas" value="saas" />
+                        <label class="form-check-label p-0 w-100" for="demo-skin-saas">
+                            <img src="assets/images/layouts/skin-saas.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="text-center text-muted mt-2 mb-0">Saas</h5>
+                </div>
+
+                <div class="col-6" id="skin-flat">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-skin" id="demo-skin-flat" value="flat" />
+                        <label class="form-check-label p-0 w-100" for="demo-skin-flat">
+                            <img src="assets/images/layouts/skin-flat.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="text-center text-muted mt-2 mb-0">Flat</h5>
+                </div>
+            </div>
+        </div>
+
+        <div id="theme" class="p-3 border-bottom border-dashed">
+            <h5 class="mb-3 fw-bold">Color Scheme</h5>
+            <div class="row">
+                <div class="col-4" id="theme-light">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-bs-theme" id="layout-color-light" value="light" />
+                        <label class="form-check-label p-0 w-100" for="layout-color-light">
+                            <img src="assets/images/layouts/theme-light.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="text-center text-muted mt-2 mb-0">Light</h5>
+                </div>
+
+                <div class="col-4" id="theme-dark">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-bs-theme" id="layout-color-dark" value="dark" />
+                        <label class="form-check-label p-0 w-100" for="layout-color-dark">
+                            <img src="assets/images/layouts/theme-dark.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="text-center text-muted mt-2 mb-0">Dark</h5>
+                </div>
+
+                <div class="col-4" id="theme-system">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-bs-theme" id="layout-color-system" value="system" />
+                        <label class="form-check-label p-0 w-100" for="layout-color-system">
+                            <img src="assets/images/layouts/theme-system.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="text-center text-muted mt-2 mb-0">System</h5>
+                </div>
+            </div>
+        </div>
+
+        <div id="topbar-color" class="p-3 border-bottom border-dashed">
+            <h5 class="mb-3 fw-bold">Topbar Color</h5>
+
+            <div class="row g-3">
+                <div class="col-4" id="topbar-color-light">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-topbar-color" id="layout-topbar-color-light" value="light" />
+                        <label class="form-check-label p-0 w-100" for="layout-topbar-color-light">
+                            <img src="assets/images/layouts/topbar-color-light.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="text-center text-muted mt-2 mb-0">Light</h5>
+                </div>
+
+                <div class="col-4" id="topbar-color-dark">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-topbar-color" id="layout-topbar-color-dark" value="dark" />
+                        <label class="form-check-label p-0 w-100" for="layout-topbar-color-dark">
+                            <img src="assets/images/layouts/topbar-color-dark.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="fs-sm text-center text-muted mt-2 mb-0">Dark</h5>
+                </div>
+
+                <div class="col-4" id="topbar-color-gray">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-topbar-color" id="layout-topbar-color-gray" value="gray" />
+                        <label class="form-check-label p-0 w-100" for="layout-topbar-color-gray">
+                            <img src="assets/images/layouts/topbar-color-gray.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="fs-sm text-center text-muted mt-2 mb-0">Gray</h5>
+                </div>
+
+                <div class="col-4" id="topbar-color-gradient">
+                    <div class="form-check card-radio">
+                        <input class="form-check-input" type="radio" name="data-topbar-color" id="layout-topbar-color-gradient" value="gradient" />
+                        <label class="form-check-label p-0 w-100" for="layout-topbar-color-gradient">
+                            <img src="assets/images/layouts/topbar-color-gradient.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="fs-sm text-center text-muted mt-2 mb-0">Gradient</h5>
+                </div>
+            </div>
+        </div>
+
+        <div id="sidenav-color" class="p-3 border-bottom border-dashed">
+            <h5 class="mb-3 fw-bold">Sidenav Color</h5>
+
+            <div class="row g-3">
+                <div class="col-4" id="sidenav-color-light">
+                    <div class="form-check sidebar-setting card-radio">
+                        <input class="form-check-input" type="radio" name="data-menu-color" id="layout-sidenav-color-light" value="light" />
+                        <label class="form-check-label p-0 w-100" for="layout-sidenav-color-light">
+                            <img src="assets/images/layouts/sidenav-color-light.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="fs-sm text-center text-muted mt-2 mb-0">Light</h5>
+                </div>
+
+                <div class="col-4" id="sidenav-color-dark">
+                    <div class="form-check sidebar-setting card-radio">
+                        <input class="form-check-input" type="radio" name="data-menu-color" id="layout-sidenav-color-dark" value="dark" />
+                        <label class="form-check-label p-0 w-100" for="layout-sidenav-color-dark">
+                            <img src="assets/images/layouts/sidenav-color-dark.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="fs-sm text-center text-muted mt-2 mb-0">Dark</h5>
+                </div>
+
+                <div class="col-4" id="sidenav-color-gray">
+                    <div class="form-check sidebar-setting card-radio">
+                        <input class="form-check-input" type="radio" name="data-menu-color" id="layout-sidenav-color-gray" value="gray" />
+                        <label class="form-check-label p-0 w-100" for="layout-sidenav-color-gray">
+                            <img src="assets/images/layouts/sidenav-color-gray.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="fs-sm text-center text-muted mt-2 mb-0">Gray</h5>
+                </div>
+
+                <div class="col-4" id="sidenav-color-gradient">
+                    <div class="form-check sidebar-setting card-radio">
+                        <input class="form-check-input" type="radio" name="data-menu-color" id="layout-sidenav-color-gradient" value="gradient" />
+                        <label class="form-check-label p-0 w-100" for="layout-sidenav-color-gradient">
+                            <img src="assets/images/layouts/sidenav-color-gradient.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="fs-sm text-center text-muted mt-2 mb-0">Gradient</h5>
+                </div>
+                <div class="col-4" id="sidenav-color-image">
+                    <div class="form-check sidebar-setting card-radio">
+                        <input class="form-check-input" type="radio" name="data-menu-color" id="layout-sidenav-color-image" value="image" />
+                        <label class="form-check-label p-0 w-100" for="layout-sidenav-color-image">
+                            <img src="assets/images/layouts/sidenav-color-image.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="fs-sm text-center text-muted mt-2 mb-0">Image</h5>
+                </div>
+            </div>
+        </div>
+
+        <div id="sidenav-size" class="p-3 border-bottom border-dashed">
+            <h5 class="mb-3 fw-bold">Sidebar Size</h5>
+
+            <div class="row g-3">
+                <div class="col-4" id="sidenav-size-default">
+                    <div class="form-check sidebar-setting card-radio">
+                        <input class="form-check-input" type="radio" name="data-sidenav-size" id="layout-sidenav-size-default" value="default" />
+                        <label class="form-check-label p-0 w-100" for="layout-sidenav-size-default">
+                            <img src="assets/images/layouts/sidenav-size-default.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="mb-0 text-center text-muted mt-2">Default</h5>
+                </div>
+
+                <div class="col-4" id="sidenav-size-compact">
+                    <div class="form-check sidebar-setting card-radio">
+                        <input class="form-check-input" type="radio" name="data-sidenav-size" id="layout-sidenav-size-compact" value="compact" />
+                        <label class="form-check-label p-0 w-100" for="layout-sidenav-size-compact">
+                            <img src="assets/images/layouts/sidenav-size-compact.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="mb-0 text-center text-muted mt-2">Compact</h5>
+                </div>
+
+                <div class="col-4" id="sidenav-size-condensed">
+                    <div class="form-check sidebar-setting card-radio">
+                        <input class="form-check-input" type="radio" name="data-sidenav-size" id="layout-sidenav-size-condensed" value="condensed" />
+                        <label class="form-check-label p-0 w-100" for="layout-sidenav-size-condensed">
+                            <img src="assets/images/layouts/sidenav-size-condensed.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="mb-0 text-center text-muted mt-2">Condensed</h5>
+                </div>
+
+                <div class="col-4" id="sidenav-size-on-hover">
+                    <div class="form-check sidebar-setting card-radio">
+                        <input class="form-check-input" type="radio" name="data-sidenav-size" id="layout-sidenav-size-small-hover" value="on-hover" />
+                        <label class="form-check-label p-0 w-100" for="layout-sidenav-size-small-hover">
+                            <img src="assets/images/layouts/sidenav-size-on-hover.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="mb-0 text-center text-muted mt-2">On Hover</h5>
+                </div>
+
+                <div class="col-4" id="sidenav-size-on-hover-active">
+                    <div class="form-check sidebar-setting card-radio">
+                        <input class="form-check-input" type="radio" name="data-sidenav-size" id="layout-sidenav-size-small-hover-active" value="on-hover-active" />
+                        <label class="form-check-label p-0 w-100" for="layout-sidenav-size-small-hover-active">
+                            <img src="assets/images/layouts/sidenav-size-on-hover-active.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="mb-0 fs-base text-center text-muted mt-2">On Hover - Show</h5>
+                </div>
+
+                <div class="col-4" id="sidenav-size-offcanvas">
+                    <div class="form-check sidebar-setting card-radio">
+                        <input class="form-check-input" type="radio" name="data-sidenav-size" id="layout-sidenav-size-offcanvas" value="offcanvas" />
+                        <label class="form-check-label p-0 w-100" for="layout-sidenav-size-offcanvas">
+                            <img src="assets/images/layouts/sidenav-size-offcanvas.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="mb-0 text-center text-muted mt-2">Offcanvas</h5>
+                </div>
+            </div>
+        </div>
+
+        <div id="width" class="p-3 border-bottom border-dashed">
+            <h5 class="mb-3 fw-bold">Layout Width</h5>
+
+            <div class="row g-3">
+                <div class="col-4" id="width-fluid">
+                    <div class="form-check sidebar-setting card-radio">
+                        <input class="form-check-input" type="radio" name="data-layout-width" id="layout-width-fluid" value="fluid" />
+                        <label class="form-check-label p-0 w-100" for="layout-width-fluid">
+                            <img src="assets/images/layouts/width-fluid.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="mb-0 text-center text-muted mt-2">Fluid</h5>
+                </div>
+
+                <div class="col-4" id="width-boxed">
+                    <div class="form-check sidebar-setting card-radio">
+                        <input class="form-check-input" type="radio" name="data-layout-width" id="layout-width-boxed" value="boxed" />
+                        <label class="form-check-label p-0 w-100" for="layout-width-boxed">
+                            <img src="assets/images/layouts/width-boxed.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="mb-0 text-center text-muted mt-2">Boxed</h5>
+                </div>
+            </div>
+        </div>
+
+        <div id="dir" class="p-3 border-bottom border-dashed">
+            <h5 class="mb-3 fw-bold">Layout Direction</h5>
+
+            <div class="row g-3">
+                <div class="col-4" id="dir-ltr">
+                    <div class="form-check sidebar-setting card-radio">
+                        <input class="form-check-input" type="radio" name="dir" id="layout-dir-ltr" value="ltr" />
+                        <label class="form-check-label p-0 w-100" for="layout-dir-ltr">
+                            <img src="assets/images/layouts/dir-ltr.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="mb-0 text-center text-muted mt-2">LTR</h5>
+                </div>
+
+                <div class="col-4" id="dir-rtl">
+                    <div class="form-check sidebar-setting card-radio">
+                        <input class="form-check-input" type="radio" name="dir" id="layout-dir-rtl" value="rtl" />
+                        <label class="form-check-label p-0 w-100" for="layout-dir-rtl">
+                            <img src="assets/images/layouts/dir-rtl.png" alt="layout-img" class="img-fluid" />
+                        </label>
+                    </div>
+                    <h5 class="mb-0 text-center text-muted mt-2">RTL</h5>
+                </div>
+            </div>
+        </div>
+
+        <div id="position" class="p-3 border-bottom border-dashed">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0">Layout Position</h5>
+
+                <div class="d-flex gap-1">
+                    <div id="position-fixed">
+                        <input type="radio" class="btn-check" name="data-layout-position" id="layout-position-fixed" value="fixed" />
+                        <label class="btn btn-sm btn-soft-warning w-sm" for="layout-position-fixed">Fixed</label>
+                    </div>
+                    <div id="position-scrollable">
+                        <input type="radio" class="btn-check" name="data-layout-position" id="layout-position-scrollable" value="scrollable" />
+                        <label class="btn btn-sm btn-soft-warning w-sm ms-0" for="layout-position-scrollable">Scrollable</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="sidenav-user" class="p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <label class="fw-bold m-0" for="sidebaruser-check">Sidebar User Info</label>
+                </h5>
+                <div class="form-check form-switch fs-lg">
+                    <input type="checkbox" class="form-check-input" name="sidebar-user" id="sidebaruser-check" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="offcanvas-footer border-top p-3 text-center">
+        <div class="row justify-content-end">
+            <div class="col-6">
+                <a href="https://wrapmarket.com/item/inspinia-multipurpose-admin-dashboard-template-WB0R5L90S?via=webapp" class="btn btn-success fw-semibold py-2 w-100" target="_blank"><i class="ti ti-basket me-2 fs-md"></i> Buy Now</a>
+            </div>
+            <div class="col-6">
+                <button type="button" class="btn btn-danger fw-semibold py-2 w-100" id="reset-layout"><i class="ti ti-refresh me-2 fs-md"></i> Reset</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- end offcanvas-->
+
+<!-- Vendor js -->
+<script src="assets/js/vendors.min.js"></script>
+
+<!-- App js -->
+<script src="assets/js/app.js"></script>
+
+<script>
+(function () {
+    // Filtros avançados toggle
+    const btnMais = document.getElementById('btn-mais-filtros')
+    const collapseEl = document.getElementById('filtros-avancados')
+    btnMais.addEventListener('click', function () {
+        const isOpen = collapseEl.classList.contains('show')
+        bootstrap.Collapse.getOrCreateInstance(collapseEl).toggle()
+        btnMais.innerHTML = isOpen
+            ? '<i class="ti ti-adjustments-horizontal me-1"></i>Mais filtros'
+            : '<i class="ti ti-adjustments-horizontal me-1"></i>Menos filtros'
+    })
+
+    // RN01: Iniciativa → Entrega
+    const entregasMap = {
+        'Ampliação da Rede de Atendimento Hospitalar': ['Modernização da frota hospitalar', 'Construção de novos leitos UTI'],
+        'Implantação de Gestão Eletrônica Documental':  ['Digitalização de arquivos públicos', 'Portal de documentos digitais'],
+        'Formação Continuada de Gestores Públicos':     ['Programa de capacitação anual', 'Treinamento em liderança pública'],
+        'Expansão da Educação Profissionalizante':      ['Construção de unidade técnica', 'Equipamentos para laboratórios'],
+    }
+    const selIni = document.getElementById('filtro-iniciativa')
+    const selEnt = document.getElementById('filtro-entrega')
+    selIni.addEventListener('change', function () {
+        selEnt.innerHTML = '<option value="">Selecione a entrega</option>'
+        if (this.value && entregasMap[this.value]) {
+            entregasMap[this.value].forEach(e => selEnt.insertAdjacentHTML('beforeend', `<option>${e}</option>`))
+            selEnt.disabled = false
+        } else {
+            selEnt.innerHTML = '<option value="">Selecione a iniciativa</option>'
+            selEnt.disabled = true
+        }
+    })
+
+    // RN02: Tipo → Item
+    const itensMap = {
+        'Projeto':       ['PR2025000001 – Ampliação hospitalar UEG', 'PR2025000002 – Escola técnica SEDUC'],
+        'Processo':      ['PS2025000001 – Digitalização SEAD', 'PS2025000002 – Licenciamento SEMAD'],
+        'Plano de Ação': ['PA2025000001 – Inclusão digital SEDUC', 'PA2025000002 – Segurança SEDS'],
+    }
+    const selTipo = document.getElementById('filtro-tipo')
+    const selItem = document.getElementById('filtro-item')
+    selTipo.addEventListener('change', function () {
+        selItem.innerHTML = '<option value="">Selecione o item</option>'
+        if (this.value && itensMap[this.value]) {
+            itensMap[this.value].forEach(i => selItem.insertAdjacentHTML('beforeend', `<option>${i}</option>`))
+            selItem.disabled = false
+        } else {
+            selItem.innerHTML = '<option value="">Selecione o tipo</option>'
+            selItem.disabled = true
+        }
+    })
+
+    // Filtrar por nome (busca simples client-side)
+    document.getElementById('btn-filtrar').addEventListener('click', filtrar)
+
+    function filtrar() {
+        const nome     = document.getElementById('filtro-nome').value.toLowerCase()
+        const orgao    = document.getElementById('filtro-orgao').value
+        const fase     = document.getElementById('filtro-fase').value
+        const rows     = document.querySelectorAll('#tbody-ipes tr')
+        let visíveis   = 0
+
+        rows.forEach(row => {
+            const txt  = row.textContent.toLowerCase()
+            const ok   = (!nome  || txt.includes(nome))
+                      && (!orgao || txt.includes(orgao.toLowerCase()))
+                      && (!fase  || txt.includes(fase.toLowerCase()))
+            row.classList.toggle('d-none', !ok)
+            if (ok) visíveis++
+        })
+
+        document.getElementById('total-registros').textContent = `${visíveis} IPEs encontrados`
+        document.getElementById('estado-vazio').classList.toggle('d-none', visíveis > 0)
+        document.getElementById('tabela-ipes').classList.toggle('d-none', visíveis === 0)
+        document.getElementById('paginacao').classList.toggle('d-none', visíveis === 0)
+    }
+
+    // Limpar filtros
+    function limpar() {
+        document.getElementById('filtro-nome').value = ''
+        document.getElementById('filtro-orgao').value = ''
+        selIni.value = ''
+        selEnt.innerHTML = '<option value="">Selecione a iniciativa</option>'
+        selEnt.disabled = true
+        document.getElementById('filtro-data-inicio').value = ''
+        document.getElementById('filtro-data-fim').value = ''
+        document.getElementById('filtro-fase').value = ''
+        document.getElementById('filtro-situacao').value = ''
+        selTipo.value = ''
+        selItem.innerHTML = '<option value="">Selecione o tipo</option>'
+        selItem.disabled = true
+        document.querySelectorAll('#tbody-ipes tr').forEach(r => r.classList.remove('d-none'))
+        document.getElementById('total-registros').textContent = '10 IPEs encontrados'
+        document.getElementById('estado-vazio').classList.add('d-none')
+        document.getElementById('tabela-ipes').classList.remove('d-none')
+        document.getElementById('paginacao').classList.remove('d-none')
+    }
+    document.getElementById('btn-limpar').addEventListener('click', limpar)
+    document.getElementById('btn-limpar-vazio').addEventListener('click', limpar)
+
+    // Toast de sucesso caso venha do cadastrar/editar
+    const msg = sessionStorage.getItem('siplam_msg')
+    if (msg) {
+        sessionStorage.removeItem('siplam_msg')
+        const toast = document.createElement('div')
+        toast.className = 'position-fixed bottom-0 end-0 p-3'
+        toast.style.zIndex = 9999
+        toast.innerHTML = `<div class="toast show align-items-center text-bg-success border-0" role="alert">
+            <div class="d-flex"><div class="toast-body">${msg}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>`
+        document.body.appendChild(toast)
+        setTimeout(() => toast.remove(), 3500)
+    }
+})()
+</script>
+<style>
+    .x-small { font-size: 12px; }
+    .badge-fase, .badge-sit, .badge-ppa { display:inline-block; font-size:11px; font-weight:500; padding:2px 8px; border-radius:20px; white-space:nowrap; }
+    .fase-rascunho   { background:#e9ecef; color:#6c757d; }
+    .fase-planejada  { background:#cfe2ff; color:#0a58ca; }
+    .fase-vinculada  { background:#d1ecf1; color:#0c5460; }
+    .fase-execucao   { background:#d4edda; color:#155724; }
+    .fase-finalizada { background:#6c757d; color:#fff; }
+    .fase-cancelada  { background:#f8d7da; color:#721c24; }
+    .sit-analise     { background:#fff3cd; color:#856404; }
+    .sit-transformado{ background:#d1e7dd; color:#0f5132; }
+    .sit-inexistente { background:#f8d7da; color:#842029; }
+    .ppa-ausente     { background:#e9ecef; color:#6c757d; }
+    .ppa-fraca       { background:#f8d7da; color:#842029; }
+    .ppa-media       { background:#fff3cd; color:#856404; }
+    .ppa-adequada    { background:#d1e7dd; color:#0f5132; }
+    #tabela-ipes th  { font-size:12px; }
+    #tabela-ipes td  { font-size:13px; vertical-align:middle; }
+</style>
+</body>
+</html>
