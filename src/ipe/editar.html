@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <base href="/">
+    @@include("../partials/title-meta.html", {"title": "Editar IPE"})
+    @@include('../partials/head-css.html')
+</head>
+<body>
+<div class="wrapper">
+    @@include('../partials/topbar.html')
+    @@include('../partials/sidenav.html')
+    <div class="content-page">
+        <div class="container-fluid">
+
+            <div class="page-title-head d-flex align-items-center mb-3">
+                <div class="flex-grow-1">
+                    <h4 class="page-main-title m-0">Editar IPE</h4>
+                </div>
+                <div class="text-end">
+                    <ol class="breadcrumb m-0 py-0">
+                        <li class="breadcrumb-item"><a href="index.html">SIPLAM</a></li>
+                        <li class="breadcrumb-item"><a href="ipe/">IPE</a></li>
+                        <li class="breadcrumb-item active">Editar IPE</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Dados básicos -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">Dados básicos do IPE</h5>
+                        <button class="btn btn-sm btn-link text-primary p-0" id="btn-editar-basicos"><i class="ti ti-pencil me-1"></i>Editar</button>
+                    </div>
+                    <!-- Visualização -->
+                    <div id="view-basicos">
+                        <div class="row g-3">
+                            <div class="col-6 col-md-2">
+                                <p class="text-muted small mb-1">Código do IPE</p>
+                                <p class="fw-semibold mb-0">100001</p>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <p class="text-muted small mb-1">Nome do IPE</p>
+                                <p class="fw-semibold mb-0" id="view-nome">Modernização da frota de ambulâncias estaduais</p>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <p class="text-muted small mb-1">Fase do IPE</p>
+                                <span class="badge-fase fase-execucao" id="view-fase-badge">Execução</span>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <p class="text-muted small mb-1">Órgão/Secretaria</p>
+                                <p class="fw-semibold mb-0" id="view-orgao">1100 – Universidade Estadual de Goiás (UEG)</p>
+                            </div>
+                            <div class="col-12">
+                                <p class="text-muted small mb-1">Descrição</p>
+                                <p class="mb-0" id="view-desc">IPE criado para acompanhar a modernização da frota de veículos de saúde do estado de Goiás, com foco na renovação de ambulâncias e veículos de apoio hospitalar, em conformidade com o Decreto Estadual nº 9876/2024.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Edição -->
+                    <div id="edit-basicos" class="d-none">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Nome do IPE <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm" id="edit-nome" value="Modernização da frota de ambulâncias estaduais">
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label">Fase do IPE</label>
+                                <select class="form-select form-select-sm" id="edit-fase">
+                                    <option>Rascunho</option><option>Planejada</option><option>Vinculada</option>
+                                    <option selected>Execução</option><option>Finalizada</option><option>Cancelada</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label">Órgão/Secretaria <span class="text-danger">*</span></label>
+                                <select class="form-select form-select-sm" id="edit-orgao">
+                                    <option selected>1100 – Universidade Estadual de Goiás (UEG)</option>
+                                    <option>1200 – Secretaria de Administração (SEAD)</option>
+                                    <option>1300 – Secretaria-Geral de Governo (SGG)</option>
+                                    <option>1400 – Secretaria de Educação (SEDUC)</option>
+                                    <option>1700 – Secretaria de Economia</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Descrição</label>
+                                <textarea class="form-control form-control-sm" id="edit-desc" rows="3">IPE criado para acompanhar a modernização da frota de veículos de saúde do estado de Goiás, com foco na renovação de ambulâncias e veículos de apoio hospitalar, em conformidade com o Decreto Estadual nº 9876/2024.</textarea>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button class="btn btn-sm btn-outline-secondary" id="btn-cancelar-basicos">Cancelar</button>
+                            <button class="btn btn-sm btn-primary" id="btn-salvar-basicos">Salvar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalhes da entrega -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">Detalhes da entrega</h5>
+                        <button class="btn btn-sm btn-link text-primary p-0" id="btn-editar-entrega"><i class="ti ti-pencil me-1"></i>Editar</button>
+                    </div>
+                    <!-- Visualização -->
+                    <div id="view-entrega">
+                        <div class="row g-3 mb-3">
+                            <div class="col-12 col-md-3">
+                                <p class="text-muted small mb-1">PPA</p>
+                                <p class="mb-0">PPA 2024–2027 – Saúde e Bem-Estar</p>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <p class="text-muted small mb-1">Iniciativa</p>
+                                <p class="mb-0">Ampliação da Rede de Atendimento Hospitalar</p>
+                            </div>
+                            <div class="col-12 col-md-5">
+                                <p class="text-muted small mb-1">Entrega</p>
+                                <p class="mb-0">Modernização da frota hospitalar</p>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered align-middle mb-0 small">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Unidade de Medida</th><th>Meta Acumulativa</th>
+                                        <th>Tipo de Entrega</th><th>Data de Vigência</th>
+                                        <th>Meta 2024</th><th>Meta 2025</th><th>Meta 2026</th><th>Meta 2027</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Unidades</td><td>Sim</td><td>Saúde</td><td>31/12/2027</td><td>5</td><td>10</td><td>15</td><td>20</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Edição -->
+                    <div id="edit-entrega" class="d-none">
+                        <div class="row g-3 mb-3">
+                            <div class="col-12 col-md-3">
+                                <p class="text-muted small mb-1">PPA</p>
+                                <p class="mb-0">PPA 2024–2027 – Saúde e Bem-Estar</p>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Iniciativa</label>
+                                <select class="form-select form-select-sm" id="ent-iniciativa">
+                                    <option selected>Ampliação da Rede de Atendimento Hospitalar</option>
+                                    <option>Implantação de Gestão Eletrônica Documental</option>
+                                    <option>Formação Continuada de Gestores Públicos</option>
+                                    <option>Expansão da Educação Profissionalizante</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-5">
+                                <label class="form-label">Entrega</label>
+                                <select class="form-select form-select-sm" id="ent-entrega">
+                                    <option selected>Modernização da frota hospitalar</option>
+                                    <option>Construção de novos leitos UTI</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm table-bordered align-middle mb-0 small">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Unidade de Medida</th><th>Meta Acumulativa</th>
+                                        <th>Tipo de Entrega</th><th>Data de Vigência</th>
+                                        <th>Meta 2024</th><th>Meta 2025</th><th>Meta 2026</th><th>Meta 2027</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Unidades</td><td>Sim</td><td>Saúde</td><td>31/12/2027</td><td>5</td><td>10</td><td>15</td><td>20</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Justificativa</label>
+                            <textarea class="form-control form-control-sm" id="ent-justificativa" rows="3" placeholder="Descreva a justificativa para a alteração de entrega."></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button class="btn btn-sm btn-outline-secondary" id="btn-cancelar-entrega">Cancelar</button>
+                            <button class="btn btn-sm btn-primary" id="btn-salvar-entrega">Salvar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Integração -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">Integração</h5>
+                        <button class="btn btn-sm btn-link text-primary p-0" id="btn-add-integracao"><i class="ti ti-plus me-1"></i>Adicionar integração</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width:28px"></th>
+                                    <th>Tipo de Implementação</th>
+                                    <th>Item de Implementação</th>
+                                    <th class="text-nowrap">Data de Início</th>
+                                    <th class="text-nowrap">Data de Término</th>
+                                    <th class="text-nowrap">Contribuição p/ Entrega</th>
+                                    <th class="text-nowrap">Status de Andamento</th>
+                                    <th class="text-nowrap">Conexão com PPA</th>
+                                    <th class="text-nowrap">Itens de Monitoramento</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="integracoes-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botão voltar -->
+            <div class="d-flex justify-content-start mb-4">
+                <a href="ipe/" class="btn btn-sm btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>Voltar para lista</a>
+            </div>
+
+        </div>
+        @@include('../partials/footer.html')
+    </div>
+</div>
+
+@@include('../partials/customizer.html')
+@@include('../partials/footer-scripts.html')
+
+<!-- Modal: Adicionar/Editar Integração -->
+<div class="modal fade" id="modalInteg" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-integ-title">Adicionar integração</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">Tipo de implementação <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm" id="modal-tipo">
+                            <option value="">Selecione</option>
+                            <option>Projeto</option><option>Processo</option><option>Plano de Ação</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-8">
+                        <label class="form-label">Item de implementação <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm" id="modal-item" disabled>
+                            <option value="">Selecione o tipo primeiro</option>
+                        </select>
+                    </div>
+                    <div class="col-4">
+                        <p class="text-muted small mb-1">Data de início</p>
+                        <p class="small mb-0" id="modal-dt-inicio">—</p>
+                    </div>
+                    <div class="col-4">
+                        <p class="text-muted small mb-1">Data de término</p>
+                        <p class="small mb-0" id="modal-dt-fim">—</p>
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label">Contribuição para entrega (%) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control form-control-sm" id="modal-contrib" placeholder="0" min="0" max="100">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-salvar-integ">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Adicionar item de monitoramento -->
+<div class="modal fade" id="modalAddMon" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adicionar item de monitoramento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-12 col-md-5">
+                        <label class="form-label">Item de monitoramento <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm" id="mon-item">
+                            <option value="">Selecione</option>
+                            <option>Goiânia</option><option>Anápolis</option>
+                            <option>Aparecida de Goiânia</option><option>Rio Verde</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">Data de exercício <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control form-control-sm" id="mon-data">
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Estimativa física (%) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control form-control-sm" id="mon-est" placeholder="0" min="0" max="100">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-salvar-mon">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Remover integração -->
+<div class="modal fade" id="modalRemoverInteg" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Remover integração</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body"><p class="mb-0">Tem certeza que deseja remover esta integração?</p></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Não</button>
+                <button type="button" class="btn btn-sm btn-danger" id="btn-confirmar-remover">Sim, remover</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge-fase { display:inline-block; font-size:11px; font-weight:500; padding:2px 8px; border-radius:20px; }
+    .fase-rascunho   { background:#e9ecef; color:#6c757d; }
+    .fase-planejada  { background:#cfe2ff; color:#0a58ca; }
+    .fase-vinculada  { background:#d1ecf1; color:#0c5460; }
+    .fase-execucao   { background:#d4edda; color:#155724; }
+    .fase-finalizada { background:#6c757d; color:#fff; }
+    .fase-cancelada  { background:#f8d7da; color:#721c24; }
+    .badge-ppa { display:inline-block; font-size:11px; font-weight:500; padding:2px 8px; border-radius:20px; }
+    .ppa-fraca    { background:#f8d7da; color:#842029; }
+    .ppa-média    { background:#fff3cd; color:#856404; }
+    .ppa-adequada { background:#d1e7dd; color:#0f5132; }
+</style>
+
+<script>
+(function () {
+    const itensMap = {
+        'Projeto':       [{ label:'PR2025000001 – Ampliação hospitalar UEG', inicio:'01/03/2025', fim:'31/12/2027' }, { label:'PR2025000002 – Escola técnica SEDUC', inicio:'15/01/2024', fim:'30/06/2028' }],
+        'Processo':      [{ label:'PS2025000001 – Digitalização de arquivos SEAD', inicio:'01/06/2024', fim:'30/06/2026' }, { label:'PS2025000002 – Licenciamento ambiental SEMAD', inicio:'01/08/2024', fim:'31/08/2026' }],
+        'Plano de Ação': [{ label:'PA2025000001 – Inclusão digital nas escolas', inicio:'01/03/2025', fim:'31/12/2026' }, { label:'PA2025000002 – Segurança comunitária SEDS', inicio:'01/01/2025', fim:'31/12/2027' }],
+    }
+
+    // Dados pré-carregados do IPE 100001
+    let integracoes = [
+        { tipo:'Projeto', item:'PR2025000001 – Ampliação hospitalar UEG', inicio:'01/03/2025', fim:'31/12/2027', contrib:'60', ppa:'Adequada', monitores:[
+            { item:'Goiânia', data:'2025-12-31', est:'26' },
+            { item:'Anápolis', data:'2025-12-31', est:'15' }
+        ]},
+    ]
+    let editandoIndex = null
+    let removendoIndex = null
+    let monAlvoIndex  = null
+
+    renderIntegracoes()
+
+    // Toggle edição: Dados básicos
+    document.getElementById('btn-editar-basicos').addEventListener('click', function () {
+        document.getElementById('view-basicos').classList.add('d-none')
+        document.getElementById('edit-basicos').classList.remove('d-none')
+        this.classList.add('d-none')
+    })
+    document.getElementById('btn-cancelar-basicos').addEventListener('click', function () {
+        document.getElementById('view-basicos').classList.remove('d-none')
+        document.getElementById('edit-basicos').classList.add('d-none')
+        document.getElementById('btn-editar-basicos').classList.remove('d-none')
+    })
+    document.getElementById('btn-salvar-basicos').addEventListener('click', function () {
+        const nome  = document.getElementById('edit-nome').value.trim()
+        const orgao = document.getElementById('edit-orgao').value
+        const fase  = document.getElementById('edit-fase').value
+        const desc  = document.getElementById('edit-desc').value
+        if (!nome) { document.getElementById('edit-nome').classList.add('is-invalid'); return }
+
+        // Atualiza visualização
+        document.getElementById('view-nome').textContent = nome
+        document.getElementById('view-orgao').textContent = orgao
+        document.getElementById('view-desc').textContent = desc
+        const badge = document.getElementById('view-fase-badge')
+        badge.textContent = fase
+        badge.className = 'badge-fase fase-' + fase.toLowerCase().replace('ç','c').replace('ã','a')
+
+        document.getElementById('view-basicos').classList.remove('d-none')
+        document.getElementById('edit-basicos').classList.add('d-none')
+        document.getElementById('btn-editar-basicos').classList.remove('d-none')
+        mostrarToast('Dados básicos salvos com sucesso!', 'success')
+    })
+
+    // Toggle edição: Detalhes da entrega
+    document.getElementById('btn-editar-entrega').addEventListener('click', function () {
+        document.getElementById('view-entrega').classList.add('d-none')
+        document.getElementById('edit-entrega').classList.remove('d-none')
+        this.classList.add('d-none')
+    })
+    document.getElementById('btn-cancelar-entrega').addEventListener('click', function () {
+        document.getElementById('view-entrega').classList.remove('d-none')
+        document.getElementById('edit-entrega').classList.add('d-none')
+        document.getElementById('btn-editar-entrega').classList.remove('d-none')
+    })
+    document.getElementById('btn-salvar-entrega').addEventListener('click', function () {
+        document.getElementById('view-entrega').classList.remove('d-none')
+        document.getElementById('edit-entrega').classList.add('d-none')
+        document.getElementById('btn-editar-entrega').classList.remove('d-none')
+        mostrarToast('Detalhes da entrega salvos com sucesso!', 'success')
+    })
+
+    // Tipo → Item no modal
+    document.getElementById('modal-tipo').addEventListener('change', function () {
+        const itens = itensMap[this.value] || []
+        const sel = document.getElementById('modal-item')
+        sel.innerHTML = '<option value="">Selecione</option>'
+        itens.forEach((it, i) => sel.insertAdjacentHTML('beforeend', `<option value="${i}">${it.label}</option>`))
+        sel.disabled = !this.value
+        document.getElementById('modal-dt-inicio').textContent = '—'
+        document.getElementById('modal-dt-fim').textContent = '—'
+    })
+    document.getElementById('modal-item').addEventListener('change', function () {
+        const tipo = document.getElementById('modal-tipo').value
+        const idx  = this.value
+        if (tipo && idx !== '') {
+            document.getElementById('modal-dt-inicio').textContent = itensMap[tipo][idx].inicio
+            document.getElementById('modal-dt-fim').textContent   = itensMap[tipo][idx].fim
+        }
+    })
+
+    // Abrir modal adicionar integração
+    document.getElementById('btn-add-integracao').addEventListener('click', function () {
+        editandoIndex = null
+        document.getElementById('modal-integ-title').textContent = 'Adicionar integração'
+        document.getElementById('modal-tipo').value = ''
+        document.getElementById('modal-item').innerHTML = '<option value="">Selecione o tipo primeiro</option>'
+        document.getElementById('modal-item').disabled = true
+        document.getElementById('modal-contrib').value = ''
+        document.getElementById('modal-dt-inicio').textContent = '—'
+        document.getElementById('modal-dt-fim').textContent = '—'
+        new bootstrap.Modal(document.getElementById('modalInteg')).show()
+    })
+
+    // Salvar integração
+    document.getElementById('btn-salvar-integ').addEventListener('click', function () {
+        const tipo   = document.getElementById('modal-tipo').value
+        const itemV  = document.getElementById('modal-item').value
+        const contrib= document.getElementById('modal-contrib').value
+        if (!tipo || itemV === '' || !contrib) { alert('Preencha todos os campos obrigatórios.'); return }
+
+        const it = itensMap[tipo][itemV]
+        const integ = { tipo, item: it.label, inicio: it.inicio, fim: it.fim, contrib, ppa: 'Adequada', monitores: [] }
+        if (editandoIndex !== null) {
+            integracoes[editandoIndex] = { ...integracoes[editandoIndex], ...integ }
+        } else {
+            integracoes.push(integ)
+        }
+        renderIntegracoes()
+        bootstrap.Modal.getInstance(document.getElementById('modalInteg')).hide()
+        mostrarToast('Integração salva com sucesso!', 'success')
+    })
+
+    // Remover integração
+    document.getElementById('btn-confirmar-remover').addEventListener('click', function () {
+        if (removendoIndex !== null) {
+            integracoes.splice(removendoIndex, 1)
+            removendoIndex = null
+            renderIntegracoes()
+            mostrarToast('Integração removida.', 'warning')
+        }
+        bootstrap.Modal.getInstance(document.getElementById('modalRemoverInteg')).hide()
+    })
+
+    // Salvar monitoramento
+    document.getElementById('btn-salvar-mon').addEventListener('click', function () {
+        const item = document.getElementById('mon-item').value
+        const data = document.getElementById('mon-data').value
+        const est  = document.getElementById('mon-est').value
+        if (!item || !data || !est) { alert('Preencha todos os campos.'); return }
+        integracoes[monAlvoIndex].monitores.push({ item, data, est })
+        renderIntegracoes()
+        bootstrap.Modal.getInstance(document.getElementById('modalAddMon')).hide()
+        document.getElementById('mon-item').value = ''
+        document.getElementById('mon-data').value = ''
+        document.getElementById('mon-est').value  = ''
+        mostrarToast('Item de monitoramento adicionado!', 'success')
+    })
+
+    function renderIntegracoes() {
+        const tbody = document.getElementById('integracoes-tbody')
+        if (!integracoes.length) {
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">Nenhuma integração adicionada.</td></tr>'
+            return
+        }
+        tbody.innerHTML = integracoes.map((ig, i) => `
+            <tr>
+                <td><button class="btn btn-link p-0 btn-toggle-mon" data-i="${i}"><i class="ti ti-chevron-right fs-14"></i></button></td>
+                <td class="small">${ig.tipo}</td>
+                <td class="small">${ig.item}</td>
+                <td class="small text-nowrap">${ig.inicio}</td>
+                <td class="small text-nowrap">${ig.fim}</td>
+                <td class="small">${ig.contrib}%</td>
+                <td>
+                    <div class="progress mb-1" style="height:5px;width:70px">
+                        <div class="progress-bar" style="width:${ig.contrib}%"></div>
+                    </div>
+                    <span class="small text-muted">${ig.contrib}%</span>
+                </td>
+                <td><span class="badge-ppa ppa-${ig.ppa.toLowerCase()}">${ig.ppa}</span></td>
+                <td class="text-center small">${ig.monitores.length}</td>
+                <td class="text-nowrap">
+                    <button class="btn btn-sm btn-link p-0 me-1 btn-add-mon-row" data-i="${i}" title="Adicionar monitoramento"><i class="ti ti-plus fs-14"></i></button>
+                    <button class="btn btn-sm btn-link p-0 me-1 btn-edit-integ" data-i="${i}" title="Editar"><i class="ti ti-pencil fs-14"></i></button>
+                    <button class="btn btn-sm btn-link text-danger p-0 btn-del-integ" data-i="${i}" title="Remover"><i class="ti ti-trash fs-14"></i></button>
+                </td>
+            </tr>
+            ${ig.monitores.map((m, mi) => `
+            <tr class="mon-row-${i} d-none table-light">
+                <td></td>
+                <td colspan="2" class="small"><span class="text-muted fw-semibold">Item:</span> ${m.item}</td>
+                <td colspan="2" class="small"><span class="text-muted fw-semibold">Exercício:</span> ${m.data}</td>
+                <td colspan="4" class="small"><span class="text-muted fw-semibold">Estimativa física:</span> ${m.est}%</td>
+                <td><button class="btn btn-sm btn-link text-danger p-0 btn-del-mon" data-i="${i}" data-mi="${mi}" title="Remover"><i class="ti ti-trash fs-14"></i></button></td>
+            </tr>`).join('')}
+        `).join('')
+
+        tbody.querySelectorAll('.btn-toggle-mon').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const rows = tbody.querySelectorAll(`.mon-row-${this.dataset.i}`)
+                const icon = this.querySelector('i')
+                const hidden = rows[0]?.classList.contains('d-none')
+                rows.forEach(r => r.classList.toggle('d-none', !hidden))
+                icon.className = hidden ? 'ti ti-chevron-down fs-14' : 'ti ti-chevron-right fs-14'
+            })
+        })
+        tbody.querySelectorAll('.btn-add-mon-row').forEach(btn => {
+            btn.addEventListener('click', function () {
+                monAlvoIndex = +this.dataset.i
+                new bootstrap.Modal(document.getElementById('modalAddMon')).show()
+            })
+        })
+        tbody.querySelectorAll('.btn-edit-integ').forEach(btn => {
+            btn.addEventListener('click', function () {
+                editandoIndex = +this.dataset.i
+                const ig = integracoes[editandoIndex]
+                document.getElementById('modal-integ-title').textContent = 'Editar integração'
+                document.getElementById('modal-tipo').value = ig.tipo
+                document.getElementById('modal-tipo').dispatchEvent(new Event('change'))
+                setTimeout(() => {
+                    const sel = document.getElementById('modal-item')
+                    Array.from(sel.options).forEach((opt, idx) => { if (opt.text === ig.item) sel.value = idx })
+                    document.getElementById('modal-dt-inicio').textContent = ig.inicio
+                    document.getElementById('modal-dt-fim').textContent   = ig.fim
+                }, 50)
+                document.getElementById('modal-contrib').value = ig.contrib
+                new bootstrap.Modal(document.getElementById('modalInteg')).show()
+            })
+        })
+        tbody.querySelectorAll('.btn-del-integ').forEach(btn => {
+            btn.addEventListener('click', function () {
+                removendoIndex = +this.dataset.i
+                new bootstrap.Modal(document.getElementById('modalRemoverInteg')).show()
+            })
+        })
+        tbody.querySelectorAll('.btn-del-mon').forEach(btn => {
+            btn.addEventListener('click', function () {
+                integracoes[+this.dataset.i].monitores.splice(+this.dataset.mi, 1)
+                renderIntegracoes()
+                mostrarToast('Item de monitoramento removido.', 'warning')
+            })
+        })
+    }
+
+    function mostrarToast(msg, tipo) {
+        const cor = tipo === 'success' ? 'text-bg-success' : 'text-bg-warning'
+        const t = document.createElement('div')
+        t.className = 'position-fixed bottom-0 end-0 p-3'
+        t.style.zIndex = 9999
+        t.innerHTML = `<div class="toast show align-items-center ${cor} border-0">
+            <div class="d-flex"><div class="toast-body">${msg}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.position-fixed').remove()"></button></div></div>`
+        document.body.appendChild(t)
+        setTimeout(() => t.remove(), 3000)
+    }
+})()
+</script>
+</body>
+</html>

@@ -28,7 +28,7 @@
     const config = Object.assign(
         {
             "dir": "ltr",
-            "skin": "default",
+            "skin": "minimal",
             "theme": "light",
             "width": "fluid",
             "position": "fixed",

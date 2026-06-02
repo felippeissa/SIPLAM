@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <base href="/">
+    @@include("../partials/title-meta.html", {"title": "Cadastrar IPE"})
+    @@include('../partials/head-css.html')
+</head>
+<body>
+<div class="wrapper">
+    @@include('../partials/topbar.html')
+    @@include('../partials/sidenav.html')
+    <div class="content-page">
+        <div class="container-fluid">
+
+            <div class="page-title-head d-flex align-items-center mb-3">
+                <div class="flex-grow-1">
+                    <h4 class="page-main-title m-0">Cadastrar IPE</h4>
+                </div>
+                <div class="text-end">
+                    <ol class="breadcrumb m-0 py-0">
+                        <li class="breadcrumb-item"><a href="index.html">SIPLAM</a></li>
+                        <li class="breadcrumb-item"><a href="ipe/">IPE</a></li>
+                        <li class="breadcrumb-item active">Cadastrar IPE</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Dados básicos -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Dados básicos do IPE</h5>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">Nome do IPE <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" id="cad-nome" placeholder="Digite o nome de identificação do IPE">
+                            <div class="invalid-feedback">Campo obrigatório.</div>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label">Fase do IPE <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="cad-fase">
+                                <option value="Rascunho" selected>Rascunho</option>
+                                <option value="Planejada">Planejada</option>
+                                <option value="Vinculada">Vinculada</option>
+                                <option value="Execução">Execução</option>
+                                <option value="Finalizada">Finalizada</option>
+                                <option value="Cancelada">Cancelada</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label">Órgão/Secretaria <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="cad-orgao">
+                                <option value="">Selecione</option>
+                                <option>1100 – Universidade Estadual de Goiás (UEG)</option>
+                                <option>1200 – Secretaria de Administração (SEAD)</option>
+                                <option>1300 – Secretaria-Geral de Governo (SGG)</option>
+                                <option>1400 – Secretaria de Educação (SEDUC)</option>
+                                <option>1500 – Secretaria do Meio Ambiente (SEMAD)</option>
+                                <option>1600 – Agência Goiana de Infraestrutura (GoInfra)</option>
+                                <option>1700 – Secretaria de Economia</option>
+                                <option>1800 – Secretaria de Segurança Pública (SEDS)</option>
+                            </select>
+                            <div class="invalid-feedback">Campo obrigatório.</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Descrição</label>
+                            <textarea class="form-control form-control-sm" id="cad-descricao" rows="3" placeholder="Digite um detalhamento complementar do IPE."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalhes -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Detalhes</h5>
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-2">
+                            <p class="text-muted small mb-1">PPA</p>
+                            <p class="small mb-0" id="cad-ppa-label">Informe a entrega para visualizar.</p>
+                        </div>
+                        <div class="col-12 col-md-5">
+                            <label class="form-label">Iniciativa</label>
+                            <select class="form-select form-select-sm" id="cad-iniciativa">
+                                <option value="">Selecione</option>
+                                <option>Ampliação da Rede de Atendimento Hospitalar</option>
+                                <option>Implantação de Gestão Eletrônica Documental</option>
+                                <option>Formação Continuada de Gestores Públicos</option>
+                                <option>Expansão da Educação Profissionalizante</option>
+                                <option>Melhoria da Infraestrutura Viária</option>
+                                <option>Modernização da Gestão Fiscal</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-5">
+                            <label class="form-label">Entrega</label>
+                            <select class="form-select form-select-sm" id="cad-entrega" disabled>
+                                <option value="">Selecione a iniciativa primeiro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-0 small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Unidade de Medida</th><th>Meta Acumulativa</th>
+                                    <th>Tipo de Entrega</th><th>Data de Vigência</th>
+                                    <th>Meta 1</th><th>Meta 2</th><th>Meta 3</th><th>Meta 4</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cad-metas-tbody">
+                                <tr class="text-muted"><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Integração -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">Integração</h5>
+                        <button class="btn btn-sm btn-link text-primary p-0" id="btn-add-integracao" type="button">
+                            <i class="ti ti-plus me-1"></i>Adicionar integração
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width:28px"></th>
+                                    <th>Tipo de Implementação</th>
+                                    <th>Item de Implementação</th>
+                                    <th class="text-nowrap">Data de Início</th>
+                                    <th class="text-nowrap">Data de Término</th>
+                                    <th class="text-nowrap">Contribuição p/ Entrega</th>
+                                    <th class="text-nowrap">Status de Andamento</th>
+                                    <th class="text-nowrap">Conexão com PPA</th>
+                                    <th class="text-nowrap">Itens de Monitoramento</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="integracoes-tbody">
+                                <tr id="integracao-empty">
+                                    <td colspan="10" class="text-center text-muted py-4">Nenhuma integração adicionada.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões finais -->
+            <div class="d-flex justify-content-end gap-2 mb-4">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-cancelar">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-salvar">Salvar</button>
+            </div>
+
+        </div>
+        @@include('../partials/footer.html')
+    </div>
+</div>
+
+@@include('../partials/customizer.html')
+@@include('../partials/footer-scripts.html')
+
+<!-- Modal: Adicionar Integração -->
+<div class="modal fade" id="modalAddIntegracao" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-integ-title">Adicionar integração</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">Tipo de implementação <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm" id="modal-tipo">
+                            <option value="">Selecione</option>
+                            <option>Projeto</option><option>Processo</option><option>Plano de Ação</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-8">
+                        <label class="form-label">Item de implementação <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm" id="modal-item" disabled>
+                            <option value="">Selecione o tipo primeiro</option>
+                        </select>
+                    </div>
+                    <div class="col-4">
+                        <p class="text-muted small mb-1">Data de início</p>
+                        <p class="small mb-0" id="modal-dt-inicio">—</p>
+                    </div>
+                    <div class="col-4">
+                        <p class="text-muted small mb-1">Data de término</p>
+                        <p class="small mb-0" id="modal-dt-fim">—</p>
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label">Contribuição para entrega (%) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control form-control-sm" id="modal-contrib" placeholder="0" min="0" max="100">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-salvar-integ">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Adicionar item de monitoramento -->
+<div class="modal fade" id="modalAddMon" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adicionar item de monitoramento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-12 col-md-5">
+                        <label class="form-label">Item de monitoramento <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm" id="mon-item">
+                            <option value="">Selecione</option>
+                            <option>Goiânia</option><option>Anápolis</option>
+                            <option>Aparecida de Goiânia</option><option>Rio Verde</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">Data de exercício <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control form-control-sm" id="mon-data">
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Estimativa física (%) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control form-control-sm" id="mon-est" placeholder="0" min="0" max="100">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-salvar-mon">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Confirmar cancelar -->
+<div class="modal fade" id="modalCancelar" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancelar cadastro</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body"><p class="mb-0">Tem certeza que deseja cancelar? Os dados preenchidos serão perdidos.</p></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Não</button>
+                <button type="button" class="btn btn-sm btn-danger" id="btn-confirmar-cancelar">Sim, cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Remover integração -->
+<div class="modal fade" id="modalRemoverInteg" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Remover integração</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body"><p class="mb-0">Tem certeza que deseja remover esta integração?</p></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Não</button>
+                <button type="button" class="btn btn-sm btn-danger" id="btn-confirmar-remover-integ">Sim, remover</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge-ppa { display:inline-block; font-size:11px; font-weight:500; padding:2px 8px; border-radius:20px; }
+    .ppa-fraca    { background:#f8d7da; color:#842029; }
+    .ppa-media    { background:#fff3cd; color:#856404; }
+    .ppa-adequada { background:#d1e7dd; color:#0f5132; }
+</style>
+
+<script>
+(function () {
+    const entregasMap = {
+        'Ampliação da Rede de Atendimento Hospitalar': { ppa:'PPA 2024–2027 – Saúde e Bem-Estar', entregas:['Modernização da frota hospitalar','Construção de novos leitos UTI'], meta:{ und:'Unidades', acum:'Sim', tipo:'Saúde', vigencia:'31/12/2027', m1:'5', m2:'10', m3:'15', m4:'20' } },
+        'Implantação de Gestão Eletrônica Documental':  { ppa:'PPA 2024–2027 – Governo Digital', entregas:['Digitalização de arquivos públicos','Portal de documentos digitais'], meta:{ und:'Processos', acum:'Não', tipo:'TI', vigencia:'30/06/2026', m1:'500', m2:'1.200', m3:'2.000', m4:'3.000' } },
+        'Formação Continuada de Gestores Públicos':     { ppa:'PPA 2024–2027 – Gestão Pública', entregas:['Programa de capacitação anual','Treinamento em liderança'], meta:{ und:'Servidores', acum:'Sim', tipo:'Capacitação', vigencia:'31/12/2025', m1:'100', m2:'250', m3:'400', m4:'600' } },
+        'Expansão da Educação Profissionalizante':      { ppa:'PPA 2024–2027 – Educação', entregas:['Construção de unidade técnica','Equipamentos para laboratórios'], meta:{ und:'Unidades', acum:'Não', tipo:'Infraestrutura', vigencia:'31/12/2028', m1:'1', m2:'2', m3:'3', m4:'4' } },
+        'Melhoria da Infraestrutura Viária':            { ppa:'PPA 2024–2027 – Infraestrutura', entregas:['Pavimentação GO-010','Pavimentação GO-139'], meta:{ und:'km', acum:'Sim', tipo:'Obras', vigencia:'31/12/2030', m1:'50', m2:'120', m3:'200', m4:'350' } },
+        'Modernização da Gestão Fiscal':                { ppa:'PPA 2024–2027 – Economia', entregas:['Integração tributária estadual','Sistema de arrecadação digital'], meta:{ und:'Módulos', acum:'Não', tipo:'TI', vigencia:'31/12/2026', m1:'2', m2:'4', m3:'6', m4:'8' } },
+    }
+    const itensMap = {
+        'Projeto':       [{ label:'PR2025000001 – Ampliação hospitalar UEG', inicio:'01/03/2025', fim:'31/12/2027' }, { label:'PR2025000002 – Escola técnica SEDUC', inicio:'15/01/2024', fim:'30/06/2028' }],
+        'Processo':      [{ label:'PS2025000001 – Digitalização de arquivos SEAD', inicio:'01/06/2024', fim:'30/06/2026' }, { label:'PS2025000002 – Licenciamento ambiental SEMAD', inicio:'01/08/2024', fim:'31/08/2026' }],
+        'Plano de Ação': [{ label:'PA2025000001 – Inclusão digital nas escolas', inicio:'01/03/2025', fim:'31/12/2026' }, { label:'PA2025000002 – Segurança comunitária SEDS', inicio:'01/01/2025', fim:'31/12/2027' }],
+    }
+
+    let integracoes = []
+    let editandoIndex = null
+    let removendoIndex = null
+    let monAlvoIndex = null
+
+    // RN01: Iniciativa → Entrega + PPA + metas
+    document.getElementById('cad-iniciativa').addEventListener('change', function () {
+        const dados = entregasMap[this.value]
+        const selEnt = document.getElementById('cad-entrega')
+        selEnt.innerHTML = '<option value="">Selecione</option>'
+        document.getElementById('cad-ppa-label').textContent = dados ? dados.ppa : 'Informe a entrega para visualizar.'
+        if (dados) {
+            dados.entregas.forEach(e => selEnt.insertAdjacentHTML('beforeend', `<option>${e}</option>`))
+            selEnt.disabled = false
+            const m = dados.meta
+            document.getElementById('cad-metas-tbody').innerHTML = `<tr>
+                <td>${m.und}</td><td>${m.acum}</td><td>${m.tipo}</td><td>${m.vigencia}</td>
+                <td>${m.m1}</td><td>${m.m2}</td><td>${m.m3}</td><td>${m.m4}</td></tr>`
+        } else {
+            selEnt.innerHTML = '<option value="">Selecione a iniciativa primeiro</option>'
+            selEnt.disabled = true
+            document.getElementById('cad-metas-tbody').innerHTML = '<tr class="text-muted"><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>'
+        }
+    })
+
+    // Tipo → Item no modal
+    document.getElementById('modal-tipo').addEventListener('change', function () {
+        const itens = itensMap[this.value] || []
+        const sel = document.getElementById('modal-item')
+        sel.innerHTML = '<option value="">Selecione</option>'
+        itens.forEach((it, i) => sel.insertAdjacentHTML('beforeend', `<option value="${i}">${it.label}</option>`))
+        sel.disabled = !this.value
+        document.getElementById('modal-dt-inicio').textContent = '—'
+        document.getElementById('modal-dt-fim').textContent = '—'
+    })
+    document.getElementById('modal-item').addEventListener('change', function () {
+        const tipo = document.getElementById('modal-tipo').value
+        const idx  = this.value
+        if (tipo && idx !== '') {
+            const it = itensMap[tipo][idx]
+            document.getElementById('modal-dt-inicio').textContent = it.inicio
+            document.getElementById('modal-dt-fim').textContent   = it.fim
+        }
+    })
+
+    // Abrir modal
+    document.getElementById('btn-add-integracao').addEventListener('click', function () {
+        editandoIndex = null
+        document.getElementById('modal-integ-title').textContent = 'Adicionar integração'
+        document.getElementById('modal-tipo').value = ''
+        document.getElementById('modal-item').innerHTML = '<option value="">Selecione o tipo primeiro</option>'
+        document.getElementById('modal-item').disabled = true
+        document.getElementById('modal-contrib').value = ''
+        document.getElementById('modal-dt-inicio').textContent = '—'
+        document.getElementById('modal-dt-fim').textContent = '—'
+        new bootstrap.Modal(document.getElementById('modalAddIntegracao')).show()
+    })
+
+    // Salvar integração
+    document.getElementById('btn-salvar-integ').addEventListener('click', function () {
+        const tipo   = document.getElementById('modal-tipo').value
+        const itemSel= document.getElementById('modal-item')
+        const itemV  = itemSel.value
+        const contrib= document.getElementById('modal-contrib').value
+        if (!tipo || itemV === '' || !contrib) { alert('Preencha todos os campos obrigatórios.'); return }
+
+        const it = itensMap[tipo][itemV]
+        const integ = { tipo, item: it.label, inicio: it.inicio, fim: it.fim, contrib, ppa: 'Média', monitores: [] }
+
+        if (editandoIndex !== null) {
+            integracoes[editandoIndex] = { ...integracoes[editandoIndex], ...integ }
+        } else {
+            integracoes.push(integ)
+        }
+        renderIntegracoes()
+        bootstrap.Modal.getInstance(document.getElementById('modalAddIntegracao')).hide()
+    })
+
+    // Remover integração
+    document.getElementById('btn-confirmar-remover-integ').addEventListener('click', function () {
+        if (removendoIndex !== null) {
+            integracoes.splice(removendoIndex, 1)
+            removendoIndex = null
+            renderIntegracoes()
+        }
+        bootstrap.Modal.getInstance(document.getElementById('modalRemoverInteg')).hide()
+    })
+
+    // Salvar item de monitoramento
+    document.getElementById('btn-salvar-mon').addEventListener('click', function () {
+        const item = document.getElementById('mon-item').value
+        const data = document.getElementById('mon-data').value
+        const est  = document.getElementById('mon-est').value
+        if (!item || !data || !est) { alert('Preencha todos os campos.'); return }
+        if (monAlvoIndex !== null) {
+            integracoes[monAlvoIndex].monitores.push({ item, data, est })
+            renderIntegracoes()
+        }
+        bootstrap.Modal.getInstance(document.getElementById('modalAddMon')).hide()
+        document.getElementById('mon-item').value = ''
+        document.getElementById('mon-data').value = ''
+        document.getElementById('mon-est').value = ''
+    })
+
+    function renderIntegracoes() {
+        const tbody = document.getElementById('integracoes-tbody')
+        if (!integracoes.length) {
+            tbody.innerHTML = '<tr id="integracao-empty"><td colspan="10" class="text-center text-muted py-4">Nenhuma integração adicionada.</td></tr>'
+            return
+        }
+        tbody.innerHTML = integracoes.map((ig, i) => `
+            <tr>
+                <td><button class="btn btn-link p-0 btn-toggle-mon" data-i="${i}"><i class="ti ti-chevron-right fs-14"></i></button></td>
+                <td class="small">${ig.tipo}</td>
+                <td class="small">${ig.item}</td>
+                <td class="small text-nowrap">${ig.inicio}</td>
+                <td class="small text-nowrap">${ig.fim}</td>
+                <td class="small">${ig.contrib}%</td>
+                <td><div class="progress" style="height:5px;width:70px"><div class="progress-bar" style="width:0%"></div></div><span class="small text-muted">0%</span></td>
+                <td><span class="badge-ppa ppa-${ig.ppa.toLowerCase()}">${ig.ppa}</span></td>
+                <td class="text-center small">${ig.monitores.length}</td>
+                <td class="text-nowrap">
+                    <button class="btn btn-sm btn-link p-0 me-1 btn-add-mon-row" data-i="${i}" title="Adicionar monitoramento"><i class="ti ti-plus fs-14"></i></button>
+                    <button class="btn btn-sm btn-link p-0 me-1 btn-edit-integ" data-i="${i}" title="Editar"><i class="ti ti-pencil fs-14"></i></button>
+                    <button class="btn btn-sm btn-link text-danger p-0 btn-del-integ" data-i="${i}" title="Remover"><i class="ti ti-trash fs-14"></i></button>
+                </td>
+            </tr>
+            ${ig.monitores.map((m, mi) => `
+            <tr class="mon-row-${i} d-none table-light">
+                <td></td>
+                <td colspan="2" class="small"><span class="text-muted fw-semibold">Item:</span> ${m.item}</td>
+                <td colspan="2" class="small"><span class="text-muted fw-semibold">Exercício:</span> ${m.data}</td>
+                <td colspan="4" class="small"><span class="text-muted fw-semibold">Estimativa física:</span> ${m.est}%</td>
+                <td><button class="btn btn-sm btn-link text-danger p-0 btn-del-mon" data-i="${i}" data-mi="${mi}" title="Remover"><i class="ti ti-trash fs-14"></i></button></td>
+            </tr>`).join('')}
+        `).join('')
+
+        // Expandir/recolher monitores
+        tbody.querySelectorAll('.btn-toggle-mon').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const i = this.dataset.i
+                const rows = tbody.querySelectorAll(`.mon-row-${i}`)
+                const icon = this.querySelector('i')
+                const hidden = rows[0]?.classList.contains('d-none')
+                rows.forEach(r => r.classList.toggle('d-none', !hidden))
+                icon.className = hidden ? 'ti ti-chevron-down fs-14' : 'ti ti-chevron-right fs-14'
+            })
+        })
+
+        // Adicionar monitoramento
+        tbody.querySelectorAll('.btn-add-mon-row').forEach(btn => {
+            btn.addEventListener('click', function () {
+                monAlvoIndex = +this.dataset.i
+                new bootstrap.Modal(document.getElementById('modalAddMon')).show()
+            })
+        })
+
+        // Editar integração
+        tbody.querySelectorAll('.btn-edit-integ').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const i = +this.dataset.i
+                editandoIndex = i
+                const ig = integracoes[i]
+                document.getElementById('modal-integ-title').textContent = 'Editar integração'
+                document.getElementById('modal-tipo').value = ig.tipo
+                document.getElementById('modal-tipo').dispatchEvent(new Event('change'))
+                // Selecionar item certo
+                const sel = document.getElementById('modal-item')
+                Array.from(sel.options).forEach((opt, idx) => { if (opt.text === ig.item) sel.value = idx })
+                document.getElementById('modal-contrib').value = ig.contrib
+                document.getElementById('modal-dt-inicio').textContent = ig.inicio
+                document.getElementById('modal-dt-fim').textContent = ig.fim
+                new bootstrap.Modal(document.getElementById('modalAddIntegracao')).show()
+            })
+        })
+
+        // Remover integração
+        tbody.querySelectorAll('.btn-del-integ').forEach(btn => {
+            btn.addEventListener('click', function () {
+                removendoIndex = +this.dataset.i
+                new bootstrap.Modal(document.getElementById('modalRemoverInteg')).show()
+            })
+        })
+
+        // Remover monitor
+        tbody.querySelectorAll('.btn-del-mon').forEach(btn => {
+            btn.addEventListener('click', function () {
+                integracoes[+this.dataset.i].monitores.splice(+this.dataset.mi, 1)
+                renderIntegracoes()
+            })
+        })
+    }
+
+    // Cancelar
+    document.getElementById('btn-cancelar').addEventListener('click', function () {
+        new bootstrap.Modal(document.getElementById('modalCancelar')).show()
+    })
+    document.getElementById('btn-confirmar-cancelar').addEventListener('click', function () {
+        window.location.href = 'ipe/'
+    })
+
+    // Salvar
+    document.getElementById('btn-salvar').addEventListener('click', function () {
+        const nome  = document.getElementById('cad-nome').value.trim()
+        const orgao = document.getElementById('cad-orgao').value
+        let valido  = true
+
+        document.getElementById('cad-nome').classList.toggle('is-invalid', !nome)
+        document.getElementById('cad-orgao').classList.toggle('is-invalid', !orgao)
+        if (!nome || !orgao) valido = false
+
+        if (!valido) { return }
+
+        sessionStorage.setItem('siplam_msg', `IPE "${nome}" cadastrado com sucesso!`)
+        window.location.href = 'ipe/'
+    })
+})()
+</script>
+</body>
+</html>

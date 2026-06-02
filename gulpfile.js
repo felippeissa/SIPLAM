@@ -101,13 +101,14 @@ const plugins = function () {
 }
 
 const html = function () {
-    const srcPath = paths.baseSrc + "/"
+    const srcPath = paths.baseSrc
     const out = paths.baseDist
     return src([
-        srcPath + "*.html",
-        srcPath + "*.ico", // favicon
+        srcPath + "**/*.html",
+        srcPath + "*.ico",
         srcPath + "*.png",
-    ])
+        "!" + srcPath + "partials/**",
+    ], { base: srcPath })
         .pipe(
             fileinclude({
                 prefix: "@@",
@@ -194,7 +195,7 @@ const reloadBrowserSync = function (done) {
 
 function watchFiles() {
     watch(paths.baseSrc + "partials/*.html", series(html, reloadBrowserSync))
-    watch(paths.baseSrc + "*.html", series(html, reloadBrowserSync))
+    watch(paths.baseSrc + "**/*.html", series(html, reloadBrowserSync))
     watch(paths.baseSrcAssets + "data/**/*", series(data, reloadBrowserSync))
     watch(paths.baseSrcAssets + "images/**/*", series(images, reloadBrowserSync))
     watch([paths.baseSrcAssets + "js/**/*.js", "!" + paths.baseSrcAssets + "js/maps/*"], series(javascript, reloadBrowserSync))
