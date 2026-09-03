@@ -1,0 +1,733 @@
+<title>Mapa do Sistema PPA</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --ink:#141a21; --ink-2:#43505d; --ink-3:#6f7d8a;
+    --ground:#eef1f4; --grid:#dde3e9;
+    --surface:#ffffff; --surface-2:#e9edf1;
+    --line:#cfd7df; --line-strong:#aab6c2;
+    --accent:#1f5c8b; --accent-soft:#e2edf6;
+    --setorial:#1f5c8b; --central:#7a4a1c; --transv:#3f5b52;
+    --c:#1f6b4d; --c-soft:#e0efe8;
+    --r:#33566f; --r-soft:#e6ecf1;
+    --u:#8a5a12; --u-soft:#f6ecd9;
+    --x:#8a2f3f; --x-soft:#f6e3e7;
+    --gap:#9b3324; --gap-soft:#f8e4e1;
+    --bug:#a8390d; --bug-soft:#fae3d6;
+    --q:#6a3b8f; --q-soft:#efe6f6;
+    --edge:#a9b6c2;
+  }
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+    --ink:#e9eef3; --ink-2:#b6c2ce; --ink-3:#8593a1;
+    --ground:#10151a; --grid:#1b232b;
+    --surface:#1a2128; --surface-2:#222b34;
+    --line:#2e3841; --line-strong:#42505c;
+    --accent:#74b4e0; --accent-soft:#152e3d;
+    --setorial:#74b4e0; --central:#d8a066; --transv:#8fc0ae;
+    --c:#6fc79f; --c-soft:#14302a;
+    --r:#9fb6c8; --r-soft:#1e2830;
+    --u:#dcae63; --u-soft:#312512;
+    --x:#e08a9c; --x-soft:#331b21;
+    --gap:#e8897a; --gap-soft:#361c19;
+    --bug:#f0a17c; --bug-soft:#3a2116;
+    --q:#c39fe0; --q-soft:#291b36;
+    --edge:#3c4854;
+  }}
+  :root[data-theme="dark"]{
+    --ink:#e9eef3; --ink-2:#b6c2ce; --ink-3:#8593a1;
+    --ground:#10151a; --grid:#1b232b;
+    --surface:#1a2128; --surface-2:#222b34;
+    --line:#2e3841; --line-strong:#42505c;
+    --accent:#74b4e0; --accent-soft:#152e3d;
+    --setorial:#74b4e0; --central:#d8a066; --transv:#8fc0ae;
+    --c:#6fc79f; --c-soft:#14302a;
+    --r:#9fb6c8; --r-soft:#1e2830;
+    --u:#dcae63; --u-soft:#312512;
+    --x:#e08a9c; --x-soft:#331b21;
+    --gap:#e8897a; --gap-soft:#361c19;
+    --bug:#f0a17c; --bug-soft:#3a2116;
+    --q:#c39fe0; --q-soft:#291b36;
+    --edge:#3c4854;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:"Source Sans 3","Segoe UI",system-ui,sans-serif; font-size:14px; overflow:hidden;
+  }
+
+  .bar{
+    position:fixed; inset:0 0 auto 0; z-index:20;
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    padding:9px 18px; background:var(--surface); border-bottom:1px solid var(--line);
+  }
+  .bar h1{font-family:Archivo,sans-serif; font-size:16px; font-weight:700; margin:0; letter-spacing:-.01em;}
+  .bar .sub{font-size:11.5px; color:var(--ink-3); font-family:"JetBrains Mono",monospace; margin-top:1px;}
+  .legend{display:flex; gap:10px; flex-wrap:wrap; margin-left:auto; align-items:center;}
+  .lg{display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--ink-2); white-space:nowrap;}
+  .sw{width:11px; height:11px; border-radius:3px; border:1px solid var(--line-strong);}
+  .tools{display:flex; gap:6px;}
+  .tools button{
+    font:inherit; font-size:12px; padding:4px 10px; cursor:pointer;
+    background:var(--surface); color:var(--ink-2); border:1px solid var(--line-strong); border-radius:4px;
+  }
+  .tools button:hover{background:var(--surface-2); color:var(--ink);}
+  .tools button[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .tools button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+
+  #stage{
+    position:fixed; inset:0; cursor:grab;
+    background-image:radial-gradient(var(--grid) 1px, transparent 1px); background-size:22px 22px;
+  }
+  #stage.panning{cursor:grabbing}
+  #world{position:absolute; top:0; left:0; transform-origin:0 0;}
+  #edges{position:absolute; top:0; left:0; overflow:visible; pointer-events:none;}
+
+  .node{
+    position:absolute; background:var(--surface); border:1px solid var(--line); border-radius:6px;
+    padding:9px 12px; cursor:grab; user-select:none; box-shadow:0 1px 2px rgba(16,24,32,.06);
+  }
+  .node:active{cursor:grabbing}
+  .node.dragging{box-shadow:0 8px 20px rgba(16,24,32,.18); z-index:5;}
+  .node.oculto{display:none}
+  .node .k{font-family:"JetBrains Mono",monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; margin-bottom:3px;}
+  .node .t{font-weight:600; line-height:1.3; font-size:13.5px;}
+  .node .s{font-size:12px; color:var(--ink-3); margin-top:3px; line-height:1.4;}
+  .node .s code{font-family:"JetBrains Mono",monospace; font-size:11px;}
+
+  .n-root{width:236px; background:var(--accent); border-color:var(--accent); color:#fff; padding:13px 15px;}
+  .n-root .k{color:rgba(255,255,255,.72)} .n-root .s{color:rgba(255,255,255,.8)}
+  .n-root .t{font-family:Archivo,sans-serif; font-size:17px;}
+
+  .n-grupo{width:206px; padding:11px 13px; border-width:2px;}
+  .n-grupo .t{font-family:Archivo,sans-serif; font-size:15px;}
+  .n-grupo.g-setorial{border-color:var(--setorial)} .n-grupo.g-setorial .k{color:var(--setorial)}
+  .n-grupo.g-central{border-color:var(--central)} .n-grupo.g-central .k{color:var(--central)}
+  .n-grupo.g-transv{border-color:var(--transv)} .n-grupo.g-transv .k{color:var(--transv)}
+
+  .n-tela{width:252px; border-left:3px solid var(--line-strong);}
+  .n-tela .s{font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--ink-3);}
+  .n-tela.g-setorial{border-left-color:var(--setorial)} .n-tela.g-setorial .k{color:var(--setorial)}
+  .n-tela.g-central{border-left-color:var(--central)} .n-tela.g-central .k{color:var(--central)}
+  .n-tela.g-transv{border-left-color:var(--transv)} .n-tela.g-transv .k{color:var(--transv)}
+
+  .n-acao{width:250px; padding:7px 11px; border-color:transparent;}
+  .n-acao .t{font-size:12.5px;}
+  .n-acao.op-C{background:var(--c-soft)} .n-acao.op-C .k{color:var(--c)}
+  .n-acao.op-R{background:var(--r-soft)} .n-acao.op-R .k{color:var(--r)}
+  .n-acao.op-U{background:var(--u-soft)} .n-acao.op-U .k{color:var(--u)}
+  .n-acao.op-X{background:var(--x-soft)} .n-acao.op-X .k{color:var(--x)}
+  .n-acao.op-N{background:var(--gap-soft); border:1px dashed var(--gap);}
+  .n-acao.op-N .k{color:var(--gap)} .n-acao.op-N .t{color:var(--gap)}
+
+  .n-problema{
+    width:296px; background:var(--bug-soft); border-color:transparent; border-left:3px solid var(--bug);
+  }
+  .n-problema .k{color:var(--bug)}
+  .n-problema .t{font-weight:400; font-size:12.5px; line-height:1.42;}
+  .n-problema .t b{font-weight:600;}
+
+  .n-pergunta{width:296px; background:var(--q-soft); border-color:transparent; border-left:3px solid var(--q);}
+  .n-pergunta .k{color:var(--q)}
+  .n-pergunta .t{font-weight:400; font-size:12.5px; line-height:1.42;}
+  .n-pergunta .t b{font-weight:600;}
+
+  .hint{
+    position:fixed; left:18px; bottom:14px; z-index:20; font-size:11.5px; color:var(--ink-3);
+    background:var(--surface); border:1px solid var(--line); border-radius:4px; padding:5px 10px;
+    font-family:"JetBrains Mono",monospace;
+  }
+</style>
+
+<div class="bar">
+  <div>
+    <h1>Mapa do sistema PPA 2028–2031</h1>
+    <div class="sub" id="contagem">carregando…</div>
+  </div>
+  <div class="legend">
+    <span class="lg"><span class="sw" style="background:var(--c-soft);border-color:var(--c)"></span>Criar</span>
+    <span class="lg"><span class="sw" style="background:var(--r-soft);border-color:var(--r)"></span>Consultar</span>
+    <span class="lg"><span class="sw" style="background:var(--u-soft);border-color:var(--u)"></span>Alterar</span>
+    <span class="lg"><span class="sw" style="background:var(--x-soft);border-color:var(--x)"></span>Excluir</span>
+    <span class="lg"><span class="sw" style="background:var(--gap-soft);border-color:var(--gap)"></span>Não existe</span>
+    <span class="lg"><span class="sw" style="background:var(--bug-soft);border-color:var(--bug)"></span>Problema</span>
+    <span class="lg"><span class="sw" style="background:var(--q-soft);border-color:var(--q)"></span>Pergunta</span>
+  </div>
+  <div class="tools">
+    <button id="soPend" aria-pressed="false" title="Mostrar apenas lacunas, problemas e perguntas">Só pendências</button>
+    <button id="zin" title="Aproximar">+</button>
+    <button id="zout" title="Afastar">−</button>
+    <button id="fit">Enquadrar</button>
+    <button id="reset">Reorganizar</button>
+  </div>
+</div>
+
+<div id="stage"><div id="world"><svg id="edges"></svg></div></div>
+<div class="hint">arraste os nós · arraste o fundo para navegar · ctrl+scroll amplia · posições salvas</div>
+
+<script>
+const GRUPOS = [
+{ id:"g1", cls:"g-setorial", k:"Visão Setorial", t:"Órgão setorial", s:"Vagner Ribeiro · SEDS — preenche, valida e envia", telas:[
+
+  { id:"s1", k:"Tela inicial", t:"Programas do PPA", s:"/",
+    acoes:[
+      { op:"R", t:"Faixa de 6 indicadores do órgão", s:"programas · com contribuição · iniciativas · entregas · previsto · % de execução" },
+      { op:"R", t:"Tabela de Programas com a situação do meu órgão", s:"código, nome, eixo, participação, iniciativas, pendências, financeiro" },
+      { op:"R", t:"Buscar por código ou nome do Programa" },
+      { op:"R", t:"Filtrar por situação da contribuição", s:"7 opções, de “sem iniciativas” a “com iniciativa devolvida”" },
+      { op:"R", t:"Filtrar por eixo e por objetivo estratégico", s:"encadeados: o eixo restringe os objetivos" },
+      { op:"R", t:"Ordenar a tabela", s:"prioridade · código · nome · nº de iniciativas" },
+      { op:"R", t:"Expandir Programa → Iniciativas do órgão → Entregas" },
+      { op:"C", t:"Nova Iniciativa no Programa" },
+      { op:"U", t:"Marcar Programa como “sem contribuição”" },
+      { op:"U", t:"Reconsiderar participação" },
+      { op:"R", t:"Abrir ficha do Programa" },
+      { op:"R", t:"Gerar PDF da Iniciativa pelo menu da linha" },
+      { op:"X", t:"Excluir Iniciativa", s:"confirm() do navegador, sem registro no histórico" },
+    ],
+    problemas:[
+      { t:"A <b>ordenação por prioridade</b> aplica uma regra implícita — devolvida acima de em preenchimento, acima de enviada — que a interface nunca explica ao usuário." },
+    ],
+    perguntas:[
+      { t:"Marcar um Programa como <b>sem contribuição</b> exige justificativa? Hoje é um clique, sem texto e sem registro de quem decidiu." },
+      { t:"Excluir Iniciativa continua permitido <b>depois de enviada ou validada</b>? Hoje o botão existe em qualquer status." },
+    ]},
+
+  { id:"s2", k:"Tela", t:"Ficha do Programa", s:"/programa/$id",
+    acoes:[
+      { op:"R", t:"Ler problema central e evidências" },
+      { op:"R", t:"Ler objetivo, resultado esperado e população afetada" },
+      { op:"R", t:"Ler árvore de causas e subcausas" },
+      { op:"R", t:"Ler consequências" },
+      { op:"R", t:"Ler indicadores de resultado", s:"nome, unidade, linha de base e meta" },
+      { op:"R", t:"Ver as Iniciativas do meu órgão neste Programa" },
+    ],
+    problemas:[
+      { t:"A ficha lê o Programa do <b>seed fixo</b>, não do estado. Programa criado ou editado na Administração não abre aqui." },
+    ],
+    perguntas:[
+      { t:"O órgão pode <b>questionar ou contribuir</b> com o diagnóstico, ou apenas consome o que a Área Central definiu?" },
+    ]},
+
+  { id:"s3", k:"Listagem", t:"Iniciativas", s:"/iniciativas",
+    acoes:[
+      { op:"R", t:"Faixa de indicadores das iniciativas do órgão" },
+      { op:"R", t:"Listar com programa, status, entregas, pendências e previsto" },
+      { op:"R", t:"Buscar e filtrar por eixo, objetivo e status" },
+      { op:"N", t:"Criar Iniciativa a partir desta tela", s:"só nasce dentro de um Programa" },
+    ],
+    problemas:[],
+    perguntas:[
+      { t:"Faz sentido a listagem de Iniciativas <b>não ter “Nova Iniciativa”</b>? O usuário precisa saber o Programa antes de começar." },
+    ]},
+
+  { id:"s4", k:"Tela · Fluxo", t:"Ficha da Iniciativa", s:"/iniciativa/$id",
+    acoes:[
+      { op:"R", t:"Cabeçalho: status, versão, analista e datas" },
+      { op:"U", t:"Editar nome, detalhamento e público-alvo", s:"salvamento automático a cada tecla" },
+      { op:"U", t:"Relacionar as causas do Programa enfrentadas" },
+      { op:"R", t:"Listar Entregas com situação e metas" },
+      { op:"C", t:"Adicionar Entrega" },
+      { op:"X", t:"Excluir Entrega", s:"confirm() do navegador" },
+      { op:"R", t:"Abrir a ficha de uma Entrega" },
+      { op:"R", t:"Ver previsão financeira da Iniciativa", s:"quadro plurianual por fonte" },
+      { op:"R", t:"Ver pendências em 3 níveis" },
+      { op:"R", t:"Ler apontamentos recebidos da Área Central" },
+      { op:"R", t:"Ler o histórico de eventos" },
+      { op:"U", t:"Enviar para análise", s:"modal com checklist; impeditivos bloqueiam" },
+      { op:"R", t:"Gerar PDF da Iniciativa" },
+      { op:"N", t:"Criar ou editar indicadores da Iniciativa", s:"existem no modelo de dados, sem tela" },
+      { op:"N", t:"Responder ou marcar apontamento como resolvido" },
+    ],
+    problemas:[
+      { t:"A ficha também lê o Programa do <b>seed</b>: as causas oferecidas ao órgão vêm do seed, não do Programa administrado." },
+    ],
+    perguntas:[
+      { t:"Não existe botão <b>salvar</b> — tudo é gravado a cada tecla. Aceitável em peça de planejamento formal, ou precisa de rascunho × confirmação?" },
+      { t:"<b>Indicadores de Iniciativa</b> existem nos dados mas ninguém consegue cadastrar, em nenhuma visão. Entram no escopo?" },
+      { t:"Depois de enviada, o órgão perde a edição. Pode <b>cancelar o envio</b> enquanto a análise não começou?" },
+      { t:"Qual o efeito prático da <b>versão</b>? Incrementa no reenvio, mas não há como consultar a versão anterior." },
+      { t:"Onde o órgão <b>responde</b> a um apontamento? Hoje ele lê o texto e corrige o campo, sem interação registrada." },
+    ]},
+
+  { id:"s5", k:"Listagem", t:"Entregas", s:"/entregas",
+    acoes:[
+      { op:"R", t:"Faixa de indicadores das entregas do órgão" },
+      { op:"R", t:"Listar com iniciativa, metas, situação e previsto" },
+      { op:"R", t:"Buscar e filtrar por eixo, objetivo e programa" },
+      { op:"N", t:"Criar Entrega a partir desta tela", s:"só nasce dentro de uma Iniciativa" },
+    ],
+    problemas:[], perguntas:[]},
+
+  { id:"s6", k:"Tela · Preenchimento", t:"Ficha da Entrega", s:"/entrega/$id",
+    acoes:[
+      { op:"R", t:"Cabeçalho com o contexto Programa › Iniciativa › Entrega" },
+      { op:"U", t:"Editar nome e descrição" },
+      { op:"U", t:"Escolher unidade de medida", s:"lista fechada de 7 unidades" },
+      { op:"U", t:"Descrever o método de comprovação" },
+      { op:"U", t:"Informar metas de 2028 a 2031" },
+      { op:"U", t:"Definir o comportamento da meta", s:"acumulativa · fluxo · estoque · percentual · marco" },
+      { op:"U", t:"Confirmar o comportamento sugerido pelo sistema" },
+      { op:"U", t:"Definir a relação com o território", s:"estadual · territorializável · não territorializável" },
+      { op:"U", t:"Selecionar as regiões de planejamento", s:"7 regiões, quando territorializável" },
+      { op:"U", t:"Associar Projeto GOMAP" },
+      { op:"U", t:"Vincular Ação Orçamentária da LOA" },
+      { op:"R", t:"Ver IPOFs alcançados pelas Ações vinculadas" },
+      { op:"R", t:"Ver quadro financeiro derivado da Entrega" },
+      { op:"R", t:"Ver pendências da Entrega" },
+      { op:"N", t:"Excluir a Entrega daqui", s:"só pela ficha da Iniciativa" },
+    ],
+    problemas:[
+      { t:"O campo <b>gomap (sim / não / depois)</b> existe no modelo e é exibido na análise da Área Central, mas o órgão nunca é perguntado — nenhuma tela grava essa resposta." },
+      { t:"A vinculação de Ação <b>silencia quando falha</b>: se a Ação já financia outra Entrega, o clique não faz nada e nenhuma mensagem explica o motivo." },
+    ],
+    perguntas:[
+      { t:"O sistema <b>sugere</b> o comportamento da meta. Em que regra ele se baseia, e quem responde se a sugestão estiver errada?" },
+      { t:"Uma Ação só pode financiar <b>uma</b> Entrega. O que o órgão faz quando uma Ação real atende duas Entregas?" },
+      { t:"Entrega territorializável tem meta total, mas <b>não tem meta por região</b>. A distribuição precisa ser quantificada?" },
+      { t:"Quem confirma que o <b>método de comprovação</b> é suficiente — o órgão, o analista, ou o controle interno?" },
+    ]},
+
+  { id:"s7", k:"Listagem", t:"Indicadores", s:"/indicadores",
+    acoes:[
+      { op:"R", t:"Consultar indicadores de Programa e de Iniciativa" },
+      { op:"R", t:"Ver metas por ano, polaridade, fonte e periodicidade" },
+      { op:"R", t:"Filtrar por nível, eixo e objetivo" },
+      { op:"N", t:"Criar, editar ou excluir indicador", s:"nenhuma tela em nenhuma visão" },
+    ],
+    problemas:[
+      { t:"Todos os indicadores exibidos vêm do <b>seed</b>. Na prática a tela é uma vitrine de dados que ninguém pode manter." },
+    ],
+    perguntas:[
+      { t:"Indicador é <b>o maior buraco do sistema</b>: aparece em listagem e em ficha, mas não tem cadastro. Quem cadastra, e em qual visão?" },
+      { t:"Indicador precisa de <b>apuração</b> — valor realizado por período — ou o PPA registra apenas a meta?" },
+    ]},
+]},
+
+{ id:"g2", cls:"g-central", k:"Visão Área Central", t:"Área central", s:"Maria Fonseca · analista — analisa, devolve, valida e administra", telas:[
+
+  { id:"c1", k:"Tela", t:"Visão Geral", s:"/central",
+    acoes:[
+      { op:"R", t:"Tabela de Programas com participação dos órgãos", s:"código · nome + eixo · órgãos · iniciativas · em análise · devolvidas · validadas" },
+      { op:"R", t:"Buscar por código ou nome do Programa" },
+      { op:"R", t:"Filtrar a fila de trabalho", s:"todos · aguardando análise · com devolvidas" },
+      { op:"R", t:"Menu da linha → Visualizar Programa", s:"abre a ficha de diagnóstico completa, em leitura" },
+      { op:"R", t:"Menu da linha → Cobertura causal", s:"modal: cada causa e subcausa com nº de órgãos e iniciativas" },
+      { op:"R", t:"Ver chip “Nenhuma Iniciativa” na causa órfã", s:"dentro do modal de cobertura causal" },
+      { op:"R", t:"Menu da linha → Ver órgãos participantes", s:"apenas expande a linha do Programa" },
+      { op:"R", t:"Nível 1 — órgãos do Programa", s:"iniciativas, entregas e situação resumida em texto" },
+      { op:"R", t:"Nível 2 — iniciativas do órgão", s:"status, entregas, atualização e analista responsável" },
+      { op:"R", t:"Abrir a análise pelo botão contextual", s:"Analisar · Continuar análise · Visualizar, conforme o status" },
+    ],
+    problemas:[
+      { t:"A tabela lê os Programas do <b>seed fixo</b>, não do estado. Programa criado na Administração <b>não aparece aqui</b> nem no modal de cobertura." },
+      { t:"A coluna <b>“Em análise” soma enviadas + em análise</b>, e não existe coluna “em preenchimento”. As cinco colunas não fecham com o total de Iniciativas." },
+      { t:"<b>“Ver órgãos participantes” não faz nada</b> quando a linha já está expandida — não recolhe e não dá retorno." },
+      { t:"Duas definições de cobertura no mesmo sistema: aqui conta só a <b>direta</b>; em Análises › Por Causas conta <b>direta + indireta</b>. O mesmo Programa aparece coberto numa tela e descoberto na outra." },
+    ],
+    perguntas:[
+      { t:"A Visão Geral é só leitura, ou o analista deveria <b>agir daqui</b> — cobrar órgão, atribuir analista, priorizar a fila?" },
+      { t:"Qual definição de <b>cobertura de causa</b> vale para o PPA: só a direta, ou direta e indireta via subcausas?" },
+      { t:"Esta é a única tela da Área Central <b>sem faixa de indicadores</b>. Deveria ter, e com quais números?" },
+    ]},
+
+  { id:"c2", k:"Listagem", t:"Entregas do PPA", s:"/central/entregas",
+    acoes:[
+      { op:"R", t:"Tabela transversal de Entregas", s:"entrega · órgão · iniciativa · programa · meta total · previsto · situação" },
+      { op:"R", t:"Busca ampla em 7 dimensões", s:"entrega, órgão, programa, iniciativa, região, projeto ou IPOF" },
+      { op:"R", t:"Abrir a ficha da Entrega" },
+    ],
+    problemas:[
+      { t:"A busca cobre 7 dimensões, mas a tela <b>não tem nenhum filtro estruturado</b>: tudo depende de o analista digitar o termo certo." },
+    ],
+    perguntas:[
+      { t:"O analista pode <b>apontar direto na Entrega</b>? Hoje o apontamento só nasce dentro da ficha da Iniciativa." },
+    ]},
+
+  { id:"c3", k:"Listagem", t:"Órgãos participantes", s:"/central/orgaos",
+    acoes:[
+      { op:"R", t:"Faixa de 5 indicadores", s:"órgãos · iniciativas · entregas · aguardando análise · previsto" },
+      { op:"R", t:"Tabela por órgão", s:"programas · iniciativas · entregas · previsto · executado · %" },
+      { op:"R", t:"Ler a situação em chips coloridos", s:"em preenchimento · em análise · devolvidas · validadas" },
+      { op:"R", t:"Buscar órgão" },
+      { op:"R", t:"Expandir órgão → programas → iniciativas → entregas" },
+      { op:"R", t:"Abrir a análise da Iniciativa" },
+    ],
+    problemas:[
+      { t:"Só aparecem órgãos que <b>já contribuíram</b>. O órgão silencioso — justamente o que precisa ser cobrado — é invisível nesta tela." },
+    ],
+    perguntas:[
+      { t:"Falta <b>responsável e contato</b> do órgão. Quem o analista aciona quando um órgão não envia nada?" },
+      { t:"Cobrar ou notificar o órgão é função do sistema, ou acontece fora dele — e-mail, ofício, reunião?" },
+    ]},
+
+  { id:"c4", k:"Análise", t:"Por Causas", s:"/central/analises/causas",
+    acoes:[
+      { op:"R", t:"Selecionar o Programa a analisar" },
+      { op:"R", t:"Tabela de causas e subcausas", s:"cobertura · órgãos · iniciativas · entregas" },
+      { op:"R", t:"Ler o tipo de cobertura em chip", s:"direta (verde) · por subcausas (azul) · sem atuação (laranja)" },
+      { op:"R", t:"Expandir causa → iniciativas e entregas que a enfrentam" },
+      { op:"R", t:"Abrir a Entrega relacionada" },
+    ],
+    problemas:[
+      { t:"Exige <b>escolher um Programa por vez</b>: não há visão de todos os Programas, então não dá para ver onde estão as maiores lacunas do plano." },
+    ],
+    perguntas:[
+      { t:"Causa <b>sem cobertura</b> gera algum ato formal — devolução, pauta, justificativa registrada?" },
+    ]},
+
+  { id:"c5", k:"Análise", t:"Financeira", s:"/central/analises/financeira",
+    acoes:[
+      { op:"R", t:"Faixa de 5 indicadores do recorte", s:"previsto · fontes · órgãos · IPOFs · entregas com recursos" },
+      { op:"R", t:"Quadro plurianual 2028–2031 com total" },
+      { op:"R", t:"Trocar a dimensão de agrupamento", s:"9 opções: fonte, órgão, programa, iniciativa, entrega, IPOF, projeto, ação, classificação" },
+      { op:"R", t:"Filtrar por ano, eixo, objetivo, programa, órgão e fonte" },
+      { op:"R", t:"Expandir linha para a dimensão de detalhe" },
+    ],
+    problemas:[
+      { t:"A tela mostra apenas o <b>previsto</b>. O executado do SIAFIC existe no modelo e aparece em Órgãos, mas some justamente na análise financeira." },
+    ],
+    perguntas:[
+      { t:"<b>Não existe exportação em nenhuma tela do sistema.</b> CSV/Excel é requisito, ou o consumo é só em tela?" },
+      { t:"A análise financeira precisa de <b>gráficos</b>, ou o quadro numérico basta para o uso real?" },
+    ]},
+
+  { id:"c6", k:"Análise", t:"Projetos GOMAP", s:"/central/analises/projetos",
+    acoes:[
+      { op:"R", t:"Tabela de Projetos", s:"órgão · entregas · programas · IPOFs · apropriado ao PPA · situação" },
+      { op:"R", t:"Buscar por código, nome ou órgão" },
+      { op:"R", t:"Expandir Projeto → Entregas do PPA e valores" },
+      { op:"R", t:"Comparar valor global no GOMAP × apropriado ao PPA" },
+      { op:"R", t:"Ler fase, execução e cronograma do Projeto" },
+    ],
+    problemas:[],
+    perguntas:[
+      { t:"O descompasso é <b>erro a corrigir</b> ou informação aceitável? Existe limiar a partir do qual vira pendência?" },
+      { t:"Projeto GOMAP <b>sem nenhuma Entrega</b> do PPA relacionada deveria ser sinalizado ao analista?" },
+    ]},
+
+  { id:"c7", k:"Análise", t:"IPOFs", s:"/central/analises/ipofs",
+    acoes:[
+      { op:"R", t:"Tabela de IPOFs", s:"órgão · fontes · valor SIAFIC · no PPA · fora do PPA · entregas" },
+      { op:"R", t:"Ver alerta de valor fora do PPA" },
+      { op:"R", t:"Expandir → parcelas por ano", s:"SIAFIC × dentro do PPA × fora do PPA" },
+      { op:"R", t:"Expandir → entregas financiadas", s:"entrega · ação · iniciativa · programa · órgão · valores por ano" },
+      { op:"R", t:"Buscar por código, nome, fonte, órgão ou projeto" },
+      { op:"R", t:"Abrir a Entrega financiada" },
+    ],
+    problemas:[],
+    perguntas:[
+      { t:"IPOF <b>sem Ação vinculada a nenhuma Entrega</b> é problema a listar para o analista, ou situação normal?" },
+      { t:"O que significa, para a decisão, um valor <b>“fora do PPA”</b> alto? Vira devolução, ajuste orçamentário, ou é esperado?" },
+    ]},
+
+  { id:"c8", k:"Tela · CRUD", t:"Administração de Programas", s:"/central/programas",
+    acoes:[
+      { op:"R", t:"Faixa de indicadores dos Programas" },
+      { op:"R", t:"Lista com aptidão e disponibilização em chips" },
+      { op:"R", t:"Buscar e filtrar por eixo e objetivo" },
+      { op:"C", t:"Novo Programa", s:"formulário em modal, 12 campos" },
+      { op:"U", t:"Editar Programa", s:"código, nome, eixo, objetivo, descrição, problema, objetivo, público, órgão coordenador, governança" },
+      { op:"U", t:"Definir aptidão", s:"diagnóstico incompleto · apto" },
+      { op:"U", t:"Definir disponibilização", s:"em estruturação · pronto · disponível · encerrado" },
+      { op:"N", t:"Excluir Programa", s:"não existe no sistema" },
+      { op:"N", t:"Editar causas e subcausas do Programa" },
+      { op:"N", t:"Editar evidências, consequências e indicadores" },
+    ],
+    problemas:[
+      { t:"<b>O formulário não edita causas.</b> Programa novo nasce sem causa nenhuma — e sem causa a Iniciativa do órgão fica presa na pendência impeditiva “nenhuma causa relacionada”, sem saída." },
+      { t:"O CRUD grava no estado, mas <b>nenhuma outra tela lê o estado</b>: todas usam o seed. O Programa criado aqui não existe para o resto do sistema." },
+      { t:"Aptidão e disponibilização são <b>livremente editáveis</b>, sem regra: dá para disponibilizar aos órgãos um Programa com diagnóstico incompleto." },
+    ],
+    perguntas:[
+      { t:"<b>Por que não existe excluir Programa?</b> É impedimento legal do PPA — peça aprovada em lei — ou apenas não foi construído?" },
+      { t:"Programa criado por engano, antes de qualquer contribuição: excluir de fato, arquivar, ou ocultar?" },
+      { t:"“Encerrado para novas contribuições” faz o papel da exclusão? O que acontece com as <b>Iniciativas já vinculadas</b>?" },
+      { t:"Quem pode <b>disponibilizar</b> um Programa aos órgãos? É o mesmo perfil que edita o diagnóstico?" },
+      { t:"Editar Programa já disponível é permitido? Remover uma causa deixa <b>Iniciativas órfãs</b> que a referenciam." },
+      { t:"Precisa de <b>histórico de alterações</b> do Programa — quem mudou o quê e quando?" },
+      { t:"O diagnóstico — causas, evidências, consequências, indicadores — é montado <b>onde</b>, se não é aqui? Em oficina externa, planilha, outro sistema?" },
+    ]},
+
+  { id:"c9", k:"Tela · Fluxo", t:"Iniciativa em análise", s:"/central/iniciativa/$id",
+    acoes:[
+      { op:"R", t:"Cabeçalho: órgão, programa, status, versão e analista" },
+      { op:"R", t:"Ler a ficha completa e as Entregas em modo leitura" },
+      { op:"R", t:"Ver pendências calculadas por Entrega" },
+      { op:"R", t:"Ler apontamentos já registrados" },
+      { op:"R", t:"Ler o histórico do fluxo" },
+      { op:"U", t:"Iniciar análise", s:"assume a Iniciativa e registra o analista" },
+      { op:"C", t:"Registrar apontamento", s:"alvo (iniciativa ou entrega) + campo + texto" },
+      { op:"U", t:"Devolver para ajuste", s:"modal de confirmação com contagem de apontamentos" },
+      { op:"U", t:"Validar Iniciativa", s:"modal de confirmação" },
+      { op:"N", t:"Resolver apontamento", s:"existe no modelo de dados, sem tela" },
+      { op:"N", t:"Editar ou excluir apontamento" },
+      { op:"N", t:"Gerar documento da análise" },
+    ],
+    problemas:[
+      { t:"<b>Validar é permitido mesmo com pendências impeditivas</b> — o modal apenas avisa, não bloqueia. O envio do órgão é mais rígido que a validação do analista." },
+      { t:"Devolver <b>sem nenhum apontamento</b> também passa: há recomendação em texto, sem impedimento." },
+    ],
+    perguntas:[
+      { t:"Quem <b>resolve</b> um apontamento: o órgão ao corrigir, ou o analista ao conferir? Hoje ninguém consegue." },
+      { t:"Iniciativa validada pode ser <b>reaberta</b>? Por quem, e com qual registro?" },
+      { t:"A atribuição do analista é automática ao iniciar a análise, ou existe <b>distribuição de fila</b>?" },
+      { t:"A validação deveria ser <b>bloqueada</b> por pendência impeditiva, como o envio do órgão é?" },
+    ]},
+]},
+
+{ id:"g3", cls:"g-transv", k:"Transversal", t:"Atravessa as duas visões", s:"shell, busca, Atena, documentos e dados", telas:[
+
+  { id:"x1", k:"Shell", t:"Navegação e identidade", s:"cabeçalho · menu · persona",
+    acoes:[
+      { op:"U", t:"Alternar Visão Setorial ⇄ Área Central", s:"livre, sem autenticação" },
+      { op:"U", t:"Recolher e expandir o menu lateral" },
+      { op:"R", t:"Ver a persona ativa no cabeçalho" },
+      { op:"X", t:"Reiniciar protótipo", s:"apaga todo o estado local, com confirm() do navegador" },
+    ],
+    problemas:[
+      { t:"O órgão do usuário é <b>constante no código</b> (SEDS). Não há como testar o sistema como outro órgão sem alterar o código." },
+    ],
+    perguntas:[
+      { t:"A troca de visão será por <b>perfil autenticado</b>? Hoje qualquer usuário vira analista da área central com um clique." },
+      { t:"Um usuário pode responder por <b>mais de um órgão</b>, ou por uma unidade dentro do órgão?" },
+      { t:"Existem <b>perfis distintos</b> dentro da Área Central — quem só consulta, quem analisa, quem administra Programas?" },
+    ]},
+
+  { id:"x2", k:"Componente", t:"Busca global", s:"Ctrl+K · 7 tipos de entidade",
+    acoes:[
+      { op:"R", t:"Buscar Programa, Iniciativa, Entrega e Indicador" },
+      { op:"R", t:"Buscar Projeto GOMAP, Ação Orçamentária e IPOF" },
+      { op:"R", t:"Ler o contexto de cada resultado", s:"ex.: “financia a Entrega X” ou “3 Entregas relacionadas”" },
+      { op:"R", t:"Navegar direto para o item encontrado" },
+    ],
+    problemas:[
+      { t:"O resultado é <b>limitado a 30 itens</b> sem indicar que houve corte — o usuário não sabe que existem mais ocorrências." },
+    ],
+    perguntas:[
+      { t:"Na visão setorial a busca é limitada ao próprio órgão; na Área Central vê tudo. Um órgão pode <b>ver a contribuição de outro</b> órgão?" },
+    ]},
+
+  { id:"x3", k:"Componente", t:"Atena — apoio contextual", s:"assistente determinística",
+    acoes:[
+      { op:"R", t:"Ver o contador de observações relevantes no botão flutuante" },
+      { op:"R", t:"Receber sugestões contextuais em 3 níveis", s:"por Entrega, Iniciativa, painel setorial ou painel central" },
+      { op:"R", t:"Seguir o link da sugestão até o item citado" },
+      { op:"R", t:"Perguntar em linguagem natural", s:"respostas simuladas por regra nesta versão" },
+      { op:"N", t:"Agir a partir da sugestão", s:"por princípio, a Atena nunca altera dado" },
+    ],
+    problemas:[
+      { t:"A conversa <b>não persiste</b>: fechar o painel apaga o histórico, e nada do que a Atena observou fica registrado na Iniciativa." },
+    ],
+    perguntas:[
+      { t:"A Atena permanece <b>só consultiva</b>, ou pode preencher campo mediante confirmação do usuário?" },
+      { t:"Haverá <b>integração real</b> com modelo de linguagem — e com qual base documental (manual do PPA, legislação, histórico)?" },
+      { t:"O analista deveria ver <b>as mesmas observações</b> que a Atena mostrou ao órgão?" },
+    ]},
+
+  { id:"x4", k:"Dados", t:"Documentos e persistência", s:"saída e armazenamento",
+    acoes:[
+      { op:"R", t:"Gerar documento PDF da Iniciativa", s:"existe apenas na visão setorial" },
+      { op:"R", t:"Imprimir com layout próprio", s:"esconde menu, cabeçalho e Atena" },
+      { op:"U", t:"Estado gravado no navegador", s:"localStorage, sem servidor" },
+      { op:"X", t:"Apagar todo o estado", s:"pelo “Reiniciar protótipo”" },
+      { op:"N", t:"Exportar dados em CSV ou Excel" },
+      { op:"N", t:"Trilha de auditoria do sistema" },
+    ],
+    problemas:[
+      { t:"Todo o trabalho vive <b>no navegador de um usuário</b>. Limpar o navegador apaga tudo, e dois usuários nunca veem o mesmo dado." },
+      { t:"A chave do localStorage é versionada à mão. Mudar o formato dos dados sem trocar a chave deixa o usuário com um <b>estado incompatível</b> e a tela quebra." },
+    ],
+    perguntas:[
+      { t:"Além do PDF da Iniciativa, quais <b>documentos oficiais</b> o sistema precisa emitir — anexo da lei, quadro por órgão, relatório de consolidação?" },
+      { t:"Há necessidade de <b>trilha de auditoria</b> — quem consultou, exportou ou alterou o quê, além do histórico da Iniciativa?" },
+      { t:"Existe <b>prazo</b> de contribuição por Programa? Nada no sistema controla ou exibe data-limite." },
+      { t:"O PPA é revisado anualmente. O sistema precisa suportar <b>ciclos e versões do plano</b> ao longo dos 4 anos?" },
+    ]},
+]},
+];
+
+const OPK = { C:"Criar", R:"Consultar", U:"Alterar", X:"Excluir", N:"Não existe" };
+
+const world = document.getElementById("world");
+const svg = document.getElementById("edges");
+const nodes = new Map();
+const edges = [];
+let nTelas = 0, nAcoes = 0, nFaltas = 0, nProb = 0, nPerg = 0;
+
+function el(cls, html){ const d = document.createElement("div"); d.className = cls; d.innerHTML = html; world.appendChild(d); return d; }
+function corpo(k, t, s){ return `<div class="k">${k}</div><div class="t">${t}</div>${s ? `<div class="s">${s}</div>` : ""}`; }
+
+nodes.set("root", { id:"root", el: el("node n-root", corpo("Sistema", "PPA 2028–2031", "Estado de Goiás · protótipo SIPLAM")), tipo:"root" });
+
+for (const g of GRUPOS){
+  nodes.set(g.id, { id:g.id, el: el(`node n-grupo ${g.cls}`, corpo(g.k, g.t, g.s)), tipo:"grupo" });
+  edges.push(["root", g.id]);
+
+  for (const tela of g.telas){
+    nTelas++;
+    nodes.set(tela.id, { id:tela.id, el: el(`node n-tela ${g.cls}`, corpo(tela.k, tela.t, `<code>${tela.s}</code>`)), tipo:"tela" });
+    edges.push([g.id, tela.id]);
+
+    tela.acoes.forEach((a, i) => {
+      const id = `${tela.id}a${i}`;
+      a.op === "N" ? nFaltas++ : nAcoes++;
+      nodes.set(id, { id, el: el(`node n-acao op-${a.op}`, corpo(OPK[a.op], a.t, a.s)), tipo: a.op === "N" ? "pend" : "acao" });
+      edges.push([tela.id, id]);
+    });
+    (tela.problemas ?? []).forEach((p, i) => {
+      const id = `${tela.id}p${i}`; nProb++;
+      nodes.set(id, { id, el: el("node n-problema", corpo("Problema", p.t)), tipo:"pend" });
+      edges.push([tela.id, id]);
+    });
+    (tela.perguntas ?? []).forEach((q, i) => {
+      const id = `${tela.id}q${i}`; nPerg++;
+      nodes.set(id, { id, el: el("node n-pergunta", corpo("Pergunta", q.t)), tipo:"pend" });
+      edges.push([tela.id, id]);
+    });
+  }
+}
+document.getElementById("contagem").textContent =
+  `${nTelas} telas · ${nAcoes} ações · ${nFaltas} lacunas · ${nProb} problemas · ${nPerg} perguntas em aberto`;
+
+const COLX = [40, 330, 610, 930, 1260];
+const GAP_Y = 10, GAP_TELA = 40, GAP_GRUPO = 90;
+let soPendencias = false;
+
+function visivel(n){
+  if (!soPendencias) return true;
+  return n.tipo !== "acao";
+}
+
+function layout(){
+  let y = 110;
+  for (const g of GRUPOS){
+    const inicioGrupo = y;
+    for (const tela of g.telas){
+      const inicio = y;
+      let ya = y, yd = y;
+      tela.acoes.forEach((a, i) => {
+        const nd = nodes.get(`${tela.id}a${i}`);
+        if (a.op === "N"){ nd.x = COLX[4]; nd.y = yd; yd += nd.el.offsetHeight + GAP_Y; }
+        else if (visivel(nd)){ nd.x = COLX[3]; nd.y = ya; ya += nd.el.offsetHeight + GAP_Y; }
+        else { nd.x = COLX[3]; nd.y = ya; }
+      });
+      (tela.problemas ?? []).forEach((p, i) => {
+        const nd = nodes.get(`${tela.id}p${i}`);
+        nd.x = COLX[4]; nd.y = yd; yd += nd.el.offsetHeight + GAP_Y;
+      });
+      (tela.perguntas ?? []).forEach((q, i) => {
+        const nd = nodes.get(`${tela.id}q${i}`);
+        nd.x = COLX[4]; nd.y = yd; yd += nd.el.offsetHeight + GAP_Y;
+      });
+      const t = nodes.get(tela.id);
+      const fim = Math.max(ya, yd, inicio + t.el.offsetHeight + GAP_Y);
+      t.x = COLX[2];
+      t.y = inicio + (fim - GAP_Y - inicio - t.el.offsetHeight) / 2;
+      y = fim + GAP_TELA;
+    }
+    const gn = nodes.get(g.id);
+    gn.x = COLX[1];
+    gn.y = inicioGrupo + (y - GAP_TELA - inicioGrupo - gn.el.offsetHeight) / 2;
+    y += GAP_GRUPO - GAP_TELA;
+  }
+  const raiz = nodes.get("root");
+  raiz.x = COLX[0];
+  raiz.y = 110 + (y - GAP_GRUPO - 110 - raiz.el.offsetHeight) / 2;
+  aplicar();
+}
+
+function aplicar(){
+  for (const n of nodes.values()){
+    n.el.classList.toggle("oculto", !visivel(n));
+    n.el.style.transform = `translate(${n.x}px, ${n.y}px)`;
+  }
+  desenhar();
+}
+
+function desenhar(){
+  let d = "", maxX = 0, maxY = 0;
+  for (const [a, b] of edges){
+    const A = nodes.get(a), B = nodes.get(b);
+    if (!visivel(A) || !visivel(B)) continue;
+    const x1 = A.x + A.el.offsetWidth, y1 = A.y + A.el.offsetHeight / 2;
+    const x2 = B.x, y2 = B.y + B.el.offsetHeight / 2;
+    const dx = Math.max(24, (x2 - x1) / 2);
+    d += `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2} `;
+    maxX = Math.max(maxX, x2 + B.el.offsetWidth); maxY = Math.max(maxY, y2 + B.el.offsetHeight);
+  }
+  svg.setAttribute("width", maxX + 80);
+  svg.setAttribute("height", maxY + 80);
+  svg.innerHTML = `<path d="${d}" fill="none" stroke="var(--edge)" stroke-width="1.25"/>`;
+}
+
+const KEY = "mapa-ppa-sistema-v2";
+function salvar(){
+  try{
+    const o = {};
+    for (const n of nodes.values()) o[n.id] = [Math.round(n.x), Math.round(n.y)];
+    localStorage.setItem(KEY, JSON.stringify({ pos:o, view:[tx, ty, esc] }));
+  }catch{}
+}
+function carregar(){
+  try{
+    const raw = localStorage.getItem(KEY); if (!raw) return false;
+    const { pos, view } = JSON.parse(raw);
+    for (const n of nodes.values()) if (pos && pos[n.id]) { n.x = pos[n.id][0]; n.y = pos[n.id][1]; }
+    if (view) { tx = view[0]; ty = view[1]; esc = view[2]; }
+    return true;
+  }catch{ return false; }
+}
+
+let tx = 0, ty = 60, esc = 1;
+const stage = document.getElementById("stage");
+function camera(){ world.style.transform = `translate(${tx}px, ${ty}px) scale(${esc})`; }
+
+let alvo = null, ox = 0, oy = 0, panx = 0, pany = 0, pan = false;
+
+world.addEventListener("pointerdown", (e) => {
+  const nd = e.target.closest(".node"); if (!nd) return;
+  const item = [...nodes.values()].find((n) => n.el === nd); if (!item) return;
+  alvo = item; ox = e.clientX / esc - item.x; oy = e.clientY / esc - item.y;
+  nd.classList.add("dragging"); nd.setPointerCapture(e.pointerId); e.stopPropagation();
+});
+world.addEventListener("pointermove", (e) => {
+  if (!alvo) return;
+  alvo.x = e.clientX / esc - ox; alvo.y = e.clientY / esc - oy;
+  alvo.el.style.transform = `translate(${alvo.x}px, ${alvo.y}px)`;
+  desenhar();
+});
+world.addEventListener("pointerup", () => { if (alvo){ alvo.el.classList.remove("dragging"); alvo = null; salvar(); } });
+
+stage.addEventListener("pointerdown", (e) => {
+  if (e.target.closest(".node")) return;
+  pan = true; panx = e.clientX - tx; pany = e.clientY - ty;
+  stage.classList.add("panning"); stage.setPointerCapture(e.pointerId);
+});
+stage.addEventListener("pointermove", (e) => { if (pan){ tx = e.clientX - panx; ty = e.clientY - pany; camera(); } });
+stage.addEventListener("pointerup", () => { if (pan){ pan = false; stage.classList.remove("panning"); salvar(); } });
+
+function zoom(f){ esc = Math.min(2, Math.max(0.12, esc * f)); camera(); salvar(); }
+document.getElementById("zin").onclick = () => zoom(1.18);
+document.getElementById("zout").onclick = () => zoom(1/1.18);
+document.getElementById("fit").onclick = () => {
+  const w = svg.width.baseVal.value, h = svg.height.baseVal.value;
+  esc = Math.min((innerWidth - 60) / w, (innerHeight - 130) / h, 1);
+  tx = 24; ty = 70; camera(); salvar();
+};
+document.getElementById("reset").onclick = () => {
+  localStorage.removeItem(KEY); tx = 0; ty = 60; esc = 1; camera(); layout();
+};
+const btnPend = document.getElementById("soPend");
+btnPend.onclick = () => {
+  soPendencias = !soPendencias;
+  btnPend.setAttribute("aria-pressed", String(soPendencias));
+  layout();
+};
+stage.addEventListener("wheel", (e) => { if (e.ctrlKey){ e.preventDefault(); zoom(e.deltaY < 0 ? 1.1 : 1/1.1); } }, { passive:false });
+
+layout();
+if (carregar()) aplicar();
+camera();
+</script>

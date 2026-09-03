@@ -1,0 +1,294 @@
+<title>Backlog Front-end SIPLAM</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --ink:#141a21; --ink-2:#3d4a57; --ink-3:#6b7986;
+    --ground:#f4f6f8; --surface:#ffffff; --surface-2:#eef1f5;
+    --line:#dbe1e8; --line-strong:#c3ccd6;
+    --accent:#1f5c8b; --accent-soft:#e4eef6;
+    --ok:#1f6b4d; --ok-soft:#e2f0e9;
+    --warn:#8a5a12; --warn-soft:#f7eddb;
+    --danger:#9b3324; --danger-soft:#f8e5e2;
+    --p0:#9b3324; --p1:#8a5a12; --p2:#5b6873;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#e8edf2; --ink-2:#b3bfcb; --ink-3:#8492a0;
+      --ground:#11161b; --surface:#181f26; --surface-2:#1f272f;
+      --line:#2b343d; --line-strong:#3b4652;
+      --accent:#71b2df; --accent-soft:#17303f;
+      --ok:#6fc79f; --ok-soft:#15302a;
+      --warn:#dcae63; --warn-soft:#332714;
+      --danger:#e8897a; --danger-soft:#361d1b;
+      --p0:#e8897a; --p1:#dcae63; --p2:#8492a0;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#e8edf2; --ink-2:#b3bfcb; --ink-3:#8492a0;
+    --ground:#11161b; --surface:#181f26; --surface-2:#1f272f;
+    --line:#2b343d; --line-strong:#3b4652;
+    --accent:#71b2df; --accent-soft:#17303f;
+    --ok:#6fc79f; --ok-soft:#15302a;
+    --warn:#dcae63; --warn-soft:#332714;
+    --danger:#e8897a; --danger-soft:#361d1b;
+    --p0:#e8897a; --p1:#dcae63; --p2:#8492a0;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground); color:var(--ink);
+    font-family:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+    font-size:15px; line-height:1.55; margin:0;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:40px 28px 80px;}
+
+  header.top{
+    display:grid; grid-template-columns:minmax(0,1fr) auto; gap:28px; align-items:end;
+    border-bottom:2px solid var(--line-strong); padding-bottom:18px; margin-bottom:26px;
+  }
+  .eyebrow{
+    font-family:"JetBrains Mono",ui-monospace,monospace; font-size:11px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ink-3); margin-bottom:8px;
+  }
+  h1{
+    font-family:Archivo,"Segoe UI",sans-serif; font-weight:700; font-size:clamp(28px,4vw,40px);
+    line-height:1.08; margin:0 0 10px; text-wrap:balance; letter-spacing:-.02em;
+  }
+  .sub{color:var(--ink-2); max-width:62ch; margin:0;}
+  .meta{font-family:"JetBrains Mono",monospace; font-size:11.5px; color:var(--ink-3); text-align:right; line-height:1.9;}
+  .meta b{color:var(--ink); font-weight:600;}
+
+  .callout{
+    background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--accent);
+    padding:16px 18px; margin:0 0 30px;
+  }
+  .callout h3{font-family:Archivo,sans-serif; font-size:13px; text-transform:uppercase; letter-spacing:.07em; margin:0 0 8px; color:var(--accent);}
+  .callout ul{margin:0; padding-left:18px; color:var(--ink-2);}
+  .callout li+li{margin-top:5px;}
+
+  .totais{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); border:1px solid var(--line); background:var(--surface); margin-bottom:34px;}
+  .totais div{padding:12px 16px; border-right:1px solid var(--line);}
+  .totais div:last-child{border-right:0}
+  .totais .n{font-family:Archivo,sans-serif; font-size:24px; font-weight:600; font-variant-numeric:tabular-nums; line-height:1.1;}
+  .totais .l{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-3);}
+
+  section.epic{margin-bottom:38px;}
+  .epic-head{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:4px;}
+  .epic-code{font-family:"JetBrains Mono",monospace; font-size:12px; font-weight:600; color:var(--accent); letter-spacing:.04em;}
+  h2{font-family:Archivo,sans-serif; font-size:21px; font-weight:600; margin:0; letter-spacing:-.01em;}
+  .epic-note{color:var(--ink-2); font-size:13.5px; margin:0 0 14px; max-width:70ch;}
+
+  .rows{border:1px solid var(--line); background:var(--surface);}
+  .row{display:grid; grid-template-columns:64px minmax(0,1fr) 56px 46px; gap:14px; padding:11px 16px; border-bottom:1px solid var(--line); align-items:start;}
+  .row:last-child{border-bottom:0}
+  .row:hover{background:var(--surface-2)}
+  .id{font-family:"JetBrains Mono",monospace; font-size:11.5px; color:var(--ink-3); padding-top:2px;}
+  .t{font-weight:600; line-height:1.35;}
+  .d{color:var(--ink-2); font-size:13.5px; margin-top:3px;}
+  .d code{font-family:"JetBrains Mono",monospace; font-size:12px; background:var(--surface-2); padding:1px 4px; border:1px solid var(--line);}
+  .pri{font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600; padding-top:3px; letter-spacing:.04em;}
+  .pri.P0{color:var(--p0)} .pri.P1{color:var(--p1)} .pri.P2{color:var(--p2)}
+  .est{font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--ink-2); text-align:right; padding-top:3px; font-variant-numeric:tabular-nums;}
+
+  .tags{display:flex; flex-wrap:wrap; gap:5px; margin-top:6px;}
+  .tag{font-size:11px; padding:1px 7px; border:1px solid var(--line-strong); color:var(--ink-3); border-radius:999px; white-space:nowrap;}
+  .tag.ins{background:var(--accent-soft); border-color:transparent; color:var(--accent); font-family:"JetBrains Mono",monospace; font-size:10.5px;}
+  .tag.risk{background:var(--danger-soft); border-color:transparent; color:var(--danger);}
+  .tag.new{background:var(--ok-soft); border-color:transparent; color:var(--ok);}
+
+  .map{width:100%; border-collapse:collapse; font-size:13.5px; background:var(--surface); border:1px solid var(--line);}
+  .map th,.map td{text-align:left; padding:8px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
+  .map th{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-3); background:var(--surface-2); font-weight:600;}
+  .map tr:last-child td{border-bottom:0}
+  .map td:first-child{font-weight:600; white-space:nowrap;}
+  .map td:nth-child(2){font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--accent);}
+  .scroll{overflow-x:auto;}
+
+  footer{margin-top:44px; padding-top:16px; border-top:1px solid var(--line); color:var(--ink-3); font-size:12.5px;}
+  @media (max-width:640px){
+    .row{grid-template-columns:1fr auto; gap:6px}
+    .id{grid-column:1; font-size:11px}
+    .est{grid-column:2; text-align:right}
+    .t,.d,.tags{grid-column:1/-1}
+    .pri{grid-column:1/-1; }
+    header.top{grid-template-columns:1fr}
+    .meta{text-align:left}
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">PPA 2028–2031 · Estado de Goiás</div>
+      <h1>Backlog Front-end &amp; Design — Migração para Inspinia</h1>
+      <p class="sub">Recriação completa da interface do protótipo SIPLAM sobre o template Inspinia (Bootstrap 5). Escopo estrito de front-end e design: nenhuma história de API, banco ou regra de negócio de servidor.</p>
+    </div>
+    <div class="meta">
+      <b>92</b> histórias<br>
+      <b>7</b> épicos · <b>16</b> telas<br>
+      Estimativas em <b>pontos</b><br>
+      Base: TanStack&nbsp;+&nbsp;shadcn → Inspinia&nbsp;5
+    </div>
+  </header>
+
+  <div class="callout">
+    <h3>Premissas do escopo</h3>
+    <ul>
+      <li>O estado continua em <code>localStorage</code> com o mesmo <em>seed</em> de demonstração — as histórias abaixo assumem que o modelo de dados e as funções puras (<code>regras.ts</code>, <code>financeiro.ts</code>, <code>atena.ts</code>) são portados sem alteração de lógica.</li>
+      <li>O template é o <strong>Inspinia 5.x</strong> em distribuição HTML estática: Bootstrap 5, ícones Tabler, ApexCharts e ECharts, DataTables, Choices.js e Select2, SweetAlert2. São 234 páginas de exemplo e nenhuma etapa de build — o pacote traz apenas o CSS compilado, <strong>sem fontes SCSS</strong>.</li>
+      <li>Todo componente shadcn/Radix precisa de equivalente Inspinia. A tabela de equivalências no fim do documento é o contrato de conversão.</li>
+      <li>O protótipo atual <strong>não tem nenhum gráfico</strong> — só tabelas densas. As histórias marcadas <span class="tag new">novo</span> são acréscimos que o Inspinia viabiliza barato (ApexCharts/Chart.js já vêm no pacote).</li>
+      <li>Prioridade: <span class="pri P0">P0</span> bloqueia a navegação da demo · <span class="pri P1">P1</span> compõe a paridade funcional · <span class="pri P2">P2</span> refino e ganho novo.</li>
+    </ul>
+  </div>
+
+  <div class="totais">
+    <div><div class="n">18</div><div class="l">Fundação &amp; layout</div></div>
+    <div><div class="n">22</div><div class="l">Componentes</div></div>
+    <div><div class="n">24</div><div class="l">Visão Setorial</div></div>
+    <div><div class="n">21</div><div class="l">Área Central</div></div>
+    <div><div class="n">7</div><div class="l">Atena</div></div>
+  </div>
+
+  <section class="epic">
+    <div class="epic-head"><span class="epic-code">E1</span><h2>Fundação visual e tema</h2></div>
+    <p class="epic-note">Traduzir o design system atual (tokens oklch + Tailwind v4) para SCSS do Inspinia. Feito uma vez, destrava todo o resto.</p>
+    <div class="rows">
+      <div class="row"><div class="id">E1-01</div><div><div class="t">Camada de customização sobre o CSS compilado</div><div class="d">Sem fontes SCSS no pacote, a personalização vira um <code>siplam.css</code> carregado depois do <code>app.min.css</code>, redefinindo as variáveis <code>--bs-*</code>. Converter <code>--primary</code>, <code>--ok</code>, <code>--warn</code>, <code>--danger</code>, <code>--info</code> e os pares <code>*-soft</code> de oklch para as variáveis do Bootstrap.</div><div class="tags"><span class="tag ins">siplam.css</span><span class="tag risk">sem pipeline SCSS no repositório</span></div></div><div class="pri P0">P0</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E1-02</div><div><div class="t">Escala tipográfica densa (base 13px)</div><div class="d">O protótipo roda em <code>text-[13px]</code> com rótulos <code>11px</code> uppercase. Inspinia é 14px por padrão — criar override global e classes utilitárias de rótulo/valor.</div><div class="tags"><span class="tag risk">risco de regressão visual em todo o template</span></div></div><div class="pri P0">P0</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E1-03</div><div><div class="t">Densidade de tabelas e formulários</div><div class="d">Variante <code>.table-ppa</code> (padding 6/12, cabeçalho uppercase 11px, <code>tabular-nums</code>) e <code>.form-control-sm</code> como padrão dos filtros.</div></div><div class="pri P0">P0</div><div class="est">3</div></div>
+      <div class="row"><div class="id">E1-04</div><div><div class="t">Substituir lucide por Tabler Icons</div><div class="d">O template usa <code>&lt;i class="ti ti-*"&gt;</code>. Mapear os ~20 ícones em uso (Gauge, Boxes, Network, Receipt, GitBranch…) — a maioria tem equivalente de mesmo nome no Tabler.</div><div class="tags"><span class="tag ins">ti ti-*</span></div></div><div class="pri P0">P0</div><div class="est">2</div></div>
+      <div class="row"><div class="id">E1-05</div><div><div class="t">Tema claro e escuro</div><div class="d">O tema é governado por atributos <code>data-bs-theme</code> e <code>data-skin</code> no <code>&lt;html&gt;</code> via <code>config.js</code>, com 11 presets de skin. Escolher o preset base e validar os tons <code>*-soft</code> dos chips no fundo escuro, que hoje só existem em versão clara.</div><div class="tags"><span class="tag ins">config.js</span></div></div><div class="pri P2">P2</div><div class="est">3</div></div>
+    </div>
+  </section>
+
+  <section class="epic">
+    <div class="epic-head"><span class="epic-code">E2</span><h2>Shell de aplicação e navegação</h2></div>
+    <p class="epic-note">O sistema tem <strong>dois menus mutuamente exclusivos</strong> comutados pela rota (<code>/central*</code> = Área Central). Isso não é padrão do Inspinia e é o principal ajuste estrutural do template.</p>
+    <div class="rows">
+      <div class="row"><div class="id">E2-01</div><div><div class="t">Topbar institucional</div><div class="d">Marca “PPA 2028–2031 · Estado de Goiás”, comutador Visão Setorial ⇄ Visão Área Central (pill de 2 estados), busca, identificação da persona e “Reiniciar protótipo”.</div></div><div class="pri P0">P0</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E2-02</div><div><div class="t">Sidebar com dois conjuntos de menu</div><div class="d">Setorial: Programas, Iniciativas, Entregas, Indicadores. Central: Visão Geral, Entregas, Órgãos, grupo <em>Análises</em> (Causas, Financeira, Projetos, IPOFs), Administração de Programas. A estrutura <code>ul.side-nav</code> com <code>li.side-nav-title</code> já cobre os grupos; o trabalho é trocar o conjunto inteiro conforme a rota.</div><div class="tags"><span class="tag ins">ul.side-nav</span></div></div><div class="pri P0">P0</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E2-03</div><div><div class="t">Sidebar recolhível com rótulo em tooltip</div><div class="d">Pronto no template: <code>data-sidenav-size="condensed"</code> e o botão <code>.sidenav-toggle-button</code> já entregam o estado só-ícone com persistência. Resta ajustar densidade e separador de grupo.</div><div class="tags"><span class="tag new">já vem no template</span></div></div><div class="pri P1">P1</div><div class="est">1</div></div>
+      <div class="row"><div class="id">E2-04</div><div><div class="t">Trilha de contexto (Contexto/Elo)</div><div class="d">Breadcrumb próprio com separador “›”, usado em todas as telas de detalhe: Programa › Iniciativa › Entrega.</div></div><div class="pri P0">P0</div><div class="est">2</div></div>
+      <div class="row"><div class="id">E2-05</div><div><div class="t">Busca global em paleta de comandos</div><div class="d">Atalho <code>Ctrl/Cmd+K</code>, resultados agrupados em 7 tipos (Programa, Iniciativa, Entrega, Indicador, Projeto GOMAP, Ação Orçamentária, IPOF), com linha de contexto por resultado e escopo do órgão na visão setorial.</div><div class="tags"><span class="tag ins">substituir cmdk</span><span class="tag risk">sem equivalente pronto</span></div></div><div class="pri P1">P1</div><div class="est">8</div></div>
+      <div class="row"><div class="id">E2-06</div><div><div class="t">Diálogo de confirmação de reinício</div><div class="d">Trocar o <code>confirm()</code> nativo por modal do template.</div></div><div class="pri P2">P2</div><div class="est">1</div></div>
+      <div class="row"><div class="id">E2-07</div><div><div class="t">Página 404 e estado de rota inexistente</div><div class="d">Portar a tela de <code>notFound</code> das rotas de detalhe (Programa/Iniciativa/Entrega inexistente).</div></div><div class="pri P1">P1</div><div class="est">2</div></div>
+    </div>
+  </section>
+
+  <section class="epic">
+    <div class="epic-head"><span class="epic-code">E3</span><h2>Componentes compartilhados</h2></div>
+    <p class="epic-note">São 8 componentes próprios reutilizados em quase todas as telas. Construí-los antes das telas evita retrabalho — todo o épico E4/E5 depende deste.</p>
+    <div class="rows">
+      <div class="row"><div class="id">E3-01</div><div><div class="t">Chip semântico (5 tons)</div><div class="d">ok · alerta · impeditivo · info · neutro. Pílula 11px, fundo suave e texto forte da mesma matiz.</div><div class="tags"><span class="tag ins">.badge estendido</span></div></div><div class="pri P0">P0</div><div class="est">2</div></div>
+      <div class="row"><div class="id">E3-02</div><div><div class="t">StatusChip do fluxo da Iniciativa</div><div class="d">5 status: Em preenchimento (neutro), Enviada e Em análise (info), Devolvida (alerta), Validada (ok). Rótulo curto e longo.</div></div><div class="pri P0">P0</div><div class="est">2</div></div>
+      <div class="row"><div class="id">E3-03</div><div><div class="t">Seção (card com cabeçalho de rótulo)</div><div class="d">Título uppercase 11px + slot de ação à direita. É o contêiner de praticamente todo conteúdo de detalhe.</div><div class="tags"><span class="tag ins">.card</span></div></div><div class="pri P0">P0</div><div class="est">2</div></div>
+      <div class="row"><div class="id">E3-04</div><div><div class="t">Campo (par rótulo/valor de leitura)</div><div class="d">Usado nas fichas e nos documentos gerados.</div></div><div class="pri P0">P0</div><div class="est">1</div></div>
+      <div class="row"><div class="id">E3-05</div><div><div class="t">Faixa de indicadores (BigNumbers)</div><div class="d">Faixa horizontal divisível de 4 a 6 números, com rodapé de nota metodológica. Aparece em 7 telas. <em>Não</em> usar os widgets de card do Inspinia — o padrão é uma faixa única, não cards soltos.</div></div><div class="pri P0">P0</div><div class="est">3</div></div>
+      <div class="row"><div class="id">E3-06</div><div><div class="t">Quadro financeiro plurianual expansível</div><div class="d">Tabela ano a ano (2028–2031 + total) agrupada por dimensão (fonte, IPOF, ação, projeto, órgão, programa…) com expansão de linha para a dimensão de detalhe. Componente mais complexo do sistema.</div><div class="tags"><span class="tag risk">alta complexidade</span><span class="tag ins">base: tables-datatables-child-rows</span></div></div><div class="pri P0">P0</div><div class="est">13</div></div>
+      <div class="row"><div class="id">E3-07</div><div><div class="t">Lista de pendências em 3 níveis</div><div class="d">Impeditivo / alerta / informação, com ícone, texto e link para a Entrega de origem. Reaproveitada em Iniciativa, Entrega, envio e análise.</div></div><div class="pri P0">P0</div><div class="est">3</div></div>
+      <div class="row"><div class="id">E3-08</div><div><div class="t">Gerador de documento (visualizar/imprimir)</div><div class="d">Modal com cabeçalho institucional, conteúdo formatado e botão Imprimir/Salvar PDF. Depende de E7-04 (folha de estilo de impressão).</div></div><div class="pri P1">P1</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E3-09</div><div><div class="t">Tabela mestre com filtros no cabeçalho</div><div class="d">Padrão repetido em 9 listagens: busca textual + 2 a 4 selects + ordenação, alinhados à direita do título. Fazer um cabeçalho de página reutilizável.</div></div><div class="pri P0">P0</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E3-10</div><div><div class="t">Linha expansível em tabela</div><div class="d">Chevron que rotaciona e revela sub-tabela, com até <strong>três níveis encaixados</strong> na Visão Geral (programa → órgão → iniciativa). O exemplo de child rows do DataTables resolve um nível; os demais são código próprio.</div></div><div class="pri P0">P0</div><div class="est">3</div></div>
+      <div class="row"><div class="id">E3-11</div><div><div class="t">Estados vazios e de carregamento</div><div class="d">Mensagem de lista vazia por tela (texto próprio, não genérico) e esqueleto durante a hidratação do <code>localStorage</code>.</div></div><div class="pri P1">P1</div><div class="est">3</div></div>
+      <div class="row"><div class="id">E3-12</div><div><div class="t">Notificações de ação</div><div class="d">Feedback de enviar / devolver / validar / salvar. Trocar sonner pelo toast do Bootstrap; SweetAlert2, já incluído, cobre as confirmações destrutivas que hoje usam <code>confirm()</code>.</div></div><div class="pri P2">P2</div><div class="est">2</div></div>
+    </div>
+  </section>
+
+  <section class="epic">
+    <div class="epic-head"><span class="epic-code">E4</span><h2>Visão Setorial — telas do órgão</h2></div>
+    <p class="epic-note">Persona: técnico do órgão (Vagner Ribeiro / SEDS). Preenche, valida e envia.</p>
+    <div class="rows">
+      <div class="row"><div class="id">E4-01</div><div><div class="t">Programas — tabela mestre do órgão</div><div class="d">Tabela &gt;1180px com 6 indicadores no topo, busca, 4 filtros (situação da contribuição, eixo, objetivo estratégico, ordenação por prioridade/código/nome/nº de iniciativas) e linhas expansíveis com as Iniciativas do órgão. É a tela inicial e a mais densa.</div></div><div class="pri P0">P0</div><div class="est">13</div></div>
+      <div class="row"><div class="id">E4-02</div><div><div class="t">Ação “Sem contribuição” / reconsiderar</div><div class="d">Marcar um Programa como sem contribuição do órgão e desfazer, com reflexo no chip de participação.</div></div><div class="pri P1">P1</div><div class="est">3</div></div>
+      <div class="row"><div class="id">E4-03</div><div><div class="t">Programa — ficha de diagnóstico</div><div class="d">Seções: problema central, evidências, objetivos e resultado, árvore de causas e subcausas, consequências, indicadores de resultado, e as Iniciativas do órgão no Programa.</div></div><div class="pri P0">P0</div><div class="est">8</div></div>
+      <div class="row"><div class="id">E4-04</div><div><div class="t">Modal Nova Iniciativa</div><div class="d">Nome, detalhamento, público-alvo e seleção múltipla das causas do Programa; navega para a ficha criada.</div></div><div class="pri P0">P0</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E4-05</div><div><div class="t">Iniciativas — listagem</div><div class="d">Indicadores no topo, filtro por status/programa, colunas de entregas, previsto e pendências.</div></div><div class="pri P0">P0</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E4-06</div><div><div class="t">Iniciativa — ficha completa</div><div class="d">Cabeçalho com status e ações, dados editáveis, causas enfrentadas, lista de Entregas, previsão financeira, pendências e histórico. Tela de trabalho principal do órgão.</div></div><div class="pri P0">P0</div><div class="est">13</div></div>
+      <div class="row"><div class="id">E4-07</div><div><div class="t">Modal de envio para análise</div><div class="d">Checklist de pendências impeditivas que bloqueia o envio, com contagem e link para cada ponto.</div></div><div class="pri P0">P0</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E4-08</div><div><div class="t">Modo somente-leitura por status</div><div class="d">Edição liberada só em “em preenchimento” e “devolvida”. Todos os campos e botões precisam do estado desabilitado desenhado, não apenas escondido.</div><div class="tags"><span class="tag risk">atravessa todas as telas de detalhe</span></div></div><div class="pri P0">P0</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E4-09</div><div><div class="t">Entregas — listagem</div><div class="d">Indicadores, filtros e situação por Entrega (completa / alertas / impeditivos).</div></div><div class="pri P0">P0</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E4-10</div><div><div class="t">Entrega — bloco de informações</div><div class="d">Nome, descrição, unidade de medida (lista fechada) e método de comprovação.</div></div><div class="pri P0">P0</div><div class="est">3</div></div>
+      <div class="row"><div class="id">E4-11</div><div><div class="t">Entrega — metas 2028–2031 e comportamento</div><div class="d">Grade de 4 anos + seletor de comportamento (acumulativa, fluxo, estoque, percentual, marco) com texto de ajuda, sugestão automática e confirmação explícita do órgão.</div></div><div class="pri P0">P0</div><div class="est">8</div></div>
+      <div class="row"><div class="id">E4-12</div><div><div class="t">Entrega — territorialização</div><div class="d">Três tipos e, quando territorializável, seleção das 7 regiões de planejamento de Goiás.</div></div><div class="pri P0">P0</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E4-13</div><div><div class="t">Entrega — Projetos GOMAP associados</div><div class="d">Seletor de projetos do órgão, com o aviso de que o Projeto descreve <em>como</em> se produz e não define valor, e comparação valor global × refletido no PPA.</div></div><div class="pri P1">P1</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E4-14</div><div><div class="t">Entrega — vinculação orçamentária (Ações da LOA)</div><div class="d">Catálogo de Ações do órgão com indicação de qual Entrega já consome cada uma e bloqueio visual das já vinculadas (exclusividade N:1).</div></div><div class="pri P0">P0</div><div class="est">8</div></div>
+      <div class="row"><div class="id">E4-15</div><div><div class="t">Entrega — previsão financeira derivada</div><div class="d">Quadro plurianual por fonte com detalhe por IPOF e a mensagem de que nenhum valor é digitado.</div></div><div class="pri P0">P0</div><div class="est">3</div></div>
+      <div class="row"><div class="id">E4-16</div><div><div class="t">Indicadores — listagem consolidada</div><div class="d">Indicadores de Programa e de Iniciativa em uma visão, com série de metas por ano, polaridade, fonte e periodicidade.</div></div><div class="pri P1">P1</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E4-17</div><div><div class="t">Documento da Iniciativa (PDF)</div><div class="d">Layout impresso da ficha completa, incluindo entregas, metas e financeiro.</div></div><div class="pri P1">P1</div><div class="est">5</div></div>
+    </div>
+  </section>
+
+  <section class="epic">
+    <div class="epic-head"><span class="epic-code">E5</span><h2>Visão Área Central — análise e consolidação</h2></div>
+    <p class="epic-note">Persona: analista da área central (Maria Fonseca). Não preenche: analisa, aponta, devolve, valida e administra os Programas.</p>
+    <div class="rows">
+      <div class="row"><div class="id">E5-01</div><div><div class="t">Visão Geral — consolidação dos Programas</div><div class="d">Tabela de todos os Programas com participação por órgão, contribuições, entregas e financeiro; modal de cobertura de causas por Programa.</div></div><div class="pri P0">P0</div><div class="est">13</div></div>
+      <div class="row"><div class="id">E5-02</div><div><div class="t">Entregas do PPA (todos os órgãos)</div><div class="d">Listagem transversal com filtros por órgão, programa, situação e vínculo orçamentário.</div></div><div class="pri P0">P0</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E5-03</div><div><div class="t">Órgãos participantes</div><div class="d">Um cartão-linha por órgão com contagem por status do fluxo, entregas, previsto e executado.</div></div><div class="pri P1">P1</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E5-04</div><div><div class="t">Análise por Causas</div><div class="d">Cobertura direta / por subcausas / sem atuação, por causa de cada Programa, com os órgãos e iniciativas que respondem por ela.</div></div><div class="pri P1">P1</div><div class="est">8</div></div>
+      <div class="row"><div class="id">E5-05</div><div><div class="t">Análise Financeira</div><div class="d">Quadro plurianual com troca de dimensão de agrupamento (órgão, programa, fonte, ação, IPOF) e indicadores de previsto × executado.</div></div><div class="pri P0">P0</div><div class="est">8</div></div>
+      <div class="row"><div class="id">E5-06</div><div><div class="t">Análise de Projetos GOMAP</div><div class="d">Projetos, fase, execução, cronograma e o descompasso entre valor global no GOMAP e o refletido no PPA. Aceita <code>?q=</code> vindo da busca global.</div></div><div class="pri P1">P1</div><div class="est">8</div></div>
+      <div class="row"><div class="id">E5-07</div><div><div class="t">Análise de IPOFs</div><div class="d">IPOF → parcelas (ano, mês, fonte, classificação, ação) e execução SIAFIC (empenhado, liquidado, pago). Também aceita <code>?q=</code>.</div></div><div class="pri P1">P1</div><div class="est">8</div></div>
+      <div class="row"><div class="id">E5-08</div><div><div class="t">Iniciativa em análise — ficha do analista</div><div class="d">Mesma ficha, leitura + ações de análise; realce dos campos apontados.</div></div><div class="pri P0">P0</div><div class="est">8</div></div>
+      <div class="row"><div class="id">E5-09</div><div><div class="t">Registro de apontamento por campo</div><div class="d">Modal que ancora o comentário em um campo específico da Iniciativa ou da Entrega; lista de apontamentos com marcação de resolvido.</div></div><div class="pri P0">P0</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E5-10</div><div><div class="t">Confirmação de devolver / validar</div><div class="d">Modal com o número de apontamentos abertos e o efeito da decisão no fluxo e na versão.</div></div><div class="pri P0">P0</div><div class="est">3</div></div>
+      <div class="row"><div class="id">E5-11</div><div><div class="t">Linha do tempo do histórico</div><div class="d">Eventos datados com autor (órgão ou analista) e versão.</div><div class="tags"><span class="tag ins">.vertical-timeline</span></div></div><div class="pri P1">P1</div><div class="est">3</div></div>
+      <div class="row"><div class="id">E5-12</div><div><div class="t">Administração de Programas</div><div class="d">CRUD visual do Programa com aptidão (incompleto/apto) e disponibilização (em estruturação → pronto → disponível → encerrado); formulário longo em modal rolável com diagnóstico, causas/subcausas e indicadores.</div></div><div class="pri P1">P1</div><div class="est">13</div></div>
+    </div>
+  </section>
+
+  <section class="epic">
+    <div class="epic-head"><span class="epic-code">E6</span><h2>Atena — camada de apoio contextual</h2></div>
+    <p class="epic-note">Assistente determinística: observa, identifica e sugere, nunca altera dados. Precisa de identidade visual própria dentro do Inspinia, sem virar “chat genérico”.</p>
+    <div class="rows">
+      <div class="row"><div class="id">E6-01</div><div><div class="t">Botão flutuante com avatar e contador</div><div class="d">Fixo no canto inferior direito, mostra o nº de observações relevantes (nível ≥ 2) e alterna para “Precisa de ajuda?” quando não há nenhuma.</div></div><div class="pri P1">P1</div><div class="est">3</div></div>
+      <div class="row"><div class="id">E6-02</div><div><div class="t">Painel lateral (offcanvas)</div><div class="d">Cabeçalho com o contexto da tela atual, bloco de sugestões e conversa. Largura confortável para textos longos.</div><div class="tags"><span class="tag ins">.offcanvas-end</span></div></div><div class="pri P1">P1</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E6-03</div><div><div class="t">Cartão de sugestão em 3 níveis</div><div class="d">Hierarquia visual entre observação informativa, atenção e apontamento conceitual, com link opcional para o componente citado.</div></div><div class="pri P1">P1</div><div class="est">3</div></div>
+      <div class="row"><div class="id">E6-04</div><div><div class="t">Conversa com respostas simuladas</div><div class="d">Bolhas usuário/Atena, campo de entrada, envio por Enter e sugestões clicáveis como atalho de pergunta.</div></div><div class="pri P2">P2</div><div class="est">3</div></div>
+      <div class="row"><div class="id">E6-05</div><div><div class="t">Sensibilidade ao contexto de rota</div><div class="d">Quatro conjuntos de sugestões: Entrega, Iniciativa, painel setorial, painel central. Verificar que o painel reage à navegação sem recarregar.</div></div><div class="pri P1">P1</div><div class="est">3</div></div>
+    </div>
+  </section>
+
+  <section class="epic">
+    <div class="epic-head"><span class="epic-code">E7</span><h2>Qualidade, acessibilidade e entrega de design</h2></div>
+    <div class="rows">
+      <div class="row"><div class="id">E7-01</div><div><div class="t">Comportamento responsivo das tabelas largas</div><div class="d">Tabelas de 1180px+ precisam de rolagem horizontal contida, com a primeira coluna fixa quando possível. Definir o que acontece abaixo de 992px em cada listagem.</div><div class="tags"><span class="tag risk">decisão de produto pendente</span></div></div><div class="pri P1">P1</div><div class="est">8</div></div>
+      <div class="row"><div class="id">E7-02</div><div><div class="t">Navegação por teclado e foco visível</div><div class="d">Linhas expansíveis, chips clicáveis, modais e a paleta de busca com foco preso e retorno correto.</div></div><div class="pri P1">P1</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E7-03</div><div><div class="t">Contraste e leitura dos chips semânticos</div><div class="d">Auditar os pares texto/fundo suaves contra WCAG AA — requisito de sistema de governo.</div></div><div class="pri P1">P1</div><div class="est">3</div></div>
+      <div class="row"><div class="id">E7-04</div><div><div class="t">Folha de estilo de impressão</div><div class="d">Classe <code>.no-print</code> e área <code>[data-print]</code>: esconder shell, menu e Atena; formatar o documento em A4 com cabeçalho institucional.</div></div><div class="pri P1">P1</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E7-05</div><div><div class="t">Biblioteca de componentes no Figma</div><div class="d">Chip, StatusChip, Seção, Campo, BigNumbers, linha de tabela, quadro financeiro, cartão de sugestão — como componentes com variantes, espelhando o código.</div></div><div class="pri P1">P1</div><div class="est">8</div></div>
+      <div class="row"><div class="id">E7-06</div><div><div class="t">Guia de uso da linguagem</div><div class="d">Documentar quando é chip × badge × texto, quando é Seção × tabela, e o vocabulário obrigatório (Entrega ≠ Projeto; valor do PPA vem da Ação, nunca do GOMAP).</div></div><div class="pri P1">P1</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E7-07</div><div><div class="t">Gráficos de execução financeira</div><div class="d">Barras previsto × executado por órgão e série anual na Análise Financeira — hoje inexistentes. ApexCharts e ECharts já vêm no pacote, com 31 páginas de exemplo.</div><div class="tags"><span class="tag new">ganho novo</span></div></div><div class="pri P2">P2</div><div class="est">5</div></div>
+      <div class="row"><div class="id">E7-08</div><div><div class="t">Mapa das regiões de planejamento</div><div class="d">Distribuição territorial das Entregas por região — hoje só uma lista de checkboxes. O pacote traz jsVectorMap e Leaflet, mas o mapa de Goiás por região de planejamento precisa ser desenhado.</div><div class="tags"><span class="tag new">ganho novo</span></div></div><div class="pri P2">P2</div><div class="est">8</div></div>
+    </div>
+  </section>
+
+  <section class="epic">
+    <div class="epic-head"><span class="epic-code">Anexo</span><h2>Contrato de conversão de componentes</h2></div>
+    <p class="epic-note">Toda história acima assume estas equivalências. As três últimas linhas não têm equivalente pronto no Inspinia e representam o risco técnico da migração.</p>
+    <div class="scroll">
+      <table class="map">
+        <thead><tr><th>Hoje (shadcn/Radix)</th><th>Onde é usado</th><th>Inspinia / Bootstrap 5</th></tr></thead>
+        <tbody>
+          <tr><td>Dialog</td><td>11 modais</td><td>Modal do Bootstrap — direto</td></tr>
+          <tr><td>Sheet</td><td>painel da Atena</td><td>Offcanvas — direto</td></tr>
+          <tr><td>Select</td><td>~20 filtros</td><td>Choices.js, ou <code>form-select</code></td></tr>
+          <tr><td>Checkbox</td><td>causas, regiões, ações</td><td><code>form-check</code> — direto</td></tr>
+          <tr><td>Tooltip</td><td>menu recolhido, ajudas</td><td>Tooltip do Bootstrap</td></tr>
+          <tr><td>Badge</td><td>chips semânticos</td><td><code>.badge</code> + tons suaves próprios</td></tr>
+          <tr><td>Table</td><td>todas as listagens</td><td>DataTables + variante densa própria</td></tr>
+          <tr><td>Ícones lucide</td><td>menu, ações, chips</td><td>Tabler Icons <code>ti ti-*</code></td></tr>
+          <tr><td>confirm() do navegador</td><td>excluir, reiniciar</td><td>SweetAlert2 — já incluído</td></tr>
+          <tr><td>Command (cmdk)</td><td>busca global Ctrl+K</td><td>sem equivalente — construir</td></tr>
+          <tr><td>Expansão de 3 níveis</td><td>Visão Geral, quadro financeiro</td><td>child rows cobrem 1 nível — construir o resto</td></tr>
+          <tr><td>Tokens Tailwind v4 (oklch)</td><td>tema inteiro</td><td>override de <code>--bs-*</code> — não há SCSS no pacote</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Escopo estrito de front-end e design. Fora deste backlog: persistência em servidor, autenticação, integrações reais com SIAFIC e GOMAP, e a inteligência da Atena — que segue determinística e simulada.
+  </footer>
+</div>
