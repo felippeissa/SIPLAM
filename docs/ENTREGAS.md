@@ -49,11 +49,11 @@ a partir da raiz de `main`.
 ## Depois (ordem prevista, sujeita a revisão)
 
 4. Componentes compartilhados — chip, seção, campo, faixa de indicadores, tabela densa.
-4. Visão Geral da Área Central — a tela mais densa; valida a fundação.
-5. Administração de Programas — o único CRUD completo do sistema.
-6. Ficha da Iniciativa em análise — apontamentos, devolver e validar.
-7. Demais telas da Área Central.
-8. Visão Setorial.
+5. Visão Geral da Área Central — a tela mais densa; valida a fundação.
+6. Administração de Programas — o único CRUD completo do sistema.
+7. Ficha da Iniciativa em análise — apontamentos, devolver e validar.
+8. Demais telas da Área Central.
+9. Visão Setorial.
 
 O detalhamento de cada uma está em `docs/backlog-frontend.html`. As decisões ainda em aberto
 estão em `docs/mapa-sistema.html`, nos nós roxos.
