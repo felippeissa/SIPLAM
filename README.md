@@ -5,15 +5,21 @@ Sistema de elaboração do **Plano Plurianual 2028–2031 do Estado de Goiás**.
 Interface construída sobre o template Inspinia 5 (Bootstrap 5), reproduzindo o comportamento
 validado no protótipo React que está em `prototipo-lovable/`.
 
+## Ver online
+
+**[felippeissa.github.io/SIPLAM](https://felippeissa.github.io/SIPLAM/)** — tela de acesso.
+
 ## Estado atual
 
-Início do projeto. Este commit sobe apenas os insumos — template, protótipo de referência e
-documentação. **Ainda não há tela construída**; as primeiras entram na próxima entrega.
+A tela de acesso (`index.html`) está publicada, montada sobre a página de autenticação padrão do
+Inspinia. As telas do sistema entram nas próximas entregas; o roteiro está em
+[docs/ENTREGAS.md](docs/ENTREGAS.md).
 
 ## Estrutura
 
 ```
-src/                 o SIPLAM (vazio nesta etapa)
+index.html           tela de acesso — entrada publicada no GitHub Pages
+src/                 telas do SIPLAM (a partir da próxima entrega)
 inspinia/            template Inspinia 5 — referência de markup e componentes
 prototipo-lovable/   protótipo React/TanStack que define o comportamento a reproduzir
 docs/                backlog, mapa do sistema e registro de entregas

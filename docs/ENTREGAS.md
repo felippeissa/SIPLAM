@@ -17,11 +17,17 @@ Insumos no repositório: template Inspinia 5, protótipo Lovable como referênci
 backlog de front-end (92 histórias) e mapa do sistema (20 telas, 12 lacunas, 20 problemas,
 43 perguntas em aberto). Nenhuma tela construída.
 
+### 2 · Tela de acesso publicada — `2026-09-03`
+
+`index.html` na raiz, a partir da página `auth-split-sign-in` do Inspinia, sem alteração de estilo:
+apenas textos em português e caminhos apontando para `inspinia/assets/`. Publicada no GitHub Pages
+a partir da raiz de `main`.
+
 ---
 
 ## Próxima entrega
 
-### 2 · Fundação visual e shell navegável
+### 3 · Fundação visual e shell navegável
 
 **Objetivo:** o esqueleto que todas as telas vão usar, navegável nas duas visões.
 
@@ -42,7 +48,7 @@ backlog de front-end (92 histórias) e mapa do sistema (20 telas, 12 lacunas, 20
 
 ## Depois (ordem prevista, sujeita a revisão)
 
-3. Componentes compartilhados — chip, seção, campo, faixa de indicadores, tabela densa.
+4. Componentes compartilhados — chip, seção, campo, faixa de indicadores, tabela densa.
 4. Visão Geral da Área Central — a tela mais densa; valida a fundação.
 5. Administração de Programas — o único CRUD completo do sistema.
 6. Ficha da Iniciativa em análise — apontamentos, devolver e validar.
