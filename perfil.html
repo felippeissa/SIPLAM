@@ -1,0 +1,146 @@
+<!doctype html>
+<html
+    lang="pt-BR"
+    data-skin="minimal"
+    data-bs-theme="light"
+    data-topbar-color="light"
+    data-menu-color="gray"
+    data-sidenav-size="default"
+    data-layout-width="fluid"
+    data-layout-position="fixed"
+>
+    <head>
+        <meta charset="utf-8" />
+        <title>Escolha de perfil | SIPLAM — PPA 2028–2031</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="Escolha de perfil de acesso ao SIPLAM — Plano Plurianual 2028–2031 do Estado de Goiás." />
+        <meta name="author" content="Governo do Estado de Goiás" />
+
+        <!-- App favicon -->
+        <link rel="shortcut icon" href="inspinia/assets/images/favicon.ico" />
+ <!-- Theme Config Js -->
+<script src="inspinia/assets/js/config.js"></script>
+
+<!-- Fluxo de acesso -->
+<script src="assets/js/acesso.js"></script>
+
+<!-- Vendor css -->
+<link href="inspinia/assets/css/vendors.min.css" rel="stylesheet" type="text/css" />
+
+<!-- App css -->
+<link id="app-style" href="inspinia/assets/css/app.min.css" rel="stylesheet" type="text/css" />
+
+<!-- SIPLAM css -->
+<link href="assets/css/siplam.css" rel="stylesheet" type="text/css" />
+
+    </head>
+
+    <body>
+        <div class="auth-box overflow-hidden align-items-center d-flex">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-xxl-4 col-md-6 col-sm-8">
+                        <div class="card p-4">
+                            <div class="auth-brand text-center mb-3">
+                                <img src="assets/img/logo-siplam.svg" alt="SIPLAM" height="34" />
+                                <p class="fw-semibold mt-3 mb-0">Escolha um perfil para acessar o sistema.</p>
+                            </div>
+
+                            <form id="form-perfil" novalidate>
+                                <div class="mb-3">
+                                    <label for="perfil" class="form-label">Perfil</label>
+                                    <select class="form-control" data-choices id="perfil" name="perfil">
+                                        <option value="">Escolha uma opção</option>
+                                        <option value="tecnico-setorial">Técnico setorial</option>
+                                        <option value="ponto-focal">Ponto focal do órgão</option>
+                                        <option value="analista-central">Analista da Área Central</option>
+                                        <option value="admin-programas">Administrador de Programas</option>
+                                        <option value="consulta">Consulta</option>
+                                    </select>
+                                    <div class="invalid-feedback d-block d-none" id="erroPerfil">
+                                        Escolha um perfil para continuar.
+                                    </div>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="lembrar" checked />
+                                    <label class="form-check-label" for="lembrar">Lembrar minha escolha</label>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-primary py-2 flex-fill" id="cancelar">
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" class="btn btn-primary py-2 flex-fill">Continuar</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <p class="text-center text-muted mt-3 mb-0 fs-12">
+                            Protótipo de interface — os perfis são de demonstração e ainda não definem permissões.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Aplica a escolha lembrada antes de o Choices assumir o campo.
+            (function () {
+                var lembrarSalvo = Acesso.ler(Acesso.CHAVES.lembrarPerfil) !== "nao";
+                var salvo = Acesso.ler(Acesso.CHAVES.perfil);
+                var select = document.getElementById("perfil");
+                var lembrar = document.getElementById("lembrar");
+
+                lembrar.checked = lembrarSalvo;
+                if (lembrarSalvo && salvo) select.value = salvo;
+            })();
+        </script>
+
+        <!-- Vendor js -->
+        <script src="inspinia/assets/js/vendors.min.js"></script>
+
+        <!-- App js -->
+        <script src="inspinia/assets/js/app.js"></script>
+
+        <!-- Choices — inicialização dos selects com [data-choices] -->
+        <script src="inspinia/assets/js/pages/form-choice.js"></script>
+
+        <script>
+            (function () {
+                if (!Acesso.exigirSessao()) return;
+
+                var select = document.getElementById("perfil");
+                var lembrar = document.getElementById("lembrar");
+                var erro = document.getElementById("erroPerfil");
+
+                document.getElementById("form-perfil").addEventListener("submit", function (e) {
+                    e.preventDefault();
+
+                    if (!select.value) {
+                        erro.classList.remove("d-none");
+                        return;
+                    }
+
+                    erro.classList.add("d-none");
+
+                    if (lembrar.checked) {
+                        Acesso.gravar(Acesso.CHAVES.perfil, select.value);
+                        Acesso.gravar(Acesso.CHAVES.lembrarPerfil, "sim");
+                    } else {
+                        Acesso.remover(Acesso.CHAVES.perfil);
+                        Acesso.gravar(Acesso.CHAVES.lembrarPerfil, "nao");
+                    }
+
+                    // O perfil da sessão vale mesmo quando o usuário não quer lembrar.
+                    Acesso.gravar("siplam.perfilSessao", select.value);
+                    window.location.href = "sistema.html";
+                });
+
+                document.getElementById("cancelar").addEventListener("click", function () {
+                    Acesso.sair();
+                });
+            })();
+        </script>
+    </body>
+</html>

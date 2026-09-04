@@ -1,0 +1,11 @@
+/**
+ * SIPLAM — ajustes sobre o Inspinia.
+ *
+ * Mantém o template intacto e sobrepõe apenas o que o padrão do Estado exige.
+ * Quando os fontes SCSS entrarem no projeto, isto vira _theme-siplam.scss.
+ */
+
+/* Fundo das telas de acesso, no verde claro do padrão Aplicações Expresso. */
+.auth-box {
+    background-color: #e9f8f1;
+}

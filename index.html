@@ -28,6 +28,9 @@
 <!-- App css -->
 <link id="app-style" href="inspinia/assets/css/app.min.css" rel="stylesheet" type="text/css" />
 
+<!-- SIPLAM css -->
+<link href="assets/css/siplam.css" rel="stylesheet" type="text/css" />
+
     </head>
 
     <body>
@@ -50,6 +53,7 @@
                                     <div class="input-group">
                                         <input type="text" class="form-control" id="usuario" name="usuario" autocomplete="username" placeholder="Digite seu usuário" required />
                                     </div>
+                                    <div class="invalid-feedback d-block d-none" id="erroUsuario">Informe seu usuário.</div>
                                 </div>
 
                                 <div class="mb-3">
@@ -63,6 +67,9 @@
                                             <i class="ti ti-eye d-block eye-icon" data-pass="show"></i>
                                             <i class="ti ti-eye-off d-none eye-icon" data-pass="hide"></i>
                                         </div>
+                                    </div>
+                                    <div class="invalid-feedback d-block d-none" id="erroSenha">
+                                        A senha deve ter no mínimo 6 caracteres.
                                     </div>
                                 </div>
 
@@ -119,6 +126,8 @@
         <!-- App js -->
         <script src="inspinia/assets/js/app.js"></script>
 
+        <!-- Fluxo de acesso -->
+        <script src="assets/js/acesso.js"></script>
         <script>
             (function () {
                 var retorno = document.getElementById("retorno");
@@ -143,10 +152,27 @@
                     });
                 });
 
-                // Protótipo: nada é enviado e nenhum botão navega.
+                // Validação de formato — não há verificação de credencial em servidor.
+                var usuario = document.getElementById("usuario");
+                var erroUsuario = document.getElementById("erroUsuario");
+                var erroSenha = document.getElementById("erroSenha");
+
                 document.getElementById("form-acesso").addEventListener("submit", function (e) {
                     e.preventDefault();
-                    avisar("Protótipo de interface — a autenticação ainda não está implementada.");
+
+                    var usuarioValido = usuario.value.trim().length > 0;
+                    var senhaValida = campoSenha.value.length >= Acesso.SENHA_MINIMA;
+
+                    usuario.classList.toggle("is-invalid", !usuarioValido);
+                    erroUsuario.classList.toggle("d-none", usuarioValido);
+                    campoSenha.classList.toggle("is-invalid", !senhaValida);
+                    erroSenha.classList.toggle("d-none", senhaValida);
+
+                    if (!usuarioValido || !senhaValida) return;
+
+                    Acesso.gravar(Acesso.CHAVES.usuario, usuario.value.trim());
+                    Acesso.gravar(Acesso.CHAVES.sessao, "ativa");
+                    window.location.href = Acesso.proximaTelaAposAcesso();
                 });
 
                 document.querySelectorAll("[data-sso]").forEach(function (botao) {
