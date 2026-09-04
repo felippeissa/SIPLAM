@@ -1,5 +1,14 @@
 <!doctype html>
-<html lang="pt-BR">
+<html
+    lang="pt-BR"
+    data-skin="minimal"
+    data-bs-theme="light"
+    data-topbar-color="light"
+    data-menu-color="gray"
+    data-sidenav-size="default"
+    data-layout-width="fluid"
+    data-layout-position="fixed"
+>
     <head>
         <meta charset="utf-8" />
         <title>Entrar | SIPLAM — PPA 2028–2031</title>
@@ -22,70 +31,84 @@
     </head>
 
     <body>
-        <div class="auth-box p-0 w-100">
-            <div class="row w-100 g-0">
-                <div class="col">
-                    <div class="h-100 position-relative card-side-img rounded-0 overflow-hidden" style="background-image: url(&quot;inspinia/assets/images/auth.jpg&quot;)">
-                        <div class="p-4 card-img-overlay auth-overlay d-flex align-items-end justify-content-center"></div>
-                    </div>
-                </div>
-                <div class="col-md-auto">
-                    <!--Auth Box content -->
-                    <div class="card auth-box-form border-0 mb-0">
-                        <div class="card-body min-vh-100 d-flex flex-column justify-content-center">
-                            <div class="auth-brand mb-0 text-center">
-                                <a href="index.html" class="logo-dark">
-                                    <img src="inspinia/assets/images/logo-black.png" alt="dark logo" />
-                                </a>
-                                <a href="index.html" class="logo-light">
-                                    <img src="inspinia/assets/images/logo.png" alt="logo" />
-                                </a>
+        <div class="auth-box overflow-hidden align-items-center d-flex">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-xxl-4 col-md-6 col-sm-8">
+                        <div class="card p-4">
+                            <div class="auth-brand text-center mb-3">
+                                <img src="assets/img/logo-siplam.svg" alt="SIPLAM" height="34" />
+                                <p class="text-muted mt-2 mb-0">Plano Plurianual 2028–2031 · Estado de Goiás</p>
                             </div>
 
-                            <div class="mt-auto text-center">
-                                <h4 class="fw-bold">SIPLAM — PPA 2028–2031</h4>
-                                <p class="text-muted auth-sub-text mx-auto">Acesse com as credenciais do seu órgão para elaborar ou analisar as contribuições ao Plano Plurianual.</p>
+                            <form id="form-acesso" novalidate>
+                                <div class="mb-3">
+                                    <label for="usuario" class="form-label">
+                                        Usuário
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="usuario" name="usuario" autocomplete="username" placeholder="Digite seu usuário" required />
+                                    </div>
+                                </div>
 
-                                <form class="mt-4">
-                                    <div class="mb-3">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control py-2 px-3 bg-light bg-opacity-40 border-light" id="userEmail" placeholder="CPF ou e-mail institucional" required />
+                                <div class="mb-3">
+                                    <label for="senha" class="form-label">
+                                        Senha
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="password" id="senha" name="senha" class="form-control" autocomplete="current-password" placeholder="Digite sua senha" required />
+                                        <div class="input-group-text password-eye" data-password="false">
+                                            <i class="ti ti-eye d-block eye-icon" data-pass="show"></i>
+                                            <i class="ti ti-eye-off d-none eye-icon" data-pass="hide"></i>
                                         </div>
                                     </div>
+                                </div>
 
-                                    <div class="mb-3">
-                                        <div class="input-group">
-                                            <input type="password" class="form-control py-2 px-3 bg-light bg-opacity-40 border-light" id="userPassword" placeholder="Informe sua senha" required />
-                                        </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input form-check-input-light fs-14" type="checkbox" id="manterConectado" />
+                                        <label class="form-check-label" for="manterConectado">Me manter conectado</label>
                                     </div>
+                                    <a href="#" class="text-decoration-underline link-offset-3 text-muted">Esqueceu sua senha?</a>
+                                </div>
 
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <div class="form-check">
-                                            <input class="form-check-input form-check-input-light fs-14" type="checkbox" id="rememberMe" />
-                                            <label class="form-check-label" for="rememberMe">Manter-me conectado</label>
-                                        </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary fw-semibold py-2">Entrar</button>
+                                </div>
+                            </form>
 
-                                        <a href="inspinia/auth-split-reset-pass.html" class="text-decoration-underline link-offset-3 text-muted">Esqueci minha senha</a>
-                                    </div>
+                            <p class="text-center text-muted my-2">Ou</p>
 
-                                    <div class="d-grid">
-                                        <button type="submit" class="btn btn-primary fw-bold py-2">Entrar</button>
-                                    </div>
-                                </form>
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-outline-primary rounded-pill py-2" data-sso="id-goias">
+                                    <img src="assets/img/logo-id-goias.svg" alt="" height="17" class="me-2 align-middle" />
+                                    Entrar com ID Goiás
+                                </button>
+                                <button type="button" class="btn btn-outline-primary rounded-pill py-2" data-sso="gov-br">
+                                    <img src="assets/img/logo-govbr.svg" alt="" height="17" class="me-2 align-middle" />
+                                    Entrar com gov.br
+                                </button>
                             </div>
 
-                            <p class="text-muted text-center mt-4 mb-0">
-                                Protótipo de interface — a autenticação ainda não está implementada.
-                            </p>
+                            <div id="retorno" class="alert alert-info py-2 px-3 mt-3 mb-0 d-none" role="status"></div>
 
-                            <p class="text-center text-muted mt-auto mb-0">
-                                ©
-                                <span data-current-year></span>
-                                <span class="fw-bold">Estado de Goiás</span>
+                            <p class="text-muted text-center mt-3 mb-0 fs-12">
+                                Utilizamos cookies do navegador para manter sua sessão. Ao entrar, você concorda com a
+                                <a href="#" class="fw-semibold">Política de Privacidade</a>.
                             </p>
                         </div>
+
+                        <div class="text-center mt-3">
+                            <span class="text-muted fs-12 d-block mb-1">Acesso pela plataforma</span>
+                            <img src="assets/img/logo-expresso.svg" alt="Aplicações Expresso" height="26" />
+                        </div>
+
+                        <p class="text-center text-muted mt-3 mb-0 fs-12">
+                            Protótipo de interface — nenhum botão leva a outra tela e nenhum dado é enviado.
+                        </p>
                     </div>
-                    <!-- End Auth Box Content -->
                 </div>
             </div>
         </div>
@@ -96,5 +119,42 @@
         <!-- App js -->
         <script src="inspinia/assets/js/app.js"></script>
 
+        <script>
+            (function () {
+                var retorno = document.getElementById("retorno");
+
+                function avisar(texto) {
+                    retorno.textContent = texto;
+                    retorno.classList.remove("d-none");
+                }
+
+                // Mostrar/ocultar senha — componente password-eye do Inspinia.
+                var campoSenha = document.getElementById("senha");
+                var olho = document.querySelector(".password-eye");
+
+                olho.addEventListener("click", function () {
+                    var icones = Array.prototype.slice.call(olho.getElementsByClassName("eye-icon"));
+                    var oculta = campoSenha.type === "password";
+                    campoSenha.type = oculta ? "text" : "password";
+                    olho.setAttribute("data-password", String(oculta));
+                    icones.forEach(function (icone) {
+                        icone.classList.toggle("d-none");
+                        icone.classList.toggle("d-block");
+                    });
+                });
+
+                // Protótipo: nada é enviado e nenhum botão navega.
+                document.getElementById("form-acesso").addEventListener("submit", function (e) {
+                    e.preventDefault();
+                    avisar("Protótipo de interface — a autenticação ainda não está implementada.");
+                });
+
+                document.querySelectorAll("[data-sso]").forEach(function (botao) {
+                    botao.addEventListener("click", function () {
+                        avisar("O acesso por ID Goiás e gov.br será feito pelo Aplicações Expresso — ainda não integrado neste protótipo.");
+                    });
+                });
+            })();
+        </script>
     </body>
 </html>
