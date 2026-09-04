@@ -1,0 +1,202 @@
+<!doctype html>
+<html
+    lang="pt-BR"
+    data-skin="minimal"
+    data-bs-theme="light"
+    data-topbar-color="light"
+    data-menu-color="gray"
+    data-sidenav-size="default"
+    data-layout-width="fluid"
+    data-layout-position="fixed"
+>
+    <head>
+        <meta charset="utf-8" />
+        <title>Permissões | SIPLAM — PPA 2028–2031</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="Dados compartilhados com o SIPLAM — Plano Plurianual 2028–2031 do Estado de Goiás." />
+        <meta name="author" content="Governo do Estado de Goiás" />
+
+        <!-- App favicon -->
+        <link rel="shortcut icon" href="inspinia/assets/images/favicon.ico" />
+ <!-- Theme Config Js -->
+<script src="inspinia/assets/js/config.js"></script>
+
+<!-- Vendor css -->
+<link href="inspinia/assets/css/vendors.min.css" rel="stylesheet" type="text/css" />
+
+<!-- App css -->
+<link id="app-style" href="inspinia/assets/css/app.min.css" rel="stylesheet" type="text/css" />
+
+<!-- SIPLAM css -->
+<link href="assets/css/siplam.css" rel="stylesheet" type="text/css" />
+
+    </head>
+
+    <body>
+        <div class="auth-box overflow-hidden align-items-center d-flex">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-xxl-4 col-md-6 col-sm-8">
+                        <div class="card p-4">
+                            <div class="auth-brand text-center mb-3">
+                                <img src="assets/img/logo-siplam.svg" alt="SIPLAM" height="34" />
+                            </div>
+
+                            <h5 class="fw-bold mb-1">Verifique alguns dos seus dados:</h5>
+                            <p class="text-muted fs-12 mb-3">
+                                Ao selecionar os seguintes atributos você concorda em compartilhá-los com a aplicação.
+                            </p>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="todas" checked />
+                                <label class="form-check-label fw-semibold" for="todas">Selecionar todas</label>
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input atributo" type="checkbox" id="celular" value="celular" checked />
+                                <label class="form-check-label" for="celular">Celular</label>
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input atributo" type="checkbox" id="nomeCompleto" value="nome_completo" data-obrigatorio="true" checked />
+                                <label class="form-check-label" for="nomeCompleto">Nome completo *</label>
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input atributo" type="checkbox" id="cpf" value="cpf" data-obrigatorio="true" checked />
+                                <label class="form-check-label" for="cpf">CPF *</label>
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input atributo" type="checkbox" id="emailPessoal" value="email_pessoal" checked />
+                                <label class="form-check-label" for="emailPessoal">Email pessoal</label>
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input atributo" type="checkbox" id="nome" value="nome" checked />
+                                <label class="form-check-label" for="nome">Nome</label>
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input atributo" type="checkbox" id="emailCorporativo" value="email_corporativo" data-obrigatorio="true" checked />
+                                <label class="form-check-label" for="emailCorporativo">Email corporativo *</label>
+                            </div>
+
+                            <p class="text-muted fs-12 mt-3 mb-0">
+                                As reivindicações obrigatórias estão marcadas com um asterisco (*).
+                            </p>
+
+                            <div class="border-top border-dashed my-3"></div>
+
+                            <h6 class="fw-semibold mb-1">Verifique se a aplicação é confiável</h6>
+                            <p class="text-muted fs-12">
+                                Certifique-se de que a aplicação SIPLAM está habilitada para receber informações
+                                confidenciais. Para obter mais detalhes sobre como seus dados serão tratados,
+                                recomendamos a leitura cuidadosa da nossa
+                                <a href="#" class="fw-semibold">Política de Privacidade</a>.
+                            </p>
+
+                            <div class="d-flex flex-wrap gap-3 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="aprovacao" id="umaVez" value="uma_vez" checked />
+                                    <label class="form-check-label" for="umaVez">Aprovar uma vez</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="aprovacao" id="sempre" value="sempre" />
+                                    <label class="form-check-label" for="sempre">Aprovar sempre</label>
+                                </div>
+                            </div>
+
+                            <div id="alertaObrigatorios" class="alert alert-warning py-2 px-3 d-none" role="alert">
+                                Os atributos marcados com asterisco são obrigatórios para acessar o sistema.
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-primary py-2 flex-fill" id="cancelar">
+                                    Cancelar
+                                </button>
+                                <button type="button" class="btn btn-primary py-2 flex-fill" id="continuar">
+                                    Continuar
+                                </button>
+                            </div>
+                        </div>
+
+                        <p class="text-center text-muted mt-3 mb-0 fs-12">
+                            Protótipo de interface — nenhum dado é enviado a servidor algum.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vendor js -->
+        <script src="inspinia/assets/js/vendors.min.js"></script>
+
+        <!-- App js -->
+        <script src="inspinia/assets/js/app.js"></script>
+
+        <!-- Fluxo de acesso -->
+        <script src="assets/js/acesso.js"></script>
+        <script>
+            (function () {
+                if (!Acesso.exigirSessao()) return;
+
+                var todas = document.getElementById("todas");
+                var atributos = Array.prototype.slice.call(document.querySelectorAll(".atributo"));
+                var alerta = document.getElementById("alertaObrigatorios");
+
+                function sincronizarTodas() {
+                    var marcados = atributos.filter(function (a) {
+                        return a.checked;
+                    }).length;
+                    todas.checked = marcados === atributos.length;
+                    todas.indeterminate = marcados > 0 && marcados < atributos.length;
+                }
+
+                todas.addEventListener("change", function () {
+                    atributos.forEach(function (a) {
+                        a.checked = todas.checked;
+                    });
+                    todas.indeterminate = false;
+                });
+
+                atributos.forEach(function (a) {
+                    a.addEventListener("change", sincronizarTodas);
+                });
+
+                document.getElementById("continuar").addEventListener("click", function () {
+                    var faltando = atributos.filter(function (a) {
+                        return a.dataset.obrigatorio === "true" && !a.checked;
+                    });
+
+                    if (faltando.length > 0) {
+                        alerta.classList.remove("d-none");
+                        return;
+                    }
+
+                    alerta.classList.add("d-none");
+                    Acesso.gravar(
+                        Acesso.CHAVES.permissoes,
+                        JSON.stringify({
+                            atributos: atributos
+                                .filter(function (a) {
+                                    return a.checked;
+                                })
+                                .map(function (a) {
+                                    return a.value;
+                                }),
+                            aprovacao: document.querySelector('input[name="aprovacao"]:checked').value,
+                        })
+                    );
+                    window.location.href = "perfil.html";
+                });
+
+                document.getElementById("cancelar").addEventListener("click", function () {
+                    Acesso.sair();
+                });
+
+                sincronizarTodas();
+            })();
+        </script>
+    </body>
+</html>

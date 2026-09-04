@@ -1,0 +1,135 @@
+<!doctype html>
+<html
+    lang="pt-BR"
+    data-skin="minimal"
+    data-bs-theme="light"
+    data-topbar-color="light"
+    data-menu-color="gray"
+    data-sidenav-size="default"
+    data-layout-width="fluid"
+    data-layout-position="fixed"
+>
+    <head>
+        <meta charset="utf-8" />
+        <title>SIPLAM — PPA 2028–2031</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="SIPLAM — Plano Plurianual 2028–2031 do Estado de Goiás." />
+        <meta name="author" content="Governo do Estado de Goiás" />
+
+        <!-- App favicon -->
+        <link rel="shortcut icon" href="inspinia/assets/images/favicon.ico" />
+ <!-- Theme Config Js -->
+<script src="inspinia/assets/js/config.js"></script>
+
+<!-- Vendor css -->
+<link href="inspinia/assets/css/vendors.min.css" rel="stylesheet" type="text/css" />
+
+<!-- App css -->
+<link id="app-style" href="inspinia/assets/css/app.min.css" rel="stylesheet" type="text/css" />
+
+<!-- SIPLAM css -->
+<link href="assets/css/siplam.css" rel="stylesheet" type="text/css" />
+
+    </head>
+
+    <body>
+        <div class="auth-box overflow-hidden align-items-center d-flex">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-xxl-5 col-md-7 col-sm-9">
+                        <div class="card p-4">
+                            <div class="auth-brand text-center mb-3">
+                                <img src="assets/img/logo-siplam.svg" alt="SIPLAM" height="34" />
+                            </div>
+
+                            <div class="text-center">
+                                <h5 class="fw-bold mb-1">Acesso concluído</h5>
+                                <p class="text-muted mb-3">
+                                    Você entrou como
+                                    <span class="fw-semibold" id="perfilAtual">—</span>.
+                                </p>
+                            </div>
+
+                            <div class="alert alert-info mb-3" role="status">
+                                As telas do sistema entram na próxima entrega. Este é o fim do fluxo de acesso do
+                                protótipo.
+                            </div>
+
+                            <ul class="list-group list-group-flush mb-3">
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span class="text-muted">Termos de uso</span>
+                                    <span class="badge bg-success-subtle text-success" id="estadoTermos">—</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span class="text-muted">Dados compartilhados</span>
+                                    <span class="text-end fs-12" id="estadoPermissoes">—</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span class="text-muted">Aprovação</span>
+                                    <span class="fs-12" id="estadoAprovacao">—</span>
+                                </li>
+                            </ul>
+
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-primary py-2 flex-fill" id="sair">
+                                    Sair
+                                </button>
+                                <button type="button" class="btn btn-light py-2 flex-fill" id="reiniciar">
+                                    Reiniciar protótipo
+                                </button>
+                            </div>
+                        </div>
+
+                        <p class="text-center text-muted mt-3 mb-0 fs-12">
+                            “Reiniciar protótipo” apaga termos, permissões e perfil guardados neste navegador — útil
+                            para testar o primeiro acesso de novo.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vendor js -->
+        <script src="inspinia/assets/js/vendors.min.js"></script>
+
+        <!-- App js -->
+        <script src="inspinia/assets/js/app.js"></script>
+
+        <!-- Fluxo de acesso -->
+        <script src="assets/js/acesso.js"></script>
+        <script>
+            (function () {
+                if (!Acesso.exigirSessao()) return;
+
+                var perfilId = Acesso.ler("siplam.perfilSessao");
+                var perfil = Acesso.PERFIS.filter(function (p) {
+                    return p.id === perfilId;
+                })[0];
+
+                document.getElementById("perfilAtual").textContent = perfil ? perfil.nome : "perfil não informado";
+
+                document.getElementById("estadoTermos").textContent =
+                    Acesso.ler(Acesso.CHAVES.termos) === "aceitos" ? "Aceitos" : "Pendentes";
+
+                var permissoes = Acesso.ler(Acesso.CHAVES.permissoes);
+                if (permissoes) {
+                    var dados = JSON.parse(permissoes);
+                    document.getElementById("estadoPermissoes").textContent =
+                        dados.atributos.length + " de 6 atributos";
+                    document.getElementById("estadoAprovacao").textContent =
+                        dados.aprovacao === "sempre" ? "Aprovar sempre" : "Aprovar uma vez";
+                }
+
+                document.getElementById("sair").addEventListener("click", function () {
+                    Acesso.remover("siplam.perfilSessao");
+                    Acesso.sair();
+                });
+
+                document.getElementById("reiniciar").addEventListener("click", function () {
+                    Acesso.remover("siplam.perfilSessao");
+                    Acesso.reiniciar();
+                });
+            })();
+        </script>
+    </body>
+</html>

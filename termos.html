@@ -1,0 +1,141 @@
+<!doctype html>
+<html
+    lang="pt-BR"
+    data-skin="minimal"
+    data-bs-theme="light"
+    data-topbar-color="light"
+    data-menu-color="gray"
+    data-sidenav-size="default"
+    data-layout-width="fluid"
+    data-layout-position="fixed"
+>
+    <head>
+        <meta charset="utf-8" />
+        <title>Termos de uso | SIPLAM — PPA 2028–2031</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="Termos de uso do SIPLAM — Plano Plurianual 2028–2031 do Estado de Goiás." />
+        <meta name="author" content="Governo do Estado de Goiás" />
+
+        <!-- App favicon -->
+        <link rel="shortcut icon" href="inspinia/assets/images/favicon.ico" />
+ <!-- Theme Config Js -->
+<script src="inspinia/assets/js/config.js"></script>
+
+<!-- Vendor css -->
+<link href="inspinia/assets/css/vendors.min.css" rel="stylesheet" type="text/css" />
+
+<!-- App css -->
+<link id="app-style" href="inspinia/assets/css/app.min.css" rel="stylesheet" type="text/css" />
+
+<!-- SIPLAM css -->
+<link href="assets/css/siplam.css" rel="stylesheet" type="text/css" />
+
+    </head>
+
+    <body>
+        <div class="auth-box overflow-hidden align-items-center d-flex">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-xxl-6 col-lg-8">
+                        <div class="card p-4">
+                            <div class="auth-brand text-center mb-3">
+                                <img src="assets/img/logo-siplam.svg" alt="SIPLAM" height="34" />
+                                <h5 class="fw-bold mt-3 mb-0">Veja nossos termos de uso para acessar o sistema</h5>
+                            </div>
+
+                            <div class="border rounded p-3 mb-3" data-simplebar style="max-height: 320px">
+                                <p>
+                                    Ao utilizar este sistema, o usuário declara que leu, compreendeu e concorda
+                                    integralmente com os termos abaixo descritos. Este documento estabelece as condições
+                                    de uso para acesso e utilização das ferramentas, funcionalidades e informações
+                                    disponibilizadas por meio do SIPLAM — Sistema de Planejamento e Monitoramento,
+                                    mantido pelo Governo do Estado de Goiás.
+                                </p>
+
+                                <h6 class="fw-semibold mt-3">1. Finalidade do sistema</h6>
+                                <p>
+                                    O SIPLAM destina-se à elaboração, análise e acompanhamento do Plano Plurianual
+                                    2028–2031, sendo de uso exclusivo de servidores públicos, colaboradores autorizados
+                                    e entes vinculados à administração pública estadual.
+                                </p>
+
+                                <h6 class="fw-semibold mt-3">2. Acesso e responsabilidade do usuário</h6>
+                                <p>
+                                    O acesso ao sistema é pessoal e intransferível. O usuário é responsável por manter a
+                                    confidencialidade de suas credenciais, bem como por todas as atividades realizadas
+                                    sob sua conta. Em caso de uso indevido, perda de acesso ou suspeita de
+                                    comprometimento, o usuário deverá comunicar imediatamente a equipe técnica
+                                    responsável.
+                                </p>
+
+                                <h6 class="fw-semibold mt-3">3. Informações registradas</h6>
+                                <p>
+                                    As contribuições registradas no SIPLAM compõem peça de planejamento governamental e
+                                    ficam vinculadas ao órgão e ao usuário que as informou. O sistema mantém histórico
+                                    das ações de envio, análise, devolução e validação.
+                                </p>
+
+                                <h6 class="fw-semibold mt-3">4. Tratamento de dados pessoais</h6>
+                                <p>
+                                    Os dados pessoais compartilhados no acesso são tratados conforme a Lei Geral de
+                                    Proteção de Dados (Lei nº 13.709/2018), restritos à finalidade de identificar o
+                                    usuário e registrar sua atuação no processo de elaboração do plano.
+                                </p>
+
+                                <h6 class="fw-semibold mt-3">5. Uso adequado</h6>
+                                <p>
+                                    É vedado utilizar o sistema para finalidade diversa da institucional, tentar obter
+                                    acesso não autorizado a dados de outros órgãos ou comprometer a disponibilidade do
+                                    serviço.
+                                </p>
+
+                                <h6 class="fw-semibold mt-3">6. Vigência</h6>
+                                <p class="mb-0">
+                                    Estes termos podem ser atualizados a qualquer tempo. A continuidade do uso após a
+                                    publicação de nova versão implica concordância com as condições vigentes.
+                                </p>
+                            </div>
+
+                            <div class="d-flex flex-wrap justify-content-between gap-2">
+                                <button type="button" class="btn btn-outline-primary py-2 flex-fill" id="recusar">
+                                    Li e não concordo com os termos de uso
+                                </button>
+                                <button type="button" class="btn btn-primary py-2 flex-fill" id="aceitar">
+                                    Li e concordo com os termos de uso
+                                </button>
+                            </div>
+                        </div>
+
+                        <p class="text-center text-muted mt-3 mb-0 fs-12">
+                            Protótipo de interface — nenhum dado é enviado a servidor algum.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vendor js -->
+        <script src="inspinia/assets/js/vendors.min.js"></script>
+
+        <!-- App js -->
+        <script src="inspinia/assets/js/app.js"></script>
+
+        <!-- Fluxo de acesso -->
+        <script src="assets/js/acesso.js"></script>
+        <script>
+            (function () {
+                if (!Acesso.exigirSessao()) return;
+
+                document.getElementById("aceitar").addEventListener("click", function () {
+                    Acesso.gravar(Acesso.CHAVES.termos, "aceitos");
+                    window.location.href = "permissoes.html";
+                });
+
+                // Recusar encerra a sessão e volta ao acesso.
+                document.getElementById("recusar").addEventListener("click", function () {
+                    Acesso.sair();
+                });
+            })();
+        </script>
+    </body>
+</html>
