@@ -68,7 +68,8 @@ os botões de ação.
 Administração ganha o **Cadastro do PPA**: o plano passa a existir como entidade, com identificação,
 lei, prazo do ciclo e as listas de eixos e objetivos estratégicos — que no protótipo eram texto
 solto, redigitado em cada Programa. O plano é uma lista: tabela com os ciclos cadastrados e modal
-para criar ou editar, no padrão da Administração de Programas.
+para criar ou editar, no padrão da Administração de Programas. Quatro campos por ora — nome,
+primeiro ano, último ano e descrição; os demais entram depois de conversar com o usuário.
 
 ---
 
