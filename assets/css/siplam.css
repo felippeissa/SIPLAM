@@ -131,3 +131,24 @@
 .linha-filha > td { background-color: var(--bs-tertiary-bg); }
 .tabela-aninhada { margin: 0; }
 .tabela-aninhada > thead > tr > th { font-size: 10px; }
+
+/* ---------- Barra de filtros ---------- */
+/* Os selects dentro de um flex esticam por padrão; aqui cada um fica do seu tamanho. */
+.barra-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+.barra-filtros > * {
+    flex: 0 0 auto;
+    width: auto;
+}
+.barra-filtros .form-select,
+.barra-filtros .form-control {
+    width: auto;
+    min-width: 9rem;
+}
+.barra-filtros .app-search .form-control {
+    min-width: 16rem;
+}

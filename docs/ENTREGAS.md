@@ -31,11 +31,21 @@ compartilhados (chip, faixa de indicadores, trilha) e a **Visão Geral da Área 
 filtros, três níveis de expansão e cobertura causal. Corrige três problemas do protótipo —
 T5.1.10, T5.1.11 e T5.1.12.
 
+### 4 · As 16 telas do sistema — `2026-09-11`
+
+Visão Área Central completa (Visão Geral, Entregas, Órgãos, Causas, Financeira, Projetos, IPOFs,
+Administração de Programas e Iniciativa em análise) e Visão Setorial completa (Programas, ficha do
+Programa, Iniciativas, ficha da Iniciativa, Entregas, ficha da Entrega e Indicadores). Todas
+testadas no navegador, sem erro de console.
+
+Problemas do protótipo corrigidos nesta leva: T5.2.3, T5.3.5, T5.4.5, T5.5.6, T5.8.6, T5.8.9,
+T5.9.9, T6.1.7, T6.2.7, T6.4.16, T6.6.9, T6.6.13 e T6.7.4.
+
 ---
 
 ## Próxima entrega
 
-### 4 · Demais telas da Área Central
+### 5 · Atena, busca global e documentos
 
 **Objetivo:** o esqueleto que todas as telas vão usar, navegável nas duas visões.
 
