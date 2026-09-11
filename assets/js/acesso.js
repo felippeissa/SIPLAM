@@ -24,21 +24,38 @@
         sessao: "siplam.sessao",
     };
 
+    /**
+     * A visão é consequência do perfil, não uma escolha do usuário:
+     * quem preenche trabalha na visão setorial, quem analisa ou administra
+     * trabalha na visão da área central.
+     */
+    /**
+     * A visão é consequência do perfil, não uma escolha do usuário: o Analista
+     * Setorial trabalha na visão do órgão, o Analista da Área Central na visão
+     * de consolidação e análise.
+     */
+    var VISAO = {
+        "analista-setorial": "setorial",
+        "analista-central": "central",
+    };
+
     /** Tela inicial de cada perfil. */
     var INICIO = {
-        "tecnico-setorial": "programas.html",
-        "ponto-focal": "programas.html",
+        "analista-setorial": "programas.html",
         "analista-central": "central.html",
-        "admin-programas": "central-programas.html",
-        consulta: "central.html",
     };
 
     var PERFIS = [
-        { id: "tecnico-setorial", nome: "Técnico setorial", descricao: "Preenche Iniciativas e Entregas do órgão" },
-        { id: "ponto-focal", nome: "Ponto focal do órgão", descricao: "Envia as contribuições do órgão para análise" },
-        { id: "analista-central", nome: "Analista da Área Central", descricao: "Analisa, aponta, devolve e valida" },
-        { id: "admin-programas", nome: "Administrador de Programas", descricao: "Mantém e disponibiliza os Programas" },
-        { id: "consulta", nome: "Consulta", descricao: "Somente leitura, sem entrar na fila de trabalho" },
+        {
+            id: "analista-setorial",
+            nome: "Analista Setorial",
+            descricao: "Elabora e envia as contribuições do órgão",
+        },
+        {
+            id: "analista-central",
+            nome: "Analista da Área Central",
+            descricao: "Analisa, valida e administra os Programas",
+        },
     ];
 
     var SENHA_MINIMA = 6;
@@ -110,11 +127,24 @@
         return INICIO[perfilId] || "programas.html";
     }
 
+    /** Visão do perfil: "setorial" ou "central". */
+    function visaoDoPerfil(perfilId) {
+        return VISAO[perfilId] || "setorial";
+    }
+
+    /** Perfil escolhido nesta sessão. */
+    function perfilAtual() {
+        return ler("siplam.perfilSessao") || ler(CHAVES.perfil);
+    }
+
     window.Acesso = {
         CHAVES: CHAVES,
         PERFIS: PERFIS,
         INICIO: INICIO,
+        VISAO: VISAO,
         telaInicial: telaInicial,
+        visaoDoPerfil: visaoDoPerfil,
+        perfilAtual: perfilAtual,
         SENHA_MINIMA: SENHA_MINIMA,
         ler: ler,
         gravar: gravar,

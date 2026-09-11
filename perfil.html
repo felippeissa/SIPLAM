@@ -36,7 +36,8 @@
     </head>
 
     <body>
-        <div class="auth-box overflow-hidden align-items-center d-flex">
+        <!-- sem overflow-hidden: o dropdown do Choices precisa escapar do cartão -->
+        <div class="auth-box align-items-center d-flex">
             <div class="container">
                 <div class="row justify-content-center">
                     <div class="col-xxl-4 col-md-6 col-sm-8">
@@ -49,13 +50,10 @@
                             <form id="form-perfil" novalidate>
                                 <div class="mb-3">
                                     <label for="perfil" class="form-label">Perfil</label>
-                                    <select class="form-control" data-choices id="perfil" name="perfil">
-                                        <option value="">Escolha uma opção</option>
-                                        <option value="tecnico-setorial">Técnico setorial</option>
-                                        <option value="ponto-focal">Ponto focal do órgão</option>
+                                    <select class="form-control" data-choices data-choices-sorting-false id="perfil" name="perfil">
+                                        <option value="" placeholder>Escolha uma opção</option>
+                                        <option value="analista-setorial">Analista Setorial</option>
                                         <option value="analista-central">Analista da Área Central</option>
-                                        <option value="admin-programas">Administrador de Programas</option>
-                                        <option value="consulta">Consulta</option>
                                     </select>
                                     <div class="invalid-feedback d-block d-none" id="erroPerfil">
                                         Escolha um perfil para continuar.

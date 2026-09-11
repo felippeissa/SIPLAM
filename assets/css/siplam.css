@@ -286,3 +286,12 @@
 .content-page {
     padding-bottom: 1rem;
 }
+
+/* O cartão do Bootstrap corta o que passa da borda, o que engolia o dropdown do
+   Choices na escolha de perfil. */
+.auth-box .card {
+    overflow: visible;
+}
+.auth-box .choices__list--dropdown {
+    z-index: 20;
+}

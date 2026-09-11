@@ -44,10 +44,16 @@ Não leia `prototipo-lovable/` inteiro nem `inspinia/` inteiro. São referência
 - O **Projeto GOMAP** descreve *como* a Entrega é produzida. Seu valor global **nunca** é o valor da Entrega.
 - **Entrega** é resultado para a sociedade, não obra. "Construção de X" é nome de Projeto, não de Entrega.
 
-## Duas visões, dois menus
+## Dois perfis, duas visões
 
-- **Setorial** (órgão): Programas · Iniciativas · Entregas · Indicadores.
-- **Área Central** (analista): Visão Geral · Entregas · Órgãos · Análises (Causas, Financeira, Projetos, IPOFs) · Administração de Programas.
+**A visão é consequência do perfil**, não uma escolha na interface. São dois perfis:
+
+- **Analista Setorial** → visão setorial: Programas · Iniciativas · Entregas · Indicadores.
+- **Analista da Área Central** → visão da área central: Visão Geral · Entregas · Órgãos ·
+  Análises (Causas, Financeira, Projetos, IPOFs) · Administração de Programas.
+
+O perfil é escolhido a cada acesso, em `perfil.html`, e define a tela inicial e o menu. Abrir uma
+tela da outra visão devolve o usuário para a dele. Não existe comutador de visão no cabeçalho.
 
 ## Convenções
 
