@@ -25,7 +25,7 @@ import {
 } from "../dados/regras.js";
 import { linhasDaIniciativa } from "../dados/financeiro.js";
 import { ANOS } from "../dados/seed.js";
-import { montarShell } from "../shell.js";
+import { montarShell , somenteLeitura } from "../shell.js";
 import { chip, statusChip, esc, secao, contexto, faixaIndicadores } from "../ui.js";
 import { quadroFinanceiro, listaPendencias, chipsPendencias } from "../ui-financeiro.js";
 
@@ -59,7 +59,8 @@ function render() {
     const resumo = resumoPendencias(pendencias);
     const comentarios = comentariosDaIniciativa(estado, ini.id).filter((c) => !c.resolvido);
     const eventos = estado.eventos.filter((ev) => ev.iniciativaId === ini.id);
-    const editavel = podeEditar(ini.status);
+    // Alta gestão e controle acompanham sem operar.
+    const editavel = podeEditar(ini.status) && !somenteLeitura();
     const dis = editavel ? "" : " disabled";
 
     const camposApontados = new Set(comentarios.filter((c) => c.alvoTipo === "iniciativa").map((c) => c.campo));

@@ -25,7 +25,7 @@ import {
     TERRITORIO_LABEL,
 } from "../dados/regras.js";
 import { acoesDoOrgao, acoesDaEntrega, linhasDaEntrega, totalDaAcao } from "../dados/financeiro.js";
-import { montarShell } from "../shell.js";
+import { montarShell , somenteLeitura } from "../shell.js";
 import { chip, esc, secao, contexto, faixaIndicadores } from "../ui.js";
 import { quadroFinanceiro, listaPendencias, chipsPendencias } from "../ui-financeiro.js";
 
@@ -65,7 +65,7 @@ function render() {
 
     const ini = estado.iniciativas.find((i) => i.id === e.iniciativaId);
     const programa = estado.programas.find((p) => p.id === ini?.programaId);
-    const editavel = podeEditar(ini?.status ?? "em_preenchimento");
+    const editavel = podeEditar(ini?.status ?? "em_preenchimento") && !somenteLeitura();
     const dis = editavel ? "" : " disabled";
     const pendencias = pendenciasEntrega(estado, e);
     const resumo = resumoPendencias(pendencias);

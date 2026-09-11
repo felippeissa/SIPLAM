@@ -10,7 +10,7 @@
 import { obterEstado, updIniciativa } from "../dados/store.js";
 import { ANOS } from "../dados/seed.js";
 import { eixos, objetivos, podeEditar } from "../dados/regras.js";
-import { montarShell, cabecalhoPagina } from "../shell.js";
+import { montarShell, cabecalhoPagina , somenteLeitura } from "../shell.js";
 import { chip, esc, faixaIndicadores } from "../ui.js";
 
 const { estado } = montarShell();
@@ -185,7 +185,7 @@ function render() {
             <option value="todos">Todos os Objetivos</option>
             ${objetivos(estado.programas, eixo).map((o) => `<option value="${esc(o)}"${o === objetivo ? " selected" : ""}>${esc(o)}</option>`).join("")}
         </select>
-        <div class="dropdown">
+        <div class="dropdown ${somenteLeitura() ? "d-none" : ""}">
             <button class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown"><i class="ti ti-plus me-1"></i>Novo indicador</button>
             <ul class="dropdown-menu dropdown-menu-end fs-13">
                 ${
@@ -243,7 +243,7 @@ function render() {
                         ${ANOS.map((a) => `<td class="num">${esc(metas[a] || (a === ANOS[ANOS.length - 1] ? ind.meta ?? "—" : "—"))}</td>`).join("")}
                         <td>
                             ${
-                                l.editavel
+                                l.editavel && !somenteLeitura()
                                     ? `<button class="btn btn-sm btn-outline-primary" data-editar="${l.iniciativa.id}:${ind.id}">Editar</button>`
                                     : `<a href="${l.nivel === "Programa" ? `programa.html?id=${l.programa.id}` : `iniciativa.html?id=${l.iniciativa.id}`}" class="btn btn-sm btn-light">Ver</a>`
                             }

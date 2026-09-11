@@ -25,38 +25,61 @@
     };
 
     /**
-     * A visão é consequência do perfil, não uma escolha do usuário:
-     * quem preenche trabalha na visão setorial, quem analisa ou administra
-     * trabalha na visão da área central.
+     * A visão é consequência do perfil, não uma escolha na interface.
+     *
+     * `leitura: true` marca quem acompanha o plano sem operá-lo — alta gestão e
+     * órgãos de controle veem tudo da sua visão, sem preencher, enviar, analisar
+     * ou administrar. O recorte de cada perfil ainda precisa ser confirmado com
+     * os stakeholders; aqui vale a leitura mais conservadora.
      */
-    /**
-     * A visão é consequência do perfil, não uma escolha do usuário: o Analista
-     * Setorial trabalha na visão do órgão, o Analista da Área Central na visão
-     * de consolidação e análise.
-     */
-    var VISAO = {
-        "analista-setorial": "setorial",
-        "analista-central": "central",
-    };
-
-    /** Tela inicial de cada perfil. */
-    var INICIO = {
-        "analista-setorial": "programas.html",
-        "analista-central": "central.html",
-    };
-
     var PERFIS = [
         {
-            id: "analista-setorial",
-            nome: "Analista Setorial",
+            id: "setorial",
+            nome: "Setorial",
+            visao: "setorial",
+            inicio: "programas.html",
+            leitura: false,
             descricao: "Elabora e envia as contribuições do órgão",
         },
         {
-            id: "analista-central",
-            nome: "Analista da Área Central",
+            id: "admin-central",
+            nome: "Administrador central",
+            visao: "central",
+            inicio: "central.html",
+            leitura: false,
             descricao: "Analisa, valida e administra os Programas",
         },
+        {
+            id: "gestao-setorial",
+            nome: "Alta gestão setorial",
+            visao: "setorial",
+            inicio: "programas.html",
+            leitura: true,
+            descricao: "Acompanha as contribuições do próprio órgão",
+        },
+        {
+            id: "gestao-central",
+            nome: "Alta gestão central",
+            visao: "central",
+            inicio: "central.html",
+            leitura: true,
+            descricao: "Acompanha a consolidação do plano",
+        },
+        {
+            id: "controle",
+            nome: "Órgãos de controle",
+            visao: "central",
+            inicio: "central.html",
+            leitura: true,
+            descricao: "Consulta o plano e sua execução",
+        },
     ];
+
+    function perfilPorId(id) {
+        return PERFIS.filter(function (p) {
+            return p.id === id;
+        })[0];
+    }
 
     var SENHA_MINIMA = 6;
 
@@ -124,12 +147,17 @@
 
     /** Para onde o perfil escolhido leva. */
     function telaInicial(perfilId) {
-        return INICIO[perfilId] || "programas.html";
+        return perfilPorId(perfilId)?.inicio || "programas.html";
     }
 
     /** Visão do perfil: "setorial" ou "central". */
     function visaoDoPerfil(perfilId) {
-        return VISAO[perfilId] || "setorial";
+        return perfilPorId(perfilId)?.visao || "setorial";
+    }
+
+    /** Perfis de acompanhamento não operam o plano. */
+    function somenteLeitura(perfilId) {
+        return perfilPorId(perfilId)?.leitura === true;
     }
 
     /** Perfil escolhido nesta sessão. */
@@ -140,8 +168,8 @@
     window.Acesso = {
         CHAVES: CHAVES,
         PERFIS: PERFIS,
-        INICIO: INICIO,
-        VISAO: VISAO,
+        perfilPorId: perfilPorId,
+        somenteLeitura: somenteLeitura,
         telaInicial: telaInicial,
         visaoDoPerfil: visaoDoPerfil,
         perfilAtual: perfilAtual,

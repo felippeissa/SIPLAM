@@ -23,7 +23,7 @@ import {
     projetosDaEntrega,
 } from "../dados/regras.js";
 import { linhasDaIniciativa, acoesDaEntrega } from "../dados/financeiro.js";
-import { montarShell } from "../shell.js";
+import { montarShell , somenteLeitura } from "../shell.js";
 import { chip, statusChip, esc, secao, contexto, faixaIndicadores } from "../ui.js";
 import { quadroFinanceiro, listaPendencias, chipsPendencias } from "../ui-financeiro.js";
 
@@ -113,7 +113,9 @@ function blocoEntrega(e) {
                 }
             </div>
         </div>`,
-        `<button class="btn btn-sm btn-outline-primary" data-apontar-entrega="${e.id}">
+        somenteLeitura()
+            ? ""
+            : `<button class="btn btn-sm btn-outline-primary" data-apontar-entrega="${e.id}">
             <i class="ti ti-message-plus me-1"></i>Apontar
         </button>`
     );
@@ -132,8 +134,9 @@ function render() {
     const eventos = estado.eventos.filter((ev) => ev.iniciativaId === ini.id);
     const previsto = recursosDaIniciativa(estado, ini.id);
 
-    const acoesCabecalho =
-        ini.status === "enviada"
+    const acoesCabecalho = somenteLeitura()
+        ? `<span class="fs-12 text-muted align-self-center">Perfil de acompanhamento — sem ações de análise.</span>`
+        : ini.status === "enviada"
             ? `<button class="btn btn-sm btn-primary" id="iniciar"><i class="ti ti-player-play me-1"></i>Iniciar análise</button>`
             : ini.status === "em_analise"
               ? `<button class="btn btn-sm btn-outline-warning" id="devolver"><i class="ti ti-arrow-back-up me-1"></i>Devolver para ajuste</button>
@@ -208,7 +211,9 @@ function render() {
                         }
                     </div>
                 </div>`,
-                `<button class="btn btn-sm btn-outline-primary" data-apontar-iniciativa="1">
+                somenteLeitura()
+                    ? ""
+                    : `<button class="btn btn-sm btn-outline-primary" data-apontar-iniciativa="1">
                     <i class="ti ti-message-plus me-1"></i>Apontar
                 </button>`
             )}
@@ -236,7 +241,9 @@ function render() {
                             ${
                                 c.resolvido
                                     ? chip("resolvido", "ok")
-                                    : `<button class="btn btn-sm btn-light" data-resolver="${c.id}" title="Marcar como resolvido"><i class="ti ti-check"></i></button>`
+                                    : somenteLeitura()
+                                      ? ""
+                                      : `<button class="btn btn-sm btn-light" data-resolver="${c.id}" title="Marcar como resolvido"><i class="ti ti-check"></i></button>`
                             }
                         </div>
                         <div class="fs-12 text-muted mt-1">

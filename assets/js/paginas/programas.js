@@ -22,7 +22,7 @@ import {
     moedaCurta,
     pct,
 } from "../dados/regras.js";
-import { montarShell, cabecalhoPagina } from "../shell.js";
+import { montarShell, cabecalhoPagina , somenteLeitura } from "../shell.js";
 import { chip, statusChip, esc, faixaIndicadores } from "../ui.js";
 import { chipsPendencias } from "../ui-financeiro.js";
 
@@ -153,13 +153,15 @@ function linhaPrograma(l) {
         <td class="num">${pct(l.financeiro.percentual)}</td>
         <td>
             <div class="d-flex gap-1">
-                <button class="btn btn-sm btn-primary" data-nova="${p.id}" title="Nova Iniciativa"><i class="ti ti-plus"></i></button>
+                ${somenteLeitura() ? "" : `<button class="btn btn-sm btn-primary" data-nova="${p.id}" title="Nova Iniciativa"><i class="ti ti-plus"></i></button>`}
                 <div class="dropdown">
                     <button class="btn btn-sm btn-light btn-icon" data-bs-toggle="dropdown" aria-label="Mais ações"><i class="ti ti-dots-vertical"></i></button>
                     <ul class="dropdown-menu dropdown-menu-end fs-13">
                         <li><a class="dropdown-item" href="programa.html?id=${p.id}">Ver diagnóstico</a></li>
                         ${
-                            l.participacao === "sem_contribuicao"
+                            somenteLeitura()
+                                ? ""
+                                : l.participacao === "sem_contribuicao"
                                 ? `<li><button class="dropdown-item" data-reconsiderar="${p.id}">Reconsiderar participação</button></li>`
                                 : l.inis.length === 0
                                   ? `<li><button class="dropdown-item" data-sem="${p.id}">Marcar sem contribuição</button></li>`
@@ -191,7 +193,7 @@ function linhaPrograma(l) {
                     <td class="num">${moedaCurta(fin.previsto)}</td>
                     <td>
                         <a href="iniciativa.html?id=${i.id}" class="btn btn-sm btn-outline-primary">Abrir</a>
-                        <button class="btn btn-sm btn-light" data-excluir="${i.id}" title="Excluir Iniciativa"><i class="ti ti-trash"></i></button>
+                        ${somenteLeitura() ? "" : `<button class="btn btn-sm btn-light" data-excluir="${i.id}" title="Excluir Iniciativa"><i class="ti ti-trash"></i></button>`}
                     </td>
                 </tr>`;
                     })

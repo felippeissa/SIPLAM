@@ -11,7 +11,7 @@
  */
 import { obterEstado, addPrograma, updPrograma } from "../dados/store.js";
 import { APTIDAO_LABEL, DISPONIBILIZACAO_LABEL, eixos, objetivos, iniciativasDoOrgao } from "../dados/regras.js";
-import { montarShell, cabecalhoPagina } from "../shell.js";
+import { montarShell, cabecalhoPagina , somenteLeitura } from "../shell.js";
 import { chip, esc, faixaIndicadores } from "../ui.js";
 
 const { estado } = montarShell();
@@ -96,7 +96,7 @@ function render() {
             <option value="todos">Todos os Objetivos</option>
             ${objetivos(estado.programas, eixo).map((o) => `<option value="${esc(o)}"${o === objetivo ? " selected" : ""}>${esc(o)}</option>`).join("")}
         </select>
-        <button class="btn btn-sm btn-primary" id="novo"><i class="ti ti-plus me-1"></i>Novo Programa</button>`
+        ${somenteLeitura() ? "" : `<button class="btn btn-sm btn-primary" id="novo"><i class="ti ti-plus me-1"></i>Novo Programa</button>`}`
     )}
     ${faixaIndicadores(
         [
@@ -141,7 +141,11 @@ function render() {
                         <td class="num">${contribuicoes(p.id) || "—"}</td>
                         <td>${chip(APTIDAO_LABEL[p.aptidao ?? "incompleto"], p.aptidao === "apto" ? "ok" : "alerta")}</td>
                         <td>${chip(DISPONIBILIZACAO_LABEL[p.disponibilizacao ?? "em_estruturacao"], p.disponibilizacao === "disponivel" ? "ok" : "neutro")}</td>
-                        <td><button class="btn btn-sm btn-outline-primary" data-editar="${p.id}">Editar</button></td>
+                        <td>${
+                            somenteLeitura()
+                                ? `<a href="programa.html?id=${p.id}" class="btn btn-sm btn-light">Ver</a>`
+                                : `<button class="btn btn-sm btn-outline-primary" data-editar="${p.id}">Editar</button>`
+                        }</td>
                     </tr>`;
                               })
                               .join("")
