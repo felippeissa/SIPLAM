@@ -13,11 +13,13 @@
 /* Tokens do SIPLAM. */
 :root {
     --siplam-aninhado-bg: #f2f6fa;
+    --siplam-aninhado-bg-2: #e8eff6;
     --siplam-aninhado-traco: #c9d6e2;
 }
 
 [data-bs-theme="dark"] {
     --siplam-aninhado-bg: #1d242b;
+    --siplam-aninhado-bg-2: #222b34;
     --siplam-aninhado-traco: #38454f;
 }
 
@@ -294,4 +296,27 @@
 }
 .auth-box .choices__list--dropdown {
     z-index: 20;
+}
+
+/* ---------- Níveis dentro da mesma tabela ---------- */
+/* As linhas filhas mantêm as colunas da mãe; o que muda é o recuo e o fundo. */
+.table > tbody > tr.nivel-2 {
+    --bs-table-bg-type: var(--siplam-aninhado-bg);
+}
+.table > tbody > tr.nivel-3 {
+    --bs-table-bg-type: var(--siplam-aninhado-bg-2);
+}
+.table-hover > tbody > tr.nivel-2:hover {
+    --bs-table-bg-type: var(--siplam-aninhado-bg);
+}
+.table-hover > tbody > tr.nivel-3:hover {
+    --bs-table-bg-type: var(--siplam-aninhado-bg-2);
+}
+.recuo-2 {
+    padding-left: 1.5rem !important;
+    box-shadow: inset 3px 0 0 var(--siplam-aninhado-traco);
+}
+.recuo-3 {
+    padding-left: 3rem !important;
+    box-shadow: inset 3px 0 0 var(--siplam-aninhado-traco);
 }

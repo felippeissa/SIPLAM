@@ -57,6 +57,10 @@ Modelo de perfis corrigido: Visão Setorial e Visão Área Central **são perfis
 Os cinco perfis que eu havia proposto deram lugar aos dois reais — Analista Setorial e Analista da
 Área Central — e a visão passou a decorrer do perfil escolhido no acesso.
 
+Header ganha Notificações e Atena como ícones, ambos ligados aos dados. Na Visão Geral, as linhas
+filhas passaram a usar as colunas da tabela-mãe: com sub-tabela própria, o número de Iniciativas de
+um órgão caía sob "Em preenchimento" do Programa.
+
 ---
 
 ## Próxima entrega

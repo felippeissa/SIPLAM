@@ -13,6 +13,8 @@
  */
 import { obterEstado } from "./dados/store.js";
 import { instalarBusca } from "./busca.js";
+import { instalarAtena } from "./atena.js";
+import { instalarNotificacoes } from "./notificacoes.js";
 
 /** Menu da visão setorial — o órgão preenche e envia. */
 const MENU_SETORIAL = [
@@ -122,6 +124,20 @@ function topbar(estado, visao) {
         </div>
 
         <div class="d-flex align-items-center gap-2">
+            <div class="topbar-item">
+                <button class="topbar-link" type="button" id="abrir-atena" title="Atena — apoio contextual" aria-label="Atena">
+                    <i class="ti ti-message-chatbot topbar-link-icon"></i>
+                    <span class="badge text-bg-warning badge-circle topbar-badge d-none" id="conta-atena">0</span>
+                </button>
+            </div>
+
+            <div class="topbar-item">
+                <button class="topbar-link" type="button" id="abrir-notificacoes" title="Notificações" aria-label="Notificações">
+                    <i class="ti ti-bell topbar-link-icon"></i>
+                    <span class="badge text-bg-danger badge-circle topbar-badge" id="conta-notificacoes">0</span>
+                </button>
+            </div>
+
             <div class="topbar-item nav-user">
                 <div class="dropdown">
                     <a class="topbar-link dropdown-toggle drop-arrow-none px-2" data-bs-toggle="dropdown" href="#!" aria-haspopup="false" aria-expanded="false">
@@ -251,6 +267,8 @@ export function montarShell() {
     if (ano) ano.textContent = new Date().getFullYear();
 
     instalarBusca(estado, visao);
+    instalarNotificacoes(estado, visao);
+    instalarAtena(estado);
 
     return { estado, visao };
 }
