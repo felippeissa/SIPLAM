@@ -14,6 +14,8 @@ import { estadoInicial, ANOS } from "./seed.js";
  * O protótipo não tinha o plano como entidade: eixo e objetivo estratégico eram
  * texto solto dentro de cada Programa. O cadastro do PPA passa a guardá-los em
  * um lugar só, junto da identificação e do prazo do ciclo.
+ *
+ * É uma lista: o plano é quadrienal e o sistema atravessa mais de um ciclo.
  */
 function ppaInicial(programas) {
     const eixos = [...new Set(programas.map((p) => p.eixo).filter(Boolean))].sort((a, b) => a.localeCompare(b));
@@ -22,6 +24,7 @@ function ppaInicial(programas) {
     );
 
     return {
+        id: "ppa-2028",
         nome: "Plano Plurianual 2028–2031",
         primeiroAno: ANOS[0],
         ultimoAno: ANOS[ANOS.length - 1],
@@ -58,7 +61,9 @@ function carregar() {
     }
     if (!base) base = estadoInicial();
     // Estado gravado antes de o PPA existir como entidade.
-    if (!base.ppa) base.ppa = ppaInicial(base.programas);
+    // Estado gravado antes de o PPA existir, ou quando ele ainda era único.
+    if (!base.ppas) base.ppas = base.ppa ? [base.ppa] : [ppaInicial(base.programas)];
+    delete base.ppa;
     return base;
 }
 
@@ -86,15 +91,48 @@ export function aoMudar(fn) {
 /** Volta aos dados de demonstração. */
 export function reiniciar() {
     estado = estadoInicial();
-    estado.ppa = ppaInicial(estado.programas);
+    estado.ppas = [ppaInicial(estado.programas)];
     gravar();
 }
 
 /* ---------- PPA ---------- */
 
-export function updPpa(patch) {
-    Object.assign(estado.ppa, patch);
+export function addPpa(ppa) {
+    estado.ppas.push({ ...ppa, id: ppa.id || `ppa-${uid()}` });
     gravar();
+}
+
+export function updPpa(id, patch) {
+    const ppa = estado.ppas.find((p) => p.id === id);
+    if (!ppa) return;
+    Object.assign(ppa, patch);
+    gravar();
+}
+
+export function removePpa(id) {
+    estado.ppas = estado.ppas.filter((p) => p.id !== id);
+    gravar();
+}
+
+/** Modelo de um plano novo, já com o período seguinte ao último cadastrado. */
+export function ppaVazio() {
+    const ultimo = [...estado.ppas].sort((a, b) => Number(b.ultimoAno) - Number(a.ultimoAno))[0];
+    const inicio = ultimo ? Number(ultimo.ultimoAno) + 1 : 2028;
+    return {
+        id: `ppa-${uid()}`,
+        nome: `Plano Plurianual ${inicio}–${inicio + 3}`,
+        primeiroAno: String(inicio),
+        ultimoAno: String(inicio + 3),
+        lei: "",
+        dataLei: "",
+        orgaoResponsavel: "Secretaria de Estado da Economia",
+        situacao: "em_elaboracao",
+        aberturaContribuicoes: "",
+        encerramentoContribuicoes: "",
+        mensagem: "",
+        eixos: [],
+        objetivos: [],
+    };
 }
 
 /* ---------- utilidades internas ---------- */
