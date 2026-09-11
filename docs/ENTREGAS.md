@@ -65,6 +65,10 @@ Perfis definidos pelo time: Setorial, Administrador central, Alta gestão setori
 central e Órgãos de controle. Os três últimos acompanham sem operar — veem tudo da sua visão, sem
 os botões de ação.
 
+Administração ganha o **Cadastro do PPA**: o plano passa a existir como entidade, com identificação,
+lei, prazo do ciclo e as listas de eixos e objetivos estratégicos — que no protótipo eram texto
+solto, redigitado em cada Programa.
+
 ---
 
 ## Próxima entrega

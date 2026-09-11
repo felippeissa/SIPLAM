@@ -35,7 +35,8 @@ const MENU_CENTRAL = [
     { href: "central-projetos.html", rotulo: "Projetos", icone: "ti-git-branch" },
     { href: "central-ipofs.html", rotulo: "IPOFs", icone: "ti-receipt" },
     { grupo: "Administração" },
-    { href: "central-programas.html", rotulo: "Programas do PPA", icone: "ti-settings" },
+    { href: "central-ppa.html", rotulo: "PPA", icone: "ti-calendar-stats" },
+    { href: "central-programas.html", rotulo: "Programas", icone: "ti-layout-grid" },
 ];
 
 /**
