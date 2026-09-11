@@ -8,35 +8,21 @@
  * Quem altera o estado deve fazê-lo pelas funções daqui — elas cuidam de
  * registrar evento, tocar a data de atualização e gravar.
  */
-import { estadoInicial, ANOS } from "./seed.js";
+import { estadoInicial } from "./seed.js";
 
 /**
- * O protótipo não tinha o plano como entidade: eixo e objetivo estratégico eram
- * texto solto dentro de cada Programa. O cadastro do PPA passa a guardá-los em
- * um lugar só, junto da identificação e do prazo do ciclo.
+ * O plano como entidade, que o protótipo não tinha.
  *
- * É uma lista: o plano é quadrienal e o sistema atravessa mais de um ciclo.
+ * É uma lista: o PPA é quadrienal e o sistema atravessa mais de um ciclo.
+ * Por ora são quatro campos; os demais entram depois de conversar com o usuário.
  */
-function ppaInicial(programas) {
-    const eixos = [...new Set(programas.map((p) => p.eixo).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-    const objetivos = [...new Set(programas.map((p) => p.objetivoEstrategico).filter(Boolean))].sort((a, b) =>
-        a.localeCompare(b)
-    );
-
+function ppaInicial() {
     return {
         id: "ppa-2028",
         nome: "Plano Plurianual 2028–2031",
-        primeiroAno: ANOS[0],
-        ultimoAno: ANOS[ANOS.length - 1],
-        lei: "",
-        dataLei: "",
-        orgaoResponsavel: "Secretaria de Estado da Economia",
-        situacao: "em_elaboracao",
-        aberturaContribuicoes: "",
-        encerramentoContribuicoes: "",
-        mensagem: "",
-        eixos,
-        objetivos,
+        primeiroAno: "2028",
+        ultimoAno: "2031",
+        descricao: "",
     };
 }
 
@@ -62,7 +48,7 @@ function carregar() {
     if (!base) base = estadoInicial();
     // Estado gravado antes de o PPA existir como entidade.
     // Estado gravado antes de o PPA existir, ou quando ele ainda era único.
-    if (!base.ppas) base.ppas = base.ppa ? [base.ppa] : [ppaInicial(base.programas)];
+    if (!base.ppas) base.ppas = base.ppa ? [base.ppa] : [ppaInicial()];
     delete base.ppa;
     return base;
 }
@@ -91,7 +77,7 @@ export function aoMudar(fn) {
 /** Volta aos dados de demonstração. */
 export function reiniciar() {
     estado = estadoInicial();
-    estado.ppas = [ppaInicial(estado.programas)];
+    estado.ppas = [ppaInicial()];
     gravar();
 }
 
@@ -123,15 +109,7 @@ export function ppaVazio() {
         nome: `Plano Plurianual ${inicio}–${inicio + 3}`,
         primeiroAno: String(inicio),
         ultimoAno: String(inicio + 3),
-        lei: "",
-        dataLei: "",
-        orgaoResponsavel: "Secretaria de Estado da Economia",
-        situacao: "em_elaboracao",
-        aberturaContribuicoes: "",
-        encerramentoContribuicoes: "",
-        mensagem: "",
-        eixos: [],
-        objetivos: [],
+        descricao: "",
     };
 }
 
