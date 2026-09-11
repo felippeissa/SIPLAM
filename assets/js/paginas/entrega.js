@@ -304,17 +304,21 @@ function render() {
                 </table></div>`
                 }`
             )}
+            ${secao(
+                "Previsão financeira da Entrega",
+                quadroFinanceiro(linhasDaEntrega(estado, e.id), {
+                    dimensao: "fonte",
+                    detalhe: "acao",
+                    curto: false,
+                    vazio: "Sem Ação vinculada, a Entrega não tem valor financeiro no PPA.",
+                })
+            )}
         </div>
 
         <div class="col-xl-4">
             ${secao(
                 `Pendências desta Entrega <span class="ms-1">${chipsPendencias(resumo)}</span>`,
                 listaPendencias(pendencias, { linkEntrega: false })
-            )}
-
-            ${secao(
-                "Previsão financeira da Entrega",
-                quadroFinanceiro(linhasDaEntrega(estado, e.id), { dimensao: "fonte", detalhe: "acao", curto: false, vazio: "Sem Ação vinculada, a Entrega não tem valor financeiro no PPA." })
             )}
 
             ${secao(

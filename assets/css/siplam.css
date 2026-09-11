@@ -10,6 +10,17 @@
     background-color: #e9f8f1;
 }
 
+/* Tokens do SIPLAM. */
+:root {
+    --siplam-aninhado-bg: #f2f6fa;
+    --siplam-aninhado-traco: #c9d6e2;
+}
+
+[data-bs-theme="dark"] {
+    --siplam-aninhado-bg: #1d242b;
+    --siplam-aninhado-traco: #38454f;
+}
+
 /* ---------- Densidade ---------- */
 /* O protótipo roda em 13px com rótulos de 11px; o Inspinia é 14px. */
 .content-page {
@@ -126,11 +137,48 @@
     color: var(--bs-secondary-color);
     cursor: pointer;
 }
+.btn-expandir:hover { color: var(--bs-primary); }
+.btn-expandir:focus-visible {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 2px;
+    border-radius: 3px;
+}
 .btn-expandir .ti { transition: transform 0.15s ease; }
 .btn-expandir[aria-expanded="true"] .ti { transform: rotate(90deg); }
-.linha-filha > td { background-color: var(--bs-tertiary-bg); }
-.tabela-aninhada { margin: 0; }
-.tabela-aninhada > thead > tr > th { font-size: 10px; }
+
+/* A expansão precisa se ler como "dentro de": fundo próprio, recuo e um traço
+   na lateral que amarra as linhas filhas à linha-mãe.
+   O Bootstrap pinta a célula por box-shadow (--bs-table-bg-type), então o fundo
+   vai por lá e o traço por border-left, para um não anular o outro. */
+.table > tbody > tr.linha-filha {
+    --bs-table-bg-type: var(--siplam-aninhado-bg);
+}
+.table > tbody > tr.linha-filha > td {
+    border-left: 3px solid var(--siplam-aninhado-traco);
+    padding-left: 1.1rem;
+}
+.table-hover > tbody > tr.linha-filha:hover {
+    --bs-table-bg-type: var(--siplam-aninhado-bg);
+}
+.tabela-aninhada {
+    margin: 0;
+    --bs-table-bg: transparent;
+}
+.tabela-aninhada > thead > tr > th {
+    font-size: 10px;
+    color: var(--bs-secondary-color);
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+}
+.tabela-aninhada > tbody > tr > td {
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+}
+/* Um nível mais fundo: traço mais claro e recuo menor, para não empurrar demais. */
+.tabela-aninhada > tbody > tr.linha-filha > td,
+.tabela-aninhada tr:not(.linha-filha) > td > table {
+    border-left-color: var(--bs-border-color);
+}
 
 /* ---------- Barra de filtros ---------- */
 /* Os selects dentro de um flex esticam por padrão; aqui cada um fica do seu tamanho. */
@@ -151,4 +199,48 @@
 }
 .barra-filtros .app-search .form-control {
     min-width: 16rem;
+}
+
+/* ---------- Ajustes finos ---------- */
+/* As divisórias da faixa somem em telas menores, quando os itens quebram. */
+.faixa-item { border-right-color: var(--bs-border-color); }
+@media (max-width: 575.98px) {
+    .faixa-item {
+        border-right: 0;
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+}
+
+/* Cabeçalho de seção com chips ao lado do rótulo. */
+.card-header .rotulo-secao {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+/* Quadro financeiro: em coluna estreita, rola dentro do próprio card. */
+.card-body > .table-responsive { margin-bottom: 0; }
+
+/* Paleta de busca global. */
+.busca-resultado {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    background: transparent;
+    padding: 0.45rem 0.75rem;
+    border-radius: 0.375rem;
+    color: inherit;
+}
+.busca-resultado:hover,
+.busca-resultado.ativo {
+    background-color: var(--bs-tertiary-bg);
+}
+.busca-grupo {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--bs-secondary-color);
+    padding: 0.6rem 0.75rem 0.2rem;
 }

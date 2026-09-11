@@ -134,7 +134,7 @@
 
                     // O perfil da sessão vale mesmo quando o usuário não quer lembrar.
                     Acesso.gravar("siplam.perfilSessao", select.value);
-                    window.location.href = "sistema.html";
+                    window.location.href = Acesso.telaInicial(select.value);
                 });
 
                 document.getElementById("cancelar").addEventListener("click", function () {

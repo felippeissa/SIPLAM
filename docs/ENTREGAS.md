@@ -41,11 +41,18 @@ testadas no navegador, sem erro de console.
 Problemas do protótipo corrigidos nesta leva: T5.2.3, T5.3.5, T5.4.5, T5.5.6, T5.8.6, T5.8.9,
 T5.9.9, T6.1.7, T6.2.7, T6.4.16, T6.6.9, T6.6.13 e T6.7.4.
 
+### 5 · Revisão de layout e busca global — `2026-09-11`
+
+Hierarquia visual das tabelas aninhadas (fundo, traço lateral e recuo por nível), quadro
+financeiro movido para fora da coluna estreita, filtros que não esticam mais, busca global com
+`Ctrl+K` funcionando, e a escolha de perfil levando à tela inicial do perfil em vez da tela de
+espera, que foi removida.
+
 ---
 
 ## Próxima entrega
 
-### 5 · Atena, busca global e documentos
+### 6 · Atena e documentos
 
 **Objetivo:** o esqueleto que todas as telas vão usar, navegável nas duas visões.
 
