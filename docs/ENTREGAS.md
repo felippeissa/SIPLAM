@@ -61,6 +61,10 @@ Header ganha Notificações e Atena como ícones, ambos ligados aos dados. Na Vi
 filhas passaram a usar as colunas da tabela-mãe: com sub-tabela própria, o número de Iniciativas de
 um órgão caía sob "Em preenchimento" do Programa.
 
+Perfis definidos pelo time: Setorial, Administrador central, Alta gestão setorial, Alta gestão
+central e Órgãos de controle. Os três últimos acompanham sem operar — veem tudo da sua visão, sem
+os botões de ação.
+
 ---
 
 ## Próxima entrega

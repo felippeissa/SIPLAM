@@ -38,11 +38,22 @@ const MENU_CENTRAL = [
     { href: "central-programas.html", rotulo: "Programas do PPA", icone: "ti-settings" },
 ];
 
-/** Os dois perfis do sistema. A visão de cada um decorre daqui. */
+/**
+ * Perfis do sistema. A visão e o modo de leitura decorrem daqui.
+ * Espelha `assets/js/acesso.js`, que é a fonte usada no fluxo de acesso.
+ */
 const PERFIL = {
-    "analista-setorial": { nome: "Analista Setorial", visao: "setorial" },
-    "analista-central": { nome: "Analista da Área Central", visao: "central" },
+    setorial: { nome: "Setorial", visao: "setorial", leitura: false },
+    "admin-central": { nome: "Administrador central", visao: "central", leitura: false },
+    "gestao-setorial": { nome: "Alta gestão setorial", visao: "setorial", leitura: true },
+    "gestao-central": { nome: "Alta gestão central", visao: "central", leitura: true },
+    controle: { nome: "Órgãos de controle", visao: "central", leitura: true },
 };
+
+/** Perfis de acompanhamento não operam o plano. */
+export function somenteLeitura() {
+    return PERFIL[perfilDaSessao()]?.leitura === true;
+}
 
 /** Visão da página aberta: tudo que começa com "central" é área central. */
 export function visaoAtual() {
@@ -78,7 +89,7 @@ function quemEntrou(estado, central) {
 
     return {
         nome: usuario || (central ? estado.analista : estado.usuario),
-        papel: PERFIL[perfilId]?.nome || (central ? "Analista da Área Central" : "Analista Setorial"),
+        papel: PERFIL[perfilId]?.nome || (central ? "Administrador central" : "Setorial"),
         orgao: central ? null : estado.orgaoAtual,
     };
 }
@@ -119,6 +130,7 @@ function topbar(estado, visao) {
                  em qual delas o usuário está. -->
             <div class="topbar-item d-none d-md-flex ms-1 align-items-center">
                 <span class="chip chip-info">${central ? "Visão Área Central" : "Visão Setorial"}</span>
+                ${somenteLeitura() ? `<span class="chip chip-neutro ms-2" title="Este perfil acompanha o plano, sem operá-lo"><i class="ti ti-eye me-1"></i>Somente leitura</span>` : ""}
                 ${quem.orgao ? `<span class="fs-12 text-muted ms-2">${quem.orgao}</span>` : ""}
             </div>
         </div>

@@ -44,16 +44,24 @@ Não leia `prototipo-lovable/` inteiro nem `inspinia/` inteiro. São referência
 - O **Projeto GOMAP** descreve *como* a Entrega é produzida. Seu valor global **nunca** é o valor da Entrega.
 - **Entrega** é resultado para a sociedade, não obra. "Construção de X" é nome de Projeto, não de Entrega.
 
-## Dois perfis, duas visões
+## Perfis e visões
 
-**A visão é consequência do perfil**, não uma escolha na interface. São dois perfis:
+**A visão é consequência do perfil**, não uma escolha na interface. Cinco perfis:
 
-- **Analista Setorial** → visão setorial: Programas · Iniciativas · Entregas · Indicadores.
-- **Analista da Área Central** → visão da área central: Visão Geral · Entregas · Órgãos ·
-  Análises (Causas, Financeira, Projetos, IPOFs) · Administração de Programas.
+| Perfil | Visão | Opera o plano |
+|---|---|---|
+| Setorial | setorial | sim — preenche e envia |
+| Administrador central | central | sim — analisa, valida e administra |
+| Alta gestão setorial | setorial | não — acompanha |
+| Alta gestão central | central | não — acompanha |
+| Órgãos de controle | central | não — consulta |
 
-O perfil é escolhido a cada acesso, em `perfil.html`, e define a tela inicial e o menu. Abrir uma
-tela da outra visão devolve o usuário para a dele. Não existe comutador de visão no cabeçalho.
+O perfil é escolhido a cada acesso, em `perfil.html`, e define a tela inicial, o menu e se o
+usuário opera ou apenas acompanha. Abrir uma tela da outra visão devolve o usuário para a dele.
+Não existe comutador de visão no cabeçalho.
+
+Os perfis de acompanhamento veem tudo da sua visão, sem os botões de ação. **O recorte exato de
+cada um ainda precisa ser confirmado com os stakeholders** — aqui vale a leitura mais conservadora.
 
 ## Convenções
 
