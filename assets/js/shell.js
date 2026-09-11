@@ -36,17 +36,24 @@ const MENU_CENTRAL = [
     { href: "central-programas.html", rotulo: "Programas do PPA", icone: "ti-settings" },
 ];
 
+/** Os dois perfis do sistema. A visão de cada um decorre daqui. */
 const PERFIL = {
-    "tecnico-setorial": "Técnico setorial",
-    "ponto-focal": "Ponto focal do órgão",
-    "analista-central": "Analista da Área Central",
-    "admin-programas": "Administrador de Programas",
-    consulta: "Consulta",
+    "analista-setorial": { nome: "Analista Setorial", visao: "setorial" },
+    "analista-central": { nome: "Analista da Área Central", visao: "central" },
 };
 
-/** A visão vem do nome do arquivo: tudo que começa com "central" é área central. */
+/** Visão da página aberta: tudo que começa com "central" é área central. */
 export function visaoAtual() {
     return paginaAtual().startsWith("central") ? "central" : "setorial";
+}
+
+/** Perfil escolhido no acesso. */
+function perfilDaSessao() {
+    try {
+        return localStorage.getItem("siplam.perfilSessao") || localStorage.getItem("siplam.perfil");
+    } catch (e) {
+        return null;
+    }
 }
 
 function paginaAtual() {
@@ -59,10 +66,9 @@ function inicio(visao) {
 
 /** Nome e perfil de quem entrou, vindos do fluxo de acesso. */
 function quemEntrou(estado, central) {
-    let perfilId = null;
+    const perfilId = perfilDaSessao();
     let usuario = null;
     try {
-        perfilId = localStorage.getItem("siplam.perfilSessao");
         usuario = localStorage.getItem("siplam.usuario");
     } catch (e) {
         /* navegador sem armazenamento */
@@ -70,7 +76,8 @@ function quemEntrou(estado, central) {
 
     return {
         nome: usuario || (central ? estado.analista : estado.usuario),
-        papel: PERFIL[perfilId] || (central ? "Área Central" : estado.orgaoAtual),
+        papel: PERFIL[perfilId]?.nome || (central ? "Analista da Área Central" : "Analista Setorial"),
+        orgao: central ? null : estado.orgaoAtual,
     };
 }
 
@@ -106,13 +113,11 @@ function topbar(estado, visao) {
                 <kbd class="app-search-atalho d-none d-xl-block">Ctrl K</kbd>
             </div>
 
-            <!-- A navegação entre as duas visões fica no grupo da esquerda, onde o
-                 template põe os itens de menu; a direita é do usuário. -->
-            <div class="topbar-item d-none d-md-flex ms-1">
-                <div class="btn-group btn-group-sm" role="group" aria-label="Alternar visão">
-                    <a href="programas.html" class="btn ${central ? "btn-light" : "btn-primary"}">Visão Setorial</a>
-                    <a href="central.html" class="btn ${central ? "btn-primary" : "btn-light"}">Visão Área Central</a>
-                </div>
+            <!-- A visão decorre do perfil: não há comutador. O rótulo abaixo diz
+                 em qual delas o usuário está. -->
+            <div class="topbar-item d-none d-md-flex ms-1 align-items-center">
+                <span class="chip chip-info">${central ? "Visão Área Central" : "Visão Setorial"}</span>
+                ${quem.orgao ? `<span class="fs-12 text-muted ms-2">${quem.orgao}</span>` : ""}
             </div>
         </div>
 
@@ -131,15 +136,12 @@ function topbar(estado, visao) {
                     <div class="dropdown-menu dropdown-menu-end">
                         <div class="dropdown-header noti-title">
                             <h6 class="text-overflow m-0">${quem.nome}</h6>
-                            <span class="fs-12 text-muted">${quem.papel}</span>
+                            <span class="fs-12 text-muted d-block">${quem.papel}</span>
+                            ${quem.orgao ? `<span class="fs-12 text-muted">${quem.orgao}</span>` : ""}
                         </div>
                         <a href="perfil.html" class="dropdown-item">
                             <i class="ti ti-switch-horizontal me-1 fs-lg align-middle"></i>
                             <span class="align-middle">Trocar perfil</span>
-                        </a>
-                        <a href="${central ? "programas.html" : "central.html"}" class="dropdown-item d-md-none">
-                            <i class="ti ti-arrows-exchange me-1 fs-lg align-middle"></i>
-                            <span class="align-middle">Ir para a ${central ? "Visão Setorial" : "Área Central"}</span>
                         </a>
                         <div class="dropdown-divider"></div>
                         <a href="index.html" class="dropdown-item text-danger fw-semibold">
@@ -227,6 +229,15 @@ function rodape() {
 export function montarShell() {
     const estado = obterEstado();
     const visao = visaoAtual();
+
+    // A visão é do perfil: entrar numa tela da outra visão devolve o usuário
+    // para a dele, em vez de misturar menu de um com conteúdo do outro.
+    const perfilId = perfilDaSessao();
+    const doPerfil = PERFIL[perfilId]?.visao;
+    if (doPerfil && doPerfil !== visao) {
+        location.replace(doPerfil === "central" ? "central.html" : "programas.html");
+        return { estado, visao: doPerfil };
+    }
 
     const alvoTopbar = document.getElementById("shell-topbar");
     const alvoSidenav = document.getElementById("shell-sidenav");

@@ -53,6 +53,10 @@ Pente fino no shell: topbar e sidenav reescritas fiéis ao markup do Inspinia. O
 exigia `.button-on-hover`, `.button-close-offcanvas` e o wrapper `.scrollbar[data-simplebar]`,
 todos ausentes, o que quebrava o modo offcanvas. Conferido nos três tamanhos.
 
+Modelo de perfis corrigido: Visão Setorial e Visão Área Central **são perfis**, não um comutador.
+Os cinco perfis que eu havia proposto deram lugar aos dois reais — Analista Setorial e Analista da
+Área Central — e a visão passou a decorrer do perfil escolhido no acesso.
+
 ---
 
 ## Próxima entrega
