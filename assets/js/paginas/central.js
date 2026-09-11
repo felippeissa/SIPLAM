@@ -85,61 +85,69 @@ function filtros() {
     </select>`;
 }
 
+/**
+ * As linhas filhas usam as mesmas colunas da tabela-mãe: o número de Iniciativas
+ * de um órgão cai sob "Iniciativas", e a contagem por status sob a coluna
+ * daquele status. Com sub-tabela própria, cada nível tinha largura distinta e os
+ * números apareciam sob o cabeçalho errado.
+ */
 function linhaIniciativa(i) {
     const rotulo =
         i.status === "enviada" ? "Analisar" : i.status === "em_analise" ? "Continuar análise" : "Visualizar";
+    const marca = (status) => (i.status === status ? statusChip(i.status) : "—");
+
     return `
-    <tr>
-        <td>↳ ${esc(i.nome)}</td>
-        <td>${statusChip(i.status)}</td>
-        <td class="num">${entregasDaIniciativa(estado, i.id).length}</td>
-        <td class="fs-12 text-muted">${esc(i.atualizadoEm)}</td>
-        <td class="fs-12 text-muted">${esc(i.analista ?? "—")}</td>
+    <tr class="nivel-3">
+        <td></td>
+        <td></td>
+        <td class="recuo-3">
+            <span>${esc(i.nome)}</span>
+            <div class="fs-12 text-muted">
+                ${entregasDaIniciativa(estado, i.id).length} entrega(s) · atualizada em ${esc(i.atualizadoEm)}
+                · analista ${esc(i.analista ?? "não atribuído")}
+            </div>
+        </td>
+        <td></td>
+        <td class="num">1</td>
+        <td class="num">${marca("em_preenchimento")}</td>
+        <td class="num">${marca("enviada")}</td>
+        <td class="num">${marca("em_analise")}</td>
+        <td class="num">${marca("devolvida")}</td>
+        <td class="num">${marca("validada")}</td>
         <td><a href="central-iniciativa.html?id=${i.id}" class="btn btn-sm btn-outline-primary">${rotulo}</a></td>
     </tr>`;
 }
 
-function blocoOrgao(l, orgao) {
+function linhasOrgao(l, orgao) {
     const chave = `${l.programa.id}|${orgao}`;
     const inis = l.inis.filter((i) => i.orgao === orgao);
-    const entregas = inis.reduce((s, i) => s + entregasDaIniciativa(estado, i.id).length, 0);
-    const resumo = Object.entries(
-        inis.reduce((acc, i) => {
-            const rot = STATUS_CURTO[i.status];
-            acc[rot] = (acc[rot] ?? 0) + 1;
-            return acc;
-        }, {})
-    )
-        .map(([s, n]) => `${n} ${s.toLowerCase()}`)
-        .join(" · ");
-
     const aberto = orgaosAbertos.has(chave);
+    const conta = (status) => inis.filter((i) => i.status === status).length;
+    const entregas = inis.reduce((s, i) => s + entregasDaIniciativa(estado, i.id).length, 0);
+    const ou = (n) => n || "—";
 
-    return `
-    <tr>
-        <td style="width:2rem">
+    const linha = `
+    <tr class="nivel-2">
+        <td></td>
+        <td></td>
+        <td class="recuo-2">
             <button class="btn-expandir" data-orgao="${esc(chave)}" aria-expanded="${aberto}" aria-label="${aberto ? "Recolher" : "Expandir"} ${esc(orgao)}">
                 <i class="ti ti-chevron-right"></i>
             </button>
+            <span class="fw-medium ms-1">${esc(orgao)}</span>
+            <div class="fs-12 text-muted">${entregas} entrega(s)</div>
         </td>
-        <td class="fw-medium">${esc(orgao)}</td>
+        <td></td>
         <td class="num">${inis.length}</td>
-        <td class="num">${entregas}</td>
-        <td class="fs-12 text-muted">${esc(resumo)}</td>
-    </tr>
-    ${
-        aberto
-            ? `<tr><td></td><td colspan="4" class="pb-3">
-        <table class="table table-sm tabela-aninhada">
-            <thead><tr>
-                <th>Iniciativa</th><th style="width:11rem">Status</th><th class="num" style="width:6rem">Entregas</th>
-                <th style="width:8rem">Atualização</th><th style="width:9rem">Analista</th><th style="width:9rem">Ações</th>
-            </tr></thead>
-            <tbody>${inis.map(linhaIniciativa).join("")}</tbody>
-        </table>
-    </td></tr>`
-            : ""
-    }`;
+        <td class="num">${ou(conta("em_preenchimento"))}</td>
+        <td class="num">${ou(conta("enviada"))}</td>
+        <td class="num">${ou(conta("em_analise"))}</td>
+        <td class="num">${ou(conta("devolvida"))}</td>
+        <td class="num">${ou(conta("validada"))}</td>
+        <td></td>
+    </tr>`;
+
+    return linha + (aberto ? inis.map(linhaIniciativa).join("") : "");
 }
 
 function linhaPrograma(l) {
@@ -180,19 +188,9 @@ function linhaPrograma(l) {
     </tr>
     ${
         aberto
-            ? `<tr class="linha-filha"><td></td><td colspan="10" class="py-3">
-        ${
-            l.orgaos.length === 0
-                ? '<span class="fs-12 text-muted">Nenhum órgão cadastrou Iniciativas neste Programa.</span>'
-                : `<table class="table table-sm tabela-aninhada">
-            <thead><tr>
-                <th style="width:2rem"></th><th>Órgão</th><th class="num" style="width:7rem">Iniciativas</th>
-                <th class="num" style="width:7rem">Entregas</th><th>Situação resumida</th>
-            </tr></thead>
-            <tbody>${l.orgaos.map((o) => blocoOrgao(l, o)).join("")}</tbody>
-        </table>`
-        }
-    </td></tr>`
+            ? l.orgaos.length === 0
+                ? `<tr class="nivel-2"><td></td><td></td><td colspan="9" class="recuo-2 fs-12 text-muted">Nenhum órgão cadastrou Iniciativas neste Programa.</td></tr>`
+                : l.orgaos.map((o) => linhasOrgao(l, o)).join("")
             : ""
     }`;
 }
