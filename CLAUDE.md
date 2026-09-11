@@ -33,7 +33,7 @@ Não leia `prototipo-lovable/` inteiro nem `inspinia/` inteiro. São referência
 ## Decisões já tomadas
 
 - Bootstrap 5 + Inspinia 5; ícones Tabler (`ti ti-*`); DataTables; ApexCharts/ECharts; Choices.js; SweetAlert2.
-- Sem GitHub Pages por enquanto.
+- Publicado no GitHub Pages a partir da raiz de `main`: https://felippeissa.github.io/SIPLAM/
 - Escopo atual é **front-end e design**: sem API, sem banco, sem autenticação.
 - O estado do protótipo vive em `localStorage`; nada de servidor nesta fase.
 

@@ -34,31 +34,49 @@ const MENU_CENTRAL = [
     { href: "central-financeira.html", rotulo: "Financeira", icone: "ti-coins" },
     { href: "central-projetos.html", rotulo: "Projetos", icone: "ti-git-branch" },
     { href: "central-ipofs.html", rotulo: "IPOFs", icone: "ti-receipt" },
+    { grupo: "Cadastros" },
+    { href: "central-ppa.html", rotulo: "Cadastro de PPA", icone: "ti-calendar-stats" },
+    { href: "central-diagnostico.html", rotulo: "Cadastro de Diagnóstico", icone: "ti-stethoscope" },
+    { href: "central-causa.html", rotulo: "Cadastro de Causa", icone: "ti-binary-tree" },
+    { href: "central-problema.html", rotulo: "Cadastro de Problemas", icone: "ti-alert-triangle" },
+    { href: "central-subproblema.html", rotulo: "Cadastro de Subproblemas", icone: "ti-subtask" },
     { grupo: "Administração" },
-    { href: "central-ppa.html", rotulo: "PPA", icone: "ti-calendar-stats" },
     { href: "central-programas.html", rotulo: "Programas", icone: "ti-layout-grid" },
 ];
 
 /**
- * Perfis do sistema. A visão e o modo de leitura decorrem daqui.
+ * Perfis do sistema. A visão, o modo de leitura e o menu decorrem daqui.
  * Espelha `assets/js/acesso.js`, que é a fonte usada no fluxo de acesso.
+ *
+ * `construcao: true` marca o perfil cujas telas ainda não existem: ele não tem
+ * menu, para não oferecer caminho que não é dele.
  */
 const PERFIL = {
-    setorial: { nome: "Setorial", visao: "setorial", leitura: false },
-    "admin-central": { nome: "Administrador central", visao: "central", leitura: false },
-    "gestao-setorial": { nome: "Alta gestão setorial", visao: "setorial", leitura: true },
-    "gestao-central": { nome: "Alta gestão central", visao: "central", leitura: true },
-    controle: { nome: "Órgãos de controle", visao: "central", leitura: true },
+    setorial: { nome: "Setorial", visao: "setorial", leitura: false, construcao: true },
+    "admin-central": { nome: "Administrador central", visao: "central", leitura: false, construcao: false },
+    "gestao-setorial": { nome: "Alta gestão setorial", visao: "setorial", leitura: true, construcao: true },
+    "gestao-central": { nome: "Alta gestão central", visao: "central", leitura: true, construcao: true },
+    controle: { nome: "Órgãos de controle", visao: "central", leitura: true, construcao: true },
 };
+
+/** O perfil ainda não tem telas construídas? */
+export function emConstrucao() {
+    return PERFIL[perfilDaSessao()]?.construcao === true;
+}
 
 /** Perfis de acompanhamento não operam o plano. */
 export function somenteLeitura() {
     return PERFIL[perfilDaSessao()]?.leitura === true;
 }
 
-/** Visão da página aberta: tudo que começa com "central" é área central. */
+/**
+ * Visão da página aberta: tudo que começa com "central" é área central.
+ * A home provisória não pertence a nenhuma das duas, então segue o perfil.
+ */
 export function visaoAtual() {
-    return paginaAtual().startsWith("central") ? "central" : "setorial";
+    const pagina = paginaAtual();
+    if (pagina === "em-construcao.html") return PERFIL[perfilDaSessao()]?.visao ?? "setorial";
+    return pagina.startsWith("central") ? "central" : "setorial";
 }
 
 /** Perfil escolhido no acesso. */
@@ -127,12 +145,11 @@ function topbar(estado, visao) {
                 <kbd class="app-search-atalho d-none d-xl-block">Ctrl K</kbd>
             </div>
 
-            <!-- A visão decorre do perfil: não há comutador. O rótulo abaixo diz
-                 em qual delas o usuário está. -->
+            <!-- Não há comutador de visão: a visão é o perfil, escolhido no acesso. -->
             <div class="topbar-item d-none d-md-flex ms-1 align-items-center">
-                <span class="chip chip-info">${central ? "Visão Área Central" : "Visão Setorial"}</span>
-                ${somenteLeitura() ? `<span class="chip chip-neutro ms-2" title="Este perfil acompanha o plano, sem operá-lo"><i class="ti ti-eye me-1"></i>Somente leitura</span>` : ""}
+                <span class="chip chip-info">${quem.papel}</span>
                 ${quem.orgao ? `<span class="fs-12 text-muted ms-2">${quem.orgao}</span>` : ""}
+                ${somenteLeitura() ? `<span class="chip chip-neutro ms-2" title="Este perfil acompanha o plano, sem operá-lo"><i class="ti ti-eye me-1"></i>Somente leitura</span>` : ""}
             </div>
         </div>
 
@@ -186,7 +203,7 @@ function topbar(estado, visao) {
 }
 
 function sidenav(visao) {
-    const menu = visao === "central" ? MENU_CENTRAL : MENU_SETORIAL;
+    const menu = emConstrucao() ? [] : visao === "central" ? MENU_CENTRAL : MENU_SETORIAL;
     const atual = paginaAtual();
     const raiz = inicio(visao);
 
@@ -228,8 +245,13 @@ function sidenav(visao) {
     <div class="scrollbar" data-simplebar>
         <div id="sidenav-menu">
             <ul class="side-nav">
-                <li class="side-nav-title">${visao === "central" ? "Área Central" : "Meu órgão"}</li>
-                ${itens}
+                ${
+                    emConstrucao()
+                        ? `<li class="side-nav-title">Em construção</li>
+                           <li class="px-3 py-2 fs-12 text-muted">As telas deste perfil ainda não foram construídas.</li>`
+                        : `<li class="side-nav-title">${visao === "central" ? "Área Central" : "Meu órgão"}</li>
+                           ${itens}`
+                }
             </ul>
         </div>
     </div>
@@ -258,15 +280,6 @@ function rodape() {
 export function montarShell() {
     const estado = obterEstado();
     const visao = visaoAtual();
-
-    // A visão é do perfil: entrar numa tela da outra visão devolve o usuário
-    // para a dele, em vez de misturar menu de um com conteúdo do outro.
-    const perfilId = perfilDaSessao();
-    const doPerfil = PERFIL[perfilId]?.visao;
-    if (doPerfil && doPerfil !== visao) {
-        location.replace(doPerfil === "central" ? "central.html" : "programas.html");
-        return { estado, visao: doPerfil };
-    }
 
     const alvoTopbar = document.getElementById("shell-topbar");
     const alvoSidenav = document.getElementById("shell-sidenav");

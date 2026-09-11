@@ -25,6 +25,9 @@
     };
 
     /**
+     * Só o Administrador central tem telas construídas; os demais perfis caem na
+     * home provisória e ficam sem menu, até que as telas deles existam.
+     *
      * A visão é consequência do perfil, não uma escolha na interface.
      *
      * `leitura: true` marca quem acompanha o plano sem operá-lo — alta gestão e
@@ -37,7 +40,8 @@
             id: "setorial",
             nome: "Setorial",
             visao: "setorial",
-            inicio: "programas.html",
+            // Sem tela própria ainda: cai na home provisória.
+            inicio: null,
             leitura: false,
             descricao: "Elabora e envia as contribuições do órgão",
         },
@@ -53,7 +57,8 @@
             id: "gestao-setorial",
             nome: "Alta gestão setorial",
             visao: "setorial",
-            inicio: "programas.html",
+            // Sem tela própria ainda: cai na home provisória.
+            inicio: null,
             leitura: true,
             descricao: "Acompanha as contribuições do próprio órgão",
         },
@@ -61,7 +66,8 @@
             id: "gestao-central",
             nome: "Alta gestão central",
             visao: "central",
-            inicio: "central.html",
+            // Sem tela própria ainda: cai na home provisória.
+            inicio: null,
             leitura: true,
             descricao: "Acompanha a consolidação do plano",
         },
@@ -69,7 +75,8 @@
             id: "controle",
             nome: "Órgãos de controle",
             visao: "central",
-            inicio: "central.html",
+            // Sem tela própria ainda: cai na home provisória.
+            inicio: null,
             leitura: true,
             descricao: "Consulta o plano e sua execução",
         },
@@ -145,9 +152,12 @@
         return valido;
     }
 
-    /** Para onde o perfil escolhido leva. */
+    /**
+     * Para onde o perfil escolhido leva. Perfil sem tela própria cai na home
+     * provisória, em vez de na tela de outro perfil.
+     */
     function telaInicial(perfilId) {
-        return perfilPorId(perfilId)?.inicio || "programas.html";
+        return perfilPorId(perfilId)?.inicio || "em-construcao.html";
     }
 
     /** Visão do perfil: "setorial" ou "central". */

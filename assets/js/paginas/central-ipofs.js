@@ -235,7 +235,11 @@ conteudo.addEventListener("input", (e) => {
     if (e.target.id === "busca") {
         busca = e.target.value;
         render();
-        document.getElementById("busca").focus();
+        // O campo é recriado a cada tecla: sem devolver o cursor ao fim, o
+        // texto digitado sai embaralhado.
+        const campo = document.getElementById("busca");
+        campo.focus();
+        campo.setSelectionRange(campo.value.length, campo.value.length);
     }
 });
 

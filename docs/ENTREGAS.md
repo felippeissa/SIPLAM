@@ -71,6 +71,31 @@ solto, redigitado em cada Programa. O plano é uma lista: tabela com os ciclos c
 para criar ou editar, no padrão da Administração de Programas. Quatro campos por ora — nome,
 primeiro ano, último ano e descrição; os demais entram depois de conversar com o usuário.
 
+### 6 · Cadastros, avisos e V1 publicada — `2026-09-11`
+
+Seção **CADASTROS** no menu, com os cinco CRUDs da cadeia do diagnóstico: PPA → Diagnóstico →
+Causa → Problema (1.0) → Subproblema (1.1). Os quatro últimos saem de um mesmo construtor
+(`assets/js/cadastro-crud.js`), já que têm a mesma forma — nome, descrição e o vínculo com o nível
+acima. A numeração 1.0/1.1 é derivada da ordem de cadastro; se virar campo próprio, muda aqui.
+
+Regra de exclusão combinada com o usuário: **registro com vínculo não é excluído; sem vínculo, é.**
+O botão fica visível e desabilitado, com o motivo e o link para a tela onde estão os dependentes —
+esconder deixava a pessoa procurando uma ação que existe.
+
+A confirmação de exclusão do PPA pede o nome exato, destacado em caixa alta e monoespaçado. Saiu do
+SweetAlert2 e virou modal do Bootstrap: o plugin tem visual de erro próprio, fora do padrão, e
+disputa com o Bootstrap o ajuste de scrollbar do `body`, o que deslocava a caixa. A validação agora
+é a do template — `is-invalid` e `invalid-feedback`. A comparação ignora maiúsculas, já que o nome
+aparece em caixa alta e quem copia o que vê digita em caixa alta.
+
+Avisos de resultado (`assets/js/toast.js`): toast no canto superior direito, quatro segundos, para
+criar, editar e excluir nos cinco cadastros, com a concordância certa em cada um.
+
+Corrigido: com o calendário do flatpickr aberto, `Esc` subia até o Bootstrap e fechava o modal
+inteiro, perdendo a edição do PPA. Agora fecha só o calendário.
+
+**Primeira versão publicada no GitHub Pages.**
+
 ---
 
 ## Próxima entrega

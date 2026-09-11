@@ -50,6 +50,11 @@ function carregar() {
     // Estado gravado antes de o PPA existir, ou quando ele ainda era único.
     if (!base.ppas) base.ppas = base.ppa ? [base.ppa] : [ppaInicial()];
     delete base.ppa;
+
+    // Coleções de cadastro; vazias até alguém cadastrar.
+    for (const colecao of ["diagnosticos", "problemas", "subproblemas", "causas"]) {
+        if (!base[colecao]) base[colecao] = [];
+    }
     return base;
 }
 
@@ -78,6 +83,34 @@ export function aoMudar(fn) {
 export function reiniciar() {
     estado = estadoInicial();
     estado.ppas = [ppaInicial()];
+    estado.diagnosticos = [];
+    estado.problemas = [];
+    estado.subproblemas = [];
+    estado.causas = [];
+    gravar();
+}
+
+/* ---------- Cadastros (diagnóstico, problema, subproblema, causa) ---------- */
+
+/**
+ * CRUD genérico das coleções de cadastro. Todas têm a mesma forma —
+ * identificação, descrição e o vínculo com o nível acima — então uma função
+ * serve as quatro.
+ */
+export function addItem(colecao, item) {
+    estado[colecao].push({ ...item, id: item.id || `${colecao}-${uid()}`, criadoEm: hoje() });
+    gravar();
+}
+
+export function updItem(colecao, id, patch) {
+    const item = estado[colecao].find((x) => x.id === id);
+    if (!item) return;
+    Object.assign(item, patch);
+    gravar();
+}
+
+export function removeItem(colecao, id) {
+    estado[colecao] = estado[colecao].filter((x) => x.id !== id);
     gravar();
 }
 

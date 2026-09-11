@@ -12,12 +12,15 @@ import { moedaCurta } from "../dados/regras.js";
 import { linhasFinanceiras } from "../dados/financeiro.js";
 import { montarShell, cabecalhoPagina, somenteLeitura } from "../shell.js";
 import { esc } from "../ui.js";
+import { confirmarExclusao } from "../confirmar.js";
+import { avisar } from "../toast.js";
 
 const { estado } = montarShell();
 const leitura = somenteLeitura();
 
 let edicao = null;
 let novo = false;
+let busca = "";
 
 /** O previsto de um plano soma apenas os anos da sua vigência. */
 function previstoDoPlano(ppa) {
@@ -27,15 +30,31 @@ function previstoDoPlano(ppa) {
 }
 
 function render() {
-    const ppas = [...estado.ppas].sort((a, b) => Number(b.primeiroAno) - Number(a.primeiroAno));
+    const termo = busca.trim().toLowerCase();
+    const ppas = [...estado.ppas]
+        .filter(
+            (p) =>
+                !termo ||
+                p.nome.toLowerCase().includes(termo) ||
+                (p.descricao ?? "").toLowerCase().includes(termo) ||
+                `${p.primeiroAno}-${p.ultimoAno}`.includes(termo)
+        )
+        .sort((a, b) => Number(b.primeiroAno) - Number(a.primeiroAno));
 
     document.getElementById("conteudo").innerHTML = `
     ${cabecalhoPagina(
-        "PPA",
+        "Cadastro de Planos Plurianuais",
         "Planos plurianuais cadastrados no sistema.",
-        leitura
-            ? `<span class="fs-12 text-muted">Perfil de acompanhamento — sem edição.</span>`
-            : `<button class="btn btn-sm btn-primary" id="novo"><i class="ti ti-plus me-1"></i>Novo PPA</button>`
+        `
+        <div class="app-search">
+            <input type="search" id="busca" class="form-control form-control-sm" placeholder="Buscar" value="${esc(busca)}" />
+            <i class="ti ti-search app-search-icon text-muted"></i>
+        </div>
+        ${
+            leitura
+                ? `<span class="fs-12 text-muted">Perfil de acompanhamento — sem edição.</span>`
+                : `<button class="btn btn-sm btn-primary" id="novo"><i class="ti ti-plus me-1"></i>Novo PPA</button>`
+        }`
     )}
 
     <div class="card">
@@ -53,7 +72,11 @@ function render() {
                 <tbody>
                 ${
                     ppas.length === 0
-                        ? '<tr><td colspan="5" class="text-center text-muted py-4 fs-12">Nenhum plano cadastrado. Comece por “Novo PPA”.</td></tr>'
+                        ? `<tr><td colspan="5" class="text-center text-muted py-4 fs-12">${
+                              estado.ppas.length === 0
+                                  ? "Nenhum plano cadastrado. Comece por “Novo PPA”."
+                                  : "Nenhum plano corresponde à busca."
+                          }</td></tr>`
                         : ppas
                               .map(
                                   (p) => `
@@ -124,11 +147,13 @@ const PT_BR = {
 function prepararCalendarios(el) {
     if (leitura || typeof flatpickr === "undefined") return;
 
+    const calendarios = [];
+
     el.querySelectorAll("[data-provider='flatpickr']").forEach((campo) => {
         const ano = Number(campo.value) || new Date().getFullYear();
         const primeiro = campo.id === "f-primeiroAno";
 
-        flatpickr(campo, {
+        calendarios.push(flatpickr(campo, {
             locale: PT_BR,
             dateFormat: "Y",
             defaultDate: new Date(ano, primeiro ? 0 : 11, primeiro ? 1 : 31),
@@ -136,13 +161,30 @@ function prepararCalendarios(el) {
             onChange: (datas) => {
                 if (datas[0]) campo.value = String(datas[0].getFullYear());
             },
-        });
+        }));
     });
+
+    // Com o calendário aberto, Esc precisa fechar só o calendário. O flatpickr
+    // deixa a tecla subir e o modal do Bootstrap se fecha junto, levando embora
+    // a edição em andamento.
+    el.addEventListener(
+        "keydown",
+        (e) => {
+            if (e.key !== "Escape") return;
+            const abertos = calendarios.filter((c) => c.isOpen);
+            if (!abertos.length) return;
+            e.stopPropagation();
+            abertos.forEach((c) => c.close());
+        },
+        true // captura: antes de o Bootstrap ouvir
+    );
 }
 
 function modal() {
     const p = edicao;
     const temContribuicoes = estado.iniciativas.length > 0 && !novo;
+    // Plano com diagnóstico vinculado não pode ser excluído.
+    const diagnosticos = novo ? 0 : (estado.diagnosticos ?? []).filter((d) => d.ppaId === p.id).length;
 
     return `
 <div class="modal fade" id="modal-ppa" tabindex="-1" aria-hidden="true">
@@ -190,12 +232,24 @@ function modal() {
                 </div>`
                         : ""
                 }
+                ${
+                    diagnosticos
+                        ? `<div class="alert alert-warning py-2 px-3 fs-12 mt-3 mb-0">
+                    ${diagnosticos} diagnóstico(s) pertencem a este plano, e por isso ele não pode ser
+                    excluído. Exclua os diagnósticos primeiro, em
+                    <a href="central-diagnostico.html" class="fw-semibold">Cadastro de Diagnóstico</a>.
+                </div>`
+                        : ""
+                }
             </div>
             <div class="modal-footer">
                 ${
-                    leitura || novo || estado.ppas.length <= 1
+                    leitura || novo
                         ? ""
-                        : '<button type="button" class="btn btn-outline-danger me-auto" id="excluir">Excluir plano</button>'
+                        : `<button type="button" class="btn btn-outline-danger me-auto" id="excluir"
+                        ${diagnosticos ? `disabled title="${diagnosticos} diagnóstico(s) pertencem a este plano"` : ""}>
+                        Excluir plano
+                    </button>`
                 }
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">${leitura ? "Fechar" : "Cancelar"}</button>
                 ${leitura ? "" : '<button type="button" class="btn btn-primary" id="salvar">Salvar</button>'}
@@ -203,6 +257,17 @@ function modal() {
         </div>
     </div>
 </div>`;
+}
+
+/** Fecha o modal de edição e resolve quando ele terminou de sair da tela. */
+function fecharModal() {
+    return new Promise((resolve) => {
+        const el = document.getElementById("modal-ppa");
+        const instancia = el && bootstrap.Modal.getInstance(el);
+        if (!instancia) return resolve();
+        el.addEventListener("hidden.bs.modal", () => resolve(), { once: true });
+        instancia.hide();
+    });
 }
 
 function lerModal() {
@@ -215,6 +280,18 @@ function lerModal() {
         descricao: v("f-descricao").trim(),
     };
 }
+
+document.addEventListener("input", (e) => {
+    if (e.target.id === "busca") {
+        busca = e.target.value;
+        render();
+        // O campo é recriado a cada tecla: sem devolver o cursor ao fim, o
+        // texto digitado sai embaralhado.
+        const campo = document.getElementById("busca");
+        campo.focus();
+        campo.setSelectionRange(campo.value.length, campo.value.length);
+    }
+});
 
 document.addEventListener("click", (e) => {
     if (e.target.closest("#novo")) {
@@ -233,11 +310,33 @@ document.addEventListener("click", (e) => {
     if (!edicao || leitura) return;
 
     if (e.target.closest("#excluir")) {
-        if (!confirm(`Excluir o plano “${edicao.nome}”? Os Programas continuam cadastrados.`)) return;
-        removePpa(edicao.id);
-        bootstrap.Modal.getInstance(document.getElementById("modal-ppa")).hide();
-        edicao = null;
-        return render();
+        if ((estado.diagnosticos ?? []).some((d) => d.ppaId === edicao.id)) return;
+
+        const plano = edicao;
+
+        // O modal do Bootstrap prende o foco: com ele aberto, não dá para
+        // digitar na confirmação. Fecha primeiro, confirma depois.
+        fecharModal().then(async () => {
+            // Um plano carrega o ciclo inteiro: pede o nome exato antes de remover.
+            const confirmou = await confirmarExclusao({
+                titulo: "Excluir plano plurianual",
+                texto: `O plano ${plano.nome}, de ${plano.primeiroAno} a ${plano.ultimoAno}, será removido do sistema. Não há como desfazer.`,
+                confirmar: "Excluir plano",
+                digitar: plano.nome,
+            });
+
+            if (confirmou) {
+                removePpa(plano.id);
+                avisar("Plano plurianual excluído com sucesso.");
+                edicao = null;
+            } else {
+                // Desistiu: devolve a pessoa ao formulário onde estava.
+                edicao = plano;
+                novo = false;
+            }
+            render();
+        });
+        return;
     }
 
     if (e.target.closest("#salvar")) {
@@ -250,8 +349,10 @@ document.addEventListener("click", (e) => {
             alert("O último ano não pode ser anterior ao primeiro.");
             return;
         }
-        if (estado.ppas.some((p) => p.id === dados.id)) updPpa(dados.id, dados);
+        const existente = estado.ppas.some((p) => p.id === dados.id);
+        if (existente) updPpa(dados.id, dados);
         else addPpa(dados);
+        avisar(`Plano plurianual ${existente ? "editado" : "criado"} com sucesso.`);
 
         bootstrap.Modal.getInstance(document.getElementById("modal-ppa")).hide();
         edicao = null;

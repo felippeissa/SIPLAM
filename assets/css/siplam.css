@@ -320,3 +320,21 @@
     padding-left: 3rem !important;
     box-shadow: inset 3px 0 0 var(--siplam-aninhado-traco);
 }
+
+/* Confirmação de exclusão — o nome que a pessoa precisa copiar.
+   Destacado como um trecho a ser reproduzido, não como ênfase de texto:
+   fundo próprio, monoespaçado e selecionável de uma vez. */
+.nome-a-digitar {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.25rem;
+    background-color: var(--siplam-aninhado-bg);
+    color: var(--bs-heading-color, #343a40);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.95em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    user-select: all;
+}
