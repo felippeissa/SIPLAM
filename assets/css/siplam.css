@@ -9,3 +9,125 @@
 .auth-box {
     background-color: #e9f8f1;
 }
+
+/* ---------- Densidade ---------- */
+/* O protótipo roda em 13px com rótulos de 11px; o Inspinia é 14px. */
+.content-page {
+    font-size: 13px;
+}
+.content-page .table {
+    font-size: 13px;
+}
+.content-page .table > thead > tr > th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.content-page .table > tbody > tr > td,
+.content-page .table > thead > tr > th {
+    padding: 0.45rem 0.75rem;
+    vertical-align: middle;
+}
+.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.codigo {
+    font-family: var(--bs-font-monospace);
+    font-size: 12px;
+}
+.fs-13 { font-size: 13px; }
+.fs-12 { font-size: 12px; }
+
+/* ---------- Chips semânticos ---------- */
+.chip {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    border-radius: 999px;
+    padding: 0.1rem 0.5rem;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+.chip-ok { background-color: #e2f0e9; color: #1f6b4d; }
+.chip-alerta { background-color: #f7eddb; color: #8a5a12; }
+.chip-impeditivo { background-color: #f8e5e2; color: #9b3324; }
+.chip-info { background-color: #e4eef6; color: #1f5c8b; }
+.chip-neutro { background-color: #eef1f5; color: #5b6873; }
+
+[data-bs-theme="dark"] .chip-ok { background-color: #15302a; color: #6fc79f; }
+[data-bs-theme="dark"] .chip-alerta { background-color: #332714; color: #dcae63; }
+[data-bs-theme="dark"] .chip-impeditivo { background-color: #361d1b; color: #e8897a; }
+[data-bs-theme="dark"] .chip-info { background-color: #17303f; color: #71b2df; }
+[data-bs-theme="dark"] .chip-neutro { background-color: #222b34; color: #8492a0; }
+
+/* ---------- Faixa de indicadores ---------- */
+.faixa-indicadores {
+    display: flex;
+    flex-wrap: wrap;
+}
+.faixa-item {
+    flex: 1 1 132px;
+    min-width: 132px;
+    padding: 0.7rem 1rem;
+    border-right: 1px solid var(--bs-border-color);
+}
+.faixa-item:last-child { border-right: 0; }
+.faixa-valor {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+}
+.faixa-rotulo {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--bs-secondary-color);
+}
+.faixa-rodape {
+    border-top: 1px solid var(--bs-border-color);
+    padding: 0.4rem 1rem;
+    font-size: 11px;
+    color: var(--bs-secondary-color);
+}
+
+/* ---------- Rótulo de seção e trilha ---------- */
+.rotulo-secao {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    color: var(--bs-secondary-color);
+}
+.trilha-contexto {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 12px;
+    color: var(--bs-secondary-color);
+    margin-bottom: 0.5rem;
+}
+.trilha-contexto .sep { opacity: 0.6; }
+.trilha-contexto a { color: inherit; }
+.trilha-contexto a:hover { text-decoration: underline; }
+
+/* ---------- Linha expansível ---------- */
+.btn-expandir {
+    border: 0;
+    background: transparent;
+    padding: 0.15rem;
+    line-height: 1;
+    color: var(--bs-secondary-color);
+    cursor: pointer;
+}
+.btn-expandir .ti { transition: transform 0.15s ease; }
+.btn-expandir[aria-expanded="true"] .ti { transform: rotate(90deg); }
+.linha-filha > td { background-color: var(--bs-tertiary-bg); }
+.tabela-aninhada { margin: 0; }
+.tabela-aninhada > thead > tr > th { font-size: 10px; }

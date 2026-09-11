@@ -1,0 +1,69 @@
+<!doctype html>
+<html
+    lang="pt-BR"
+    data-skin="minimal"
+    data-bs-theme="light"
+    data-topbar-color="light"
+    data-menu-color="gray"
+    data-sidenav-size="default"
+    data-layout-width="fluid"
+    data-layout-position="fixed"
+>
+    <head>
+        <meta charset="utf-8" />
+        <title>Visão Geral | SIPLAM — PPA 2028–2031</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="Área Central: programas, órgãos participantes e iniciativas encaminhadas ao PPA 2028–2031." />
+        <meta name="author" content="Governo do Estado de Goiás" />
+
+        <!-- App favicon -->
+        <link rel="shortcut icon" href="inspinia/assets/images/favicon.ico" />
+ <!-- Theme Config Js -->
+<script src="inspinia/assets/js/config.js"></script>
+
+<!-- Vendor css -->
+<link href="inspinia/assets/css/vendors.min.css" rel="stylesheet" type="text/css" />
+
+<!-- App css -->
+<link id="app-style" href="inspinia/assets/css/app.min.css" rel="stylesheet" type="text/css" />
+
+<!-- SIPLAM css -->
+<link href="assets/css/siplam.css" rel="stylesheet" type="text/css" />
+
+    </head>
+
+    <body>
+        <div class="wrapper">
+            <div id="shell-topbar"></div>
+            <div id="shell-sidenav"></div>
+
+            <div class="content-page">
+                <div class="container-fluid">
+                    <div id="conteudo"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cobertura causal -->
+        <div class="modal fade" id="modal-cobertura" tabindex="-1" aria-labelledby="titulo-cobertura" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fs-15" id="titulo-cobertura">Cobertura causal</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body" id="corpo-cobertura"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vendor js -->
+        <script src="inspinia/assets/js/vendors.min.js"></script>
+
+        <!-- App js -->
+        <script src="inspinia/assets/js/app.js"></script>
+
+        <!-- Tela -->
+        <script type="module" src="assets/js/paginas/central.js"></script>
+    </body>
+</html>
