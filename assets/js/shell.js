@@ -1,16 +1,15 @@
 /**
  * Shell do SIPLAM — topbar, sidenav e rodapé.
  *
- * Monta a estrutura do Inspinia em volta do conteúdo da página, para as 16 telas
- * não repetirem o markup. Substitui `src/components/ppa/shell.tsx` do protótipo.
+ * O markup espelha o do Inspinia, porque o CSS do template depende da estrutura:
+ *  - `.topbar-menu` é `justify-content: space-between` e espera **dois** filhos,
+ *    o grupo da esquerda e o da direita;
+ *  - `.logo-topbar` fica oculto e só aparece quando a sidenav está em offcanvas,
+ *    então a marca do sistema vive na sidenav;
+ *  - a sidenav precisa de `.button-on-hover`, `.button-close-offcanvas` e do
+ *    wrapper `.scrollbar[data-simplebar]` para funcionar nos três tamanhos.
  *
- * Uso na página:
- *   <div class="wrapper">
- *     <div id="shell-topbar"></div>
- *     <div id="shell-sidenav"></div>
- *     <div class="content-page"> … conteúdo … </div>
- *   </div>
- *   <script type="module">import { montarShell } from "./assets/js/shell.js"; montarShell();</script>
+ * Substitui `src/components/ppa/shell.tsx` do protótipo.
  */
 import { obterEstado } from "./dados/store.js";
 import { instalarBusca } from "./busca.js";
@@ -33,18 +32,29 @@ const MENU_CENTRAL = [
     { href: "central-financeira.html", rotulo: "Financeira", icone: "ti-coins" },
     { href: "central-projetos.html", rotulo: "Projetos", icone: "ti-git-branch" },
     { href: "central-ipofs.html", rotulo: "IPOFs", icone: "ti-receipt" },
-    { grupo: " " },
-    { href: "central-programas.html", rotulo: "Administração de Programas", icone: "ti-settings" },
+    { grupo: "Administração" },
+    { href: "central-programas.html", rotulo: "Programas do PPA", icone: "ti-settings" },
 ];
+
+const PERFIL = {
+    "tecnico-setorial": "Técnico setorial",
+    "ponto-focal": "Ponto focal do órgão",
+    "analista-central": "Analista da Área Central",
+    "admin-programas": "Administrador de Programas",
+    consulta: "Consulta",
+};
 
 /** A visão vem do nome do arquivo: tudo que começa com "central" é área central. */
 export function visaoAtual() {
-    const pagina = location.pathname.split("/").pop() || "programas.html";
-    return pagina.startsWith("central") ? "central" : "setorial";
+    return paginaAtual().startsWith("central") ? "central" : "setorial";
 }
 
 function paginaAtual() {
     return location.pathname.split("/").pop() || "programas.html";
+}
+
+function inicio(visao) {
+    return visao === "central" ? "central.html" : "programas.html";
 }
 
 /** Nome e perfil de quem entrou, vindos do fluxo de acesso. */
@@ -58,14 +68,6 @@ function quemEntrou(estado, central) {
         /* navegador sem armazenamento */
     }
 
-    const PERFIL = {
-        "tecnico-setorial": "Técnico setorial",
-        "ponto-focal": "Ponto focal do órgão",
-        "analista-central": "Analista da Área Central",
-        "admin-programas": "Administrador de Programas",
-        consulta: "Consulta",
-    };
-
     return {
         nome: usuario || (central ? estado.analista : estado.usuario),
         papel: PERFIL[perfilId] || (central ? "Área Central" : estado.orgaoAtual),
@@ -75,54 +77,78 @@ function quemEntrou(estado, central) {
 function topbar(estado, visao) {
     const central = visao === "central";
     const quem = quemEntrou(estado, central);
-    const persona = `<span class="text-body fw-medium">${quem.nome}</span> · ${quem.papel}`;
+    const raiz = inicio(visao);
 
     return `
 <header class="app-topbar">
     <div class="container-fluid topbar-menu">
         <div class="d-flex align-items-center gap-2">
+            <!-- O template só exibe esta marca quando a sidenav está em offcanvas -->
             <div class="logo-topbar">
-                <a href="${central ? "central.html" : "programas.html"}" class="logo-light">
-                    <span class="logo-lg"><img src="assets/img/logo-siplam.svg" alt="SIPLAM" height="26" /></span>
+                <a href="${raiz}" class="logo-light">
+                    <span class="logo-lg"><img src="assets/img/logo-siplam.svg" alt="SIPLAM" /></span>
+                    <span class="logo-sm"><img src="assets/img/logo-siplam-sm.svg" alt="SIPLAM" /></span>
                 </a>
-                <a href="${central ? "central.html" : "programas.html"}" class="logo-dark">
-                    <span class="logo-lg"><img src="assets/img/logo-siplam.svg" alt="SIPLAM" height="26" /></span>
+                <a href="${raiz}" class="logo-dark">
+                    <span class="logo-lg"><img src="assets/img/logo-siplam.svg" alt="SIPLAM" /></span>
+                    <span class="logo-sm"><img src="assets/img/logo-siplam-sm.svg" alt="SIPLAM" /></span>
                 </a>
             </div>
 
-            <button class="sidenav-toggle-button btn btn-default btn-icon" type="button">
+            <button class="sidenav-toggle-button btn btn-default btn-icon" type="button" aria-label="Recolher ou expandir o menu">
                 <i class="ti ti-menu-4"></i>
             </button>
 
-            <div class="d-none d-md-flex align-items-baseline gap-2 ms-2">
-                <span class="fw-semibold">PPA 2028–2031</span>
-                <span class="text-muted fs-12">Estado de Goiás</span>
+            <div id="search-box" class="app-search d-none d-lg-flex">
+                <input type="search" class="form-control topbar-search" id="abrir-busca"
+                       placeholder="Buscar Programa, Iniciativa, Entrega…" readonly aria-label="Abrir a busca" />
+                <i class="ti ti-search app-search-icon text-muted"></i>
+                <kbd class="app-search-atalho">Ctrl K</kbd>
             </div>
         </div>
 
-        <div class="d-flex align-items-center gap-2 ms-3">
-            <div class="btn-group" role="group" aria-label="Alternar visão">
-                <a href="programas.html" class="btn btn-sm ${central ? "btn-light" : "btn-primary"}">Visão Setorial</a>
-                <a href="central.html" class="btn btn-sm ${central ? "btn-primary" : "btn-light"}">Visão Área Central</a>
+        <div class="d-flex align-items-center gap-2">
+            <div class="topbar-item d-none d-md-flex">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Alternar visão">
+                    <a href="programas.html" class="btn ${central ? "btn-light" : "btn-primary"}">Visão Setorial</a>
+                    <a href="central.html" class="btn ${central ? "btn-primary" : "btn-light"}">Visão Área Central</a>
+                </div>
             </div>
-        </div>
 
-        <div class="ms-auto d-flex align-items-center gap-3">
-            <button class="btn btn-sm btn-light d-none d-lg-inline-flex align-items-center gap-2" id="abrir-busca" type="button">
-                <i class="ti ti-search"></i>
-                <span class="text-muted">Buscar…</span>
-                <kbd class="bg-body-secondary text-muted">Ctrl K</kbd>
-            </button>
-            <div class="dropdown">
-                <button class="btn btn-sm btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="ti ti-user me-1"></i>
-                    <span class="d-none d-sm-inline">${persona}</span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end fs-13">
-                    <li><a class="dropdown-item" href="perfil.html"><i class="ti ti-switch-horizontal me-2"></i>Trocar perfil</a></li>
-                    <li><hr class="dropdown-divider" /></li>
-                    <li><a class="dropdown-item" href="index.html"><i class="ti ti-logout me-2"></i>Sair</a></li>
-                </ul>
+            <div class="topbar-item nav-user">
+                <div class="dropdown">
+                    <a class="topbar-link dropdown-toggle drop-arrow-none px-2" data-bs-toggle="dropdown" href="#!" aria-haspopup="false" aria-expanded="false">
+                        <span class="avatar-sm bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center me-lg-2">
+                            <i class="ti ti-user"></i>
+                        </span>
+                        <div class="d-lg-flex align-items-center gap-1 d-none text-start">
+                            <div>
+                                <h5 class="my-0 fs-13">${quem.nome}</h5>
+                                <span class="fs-12 text-muted">${quem.papel}</span>
+                            </div>
+                            <i class="ti ti-chevron-down align-middle ms-1"></i>
+                        </div>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        <div class="dropdown-header noti-title">
+                            <h6 class="text-overflow m-0">${quem.nome}</h6>
+                            <span class="fs-12 text-muted">${quem.papel}</span>
+                        </div>
+                        <a href="perfil.html" class="dropdown-item">
+                            <i class="ti ti-switch-horizontal me-1 fs-lg align-middle"></i>
+                            <span class="align-middle">Trocar perfil</span>
+                        </a>
+                        <a href="${central ? "programas.html" : "central.html"}" class="dropdown-item d-md-none">
+                            <i class="ti ti-arrows-exchange me-1 fs-lg align-middle"></i>
+                            <span class="align-middle">Ir para a ${central ? "Visão Setorial" : "Área Central"}</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="index.html" class="dropdown-item text-danger fw-semibold">
+                            <i class="ti ti-logout me-1 fs-lg align-middle"></i>
+                            <span class="align-middle">Sair</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -132,12 +158,11 @@ function topbar(estado, visao) {
 function sidenav(visao) {
     const menu = visao === "central" ? MENU_CENTRAL : MENU_SETORIAL;
     const atual = paginaAtual();
+    const raiz = inicio(visao);
 
     const itens = menu
         .map((item) => {
-            if (item.grupo !== undefined) {
-                return `<li class="side-nav-title">${item.grupo.trim() || "&nbsp;"}</li>`;
-            }
+            if (item.grupo !== undefined) return `<li class="side-nav-title">${item.grupo}</li>`;
             const ativo = item.href === atual ? " active" : "";
             return `
             <li class="side-nav-item">
@@ -151,26 +176,32 @@ function sidenav(visao) {
 
     return `
 <div class="sidenav-menu">
-    <a href="${visao === "central" ? "central.html" : "programas.html"}" class="logo">
+    <a href="${raiz}" class="logo">
         <span class="logo logo-light">
-            <span class="logo-lg"><img src="assets/img/logo-siplam.svg" alt="SIPLAM" height="24" /></span>
-            <span class="logo-sm"><img src="inspinia/assets/images/logo-sm.png" alt="SIPLAM" /></span>
+            <span class="logo-lg"><img src="assets/img/logo-siplam.svg" alt="SIPLAM" /></span>
+            <span class="logo-sm"><img src="assets/img/logo-siplam-sm.svg" alt="SIPLAM" /></span>
         </span>
         <span class="logo logo-dark">
-            <span class="logo-lg"><img src="assets/img/logo-siplam.svg" alt="SIPLAM" height="24" /></span>
-            <span class="logo-sm"><img src="inspinia/assets/images/logo-sm.png" alt="SIPLAM" /></span>
+            <span class="logo-lg"><img src="assets/img/logo-siplam.svg" alt="SIPLAM" /></span>
+            <span class="logo-sm"><img src="assets/img/logo-siplam-sm.svg" alt="SIPLAM" /></span>
         </span>
     </a>
 
-    <button class="button-sm-hover" type="button">
-        <i class="ti ti-circle align-middle"></i>
+    <button class="button-on-hover" type="button" aria-label="Fixar o menu">
+        <span class="btn-on-hover-icon"></span>
     </button>
 
-    <div id="sidenav-menu">
-        <ul class="side-nav">
-            <li class="side-nav-title mt-2">${visao === "central" ? "Área Central" : "Meu órgão"}</li>
-            ${itens}
-        </ul>
+    <button class="button-close-offcanvas" type="button" aria-label="Fechar o menu">
+        <i class="ti ti-x align-middle"></i>
+    </button>
+
+    <div class="scrollbar" data-simplebar>
+        <div id="sidenav-menu">
+            <ul class="side-nav">
+                <li class="side-nav-title">${visao === "central" ? "Área Central" : "Meu órgão"}</li>
+                ${itens}
+            </ul>
+        </div>
     </div>
 </div>`;
 }
@@ -181,7 +212,7 @@ function rodape() {
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-6 text-center text-md-start">
-                © <span data-current-year></span> <span class="fw-semibold">Estado de Goiás</span>
+                © <span data-current-year></span> <span class="fw-semibold">Estado de Goiás</span> · PPA 2028–2031
             </div>
             <div class="col-md-6">
                 <div class="text-md-end d-none d-md-block text-muted">
