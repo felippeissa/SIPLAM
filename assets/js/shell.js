@@ -13,6 +13,7 @@
  *   <script type="module">import { montarShell } from "./assets/js/shell.js"; montarShell();</script>
  */
 import { obterEstado } from "./dados/store.js";
+import { instalarBusca } from "./busca.js";
 
 /** Menu da visão setorial — o órgão preenche e envia. */
 const MENU_SETORIAL = [
@@ -46,11 +47,35 @@ function paginaAtual() {
     return location.pathname.split("/").pop() || "programas.html";
 }
 
+/** Nome e perfil de quem entrou, vindos do fluxo de acesso. */
+function quemEntrou(estado, central) {
+    let perfilId = null;
+    let usuario = null;
+    try {
+        perfilId = localStorage.getItem("siplam.perfilSessao");
+        usuario = localStorage.getItem("siplam.usuario");
+    } catch (e) {
+        /* navegador sem armazenamento */
+    }
+
+    const PERFIL = {
+        "tecnico-setorial": "Técnico setorial",
+        "ponto-focal": "Ponto focal do órgão",
+        "analista-central": "Analista da Área Central",
+        "admin-programas": "Administrador de Programas",
+        consulta: "Consulta",
+    };
+
+    return {
+        nome: usuario || (central ? estado.analista : estado.usuario),
+        papel: PERFIL[perfilId] || (central ? "Área Central" : estado.orgaoAtual),
+    };
+}
+
 function topbar(estado, visao) {
     const central = visao === "central";
-    const persona = central
-        ? `<span class="text-body fw-medium">${estado.analista}</span> · Área Central`
-        : `<span class="text-body fw-medium">${estado.usuario}</span> · ${estado.orgaoAtual}`;
+    const quem = quemEntrou(estado, central);
+    const persona = `<span class="text-body fw-medium">${quem.nome}</span> · ${quem.papel}`;
 
     return `
 <header class="app-topbar">
@@ -88,8 +113,17 @@ function topbar(estado, visao) {
                 <span class="text-muted">Buscar…</span>
                 <kbd class="bg-body-secondary text-muted">Ctrl K</kbd>
             </button>
-            <span class="text-muted fs-12 d-none d-sm-inline">${persona}</span>
-            <a href="index.html" class="btn btn-sm btn-light" title="Sair"><i class="ti ti-logout"></i></a>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="ti ti-user me-1"></i>
+                    <span class="d-none d-sm-inline">${persona}</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end fs-13">
+                    <li><a class="dropdown-item" href="perfil.html"><i class="ti ti-switch-horizontal me-2"></i>Trocar perfil</a></li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li><a class="dropdown-item" href="index.html"><i class="ti ti-logout me-2"></i>Sair</a></li>
+                </ul>
+            </div>
         </div>
     </div>
 </header>`;
@@ -174,6 +208,8 @@ export function montarShell() {
 
     const ano = document.querySelector("[data-current-year]");
     if (ano) ano.textContent = new Date().getFullYear();
+
+    instalarBusca(estado, visao);
 
     return { estado, visao };
 }

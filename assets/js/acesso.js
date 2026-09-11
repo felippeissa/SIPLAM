@@ -6,8 +6,11 @@
  * preenchido e senha com no mínimo 6 caracteres).
  *
  * Ordem das telas:
- *   index.html → (primeiro acesso) termos.html → permissoes.html → perfil.html → sistema.html
- *   index.html → (acesso seguinte) perfil.html → sistema.html
+ *   index.html → (primeiro acesso) termos.html → permissoes.html → perfil.html → sistema
+ *   index.html → (acesso seguinte) perfil.html → sistema
+ *
+ * A tela em que o usuário cai depende do perfil escolhido: quem preenche entra
+ * pela visão setorial, quem analisa ou administra entra pela área central.
  */
 (function (window) {
     "use strict";
@@ -19,6 +22,15 @@
         lembrarPerfil: "siplam.lembrarPerfil",
         usuario: "siplam.usuario",
         sessao: "siplam.sessao",
+    };
+
+    /** Tela inicial de cada perfil. */
+    var INICIO = {
+        "tecnico-setorial": "programas.html",
+        "ponto-focal": "programas.html",
+        "analista-central": "central.html",
+        "admin-programas": "central-programas.html",
+        consulta: "central.html",
     };
 
     var PERFIS = [
@@ -93,9 +105,16 @@
         return valido;
     }
 
+    /** Para onde o perfil escolhido leva. */
+    function telaInicial(perfilId) {
+        return INICIO[perfilId] || "programas.html";
+    }
+
     window.Acesso = {
         CHAVES: CHAVES,
         PERFIS: PERFIS,
+        INICIO: INICIO,
+        telaInicial: telaInicial,
         SENHA_MINIMA: SENHA_MINIMA,
         ler: ler,
         gravar: gravar,
