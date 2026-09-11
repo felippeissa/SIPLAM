@@ -94,6 +94,12 @@ criar, editar e excluir nos cinco cadastros, com a concordância certa em cada u
 Corrigido: com o calendário do flatpickr aberto, `Esc` subia até o Bootstrap e fechava o modal
 inteiro, perdendo a edição do PPA. Agora fecha só o calendário.
 
+Validação dos formulários no padrão do template (`assets/js/validacao.js`): campo em vermelho e
+mensagem em `invalid-feedback`, no lugar do `alert()` do navegador, que interrompia a pessoa sem
+dizer qual campo estava errado. Para no primeiro erro e leva o foco até ele — apontar quatro
+problemas de uma vez não ajuda a corrigir nenhum. Campo de calendário é `readonly` e abria o
+flatpickr por cima da própria mensagem ao receber foco; nesses, o campo só é trazido à vista.
+
 **Primeira versão publicada no GitHub Pages.**
 
 ---

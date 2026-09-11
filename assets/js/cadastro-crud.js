@@ -11,6 +11,7 @@ import { montarShell, cabecalhoPagina, somenteLeitura } from "./shell.js";
 import { esc } from "./ui.js";
 import { confirmarExclusao } from "./confirmar.js";
 import { avisar } from "./toast.js";
+import { campoErro, validar, limparAoDigitar } from "./validacao.js";
 
 /**
  * @param {object} cfg
@@ -165,6 +166,7 @@ export function montarCadastro(cfg) {
 
         if (edicao) {
             const el = document.getElementById("modal-cadastro");
+            limparAoDigitar(el);
             new bootstrap.Modal(el).show();
             el.addEventListener("hidden.bs.modal", () => {
                 edicao = null;
@@ -202,6 +204,7 @@ export function montarCadastro(cfg) {
                         <div class="col-12">
                             <label class="form-label" for="f-nome">${esc(cfg.singular)} <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="f-nome" value="${esc(edicao.nome)}" ${leitura ? "disabled" : ""} />
+                            ${campoErro("f-nome")}
                         </div>
                         ${
                             cfg.pai
@@ -215,6 +218,7 @@ export function montarCadastro(cfg) {
                                     )
                                     .join("")}
                             </select>
+                            ${campoErro("f-pai")}
                         </div>`
                                 : ""
                         }
@@ -312,14 +316,23 @@ export function montarCadastro(cfg) {
 
         if (e.target.closest("#salvar")) {
             const dados = lerModal();
-            if (!dados.nome) {
-                alert(`Informe ${cfg.singular.toLowerCase()}.`);
-                return;
-            }
-            if (cfg.pai && !dados[cfg.pai.campo]) {
-                alert(`Escolha ${cfg.pai.artigo} ${cfg.pai.rotulo.toLowerCase()}.`);
-                return;
-            }
+            const caixa = document.getElementById("modal-cadastro");
+
+            const ok = validar(caixa, [
+                {
+                    campo: "f-nome",
+                    valido: !!dados.nome,
+                    mensagem: `Informe ${cfg.genero === "f" ? "a" : "o"} ${cfg.singular.toLowerCase()}.`,
+                },
+                {
+                    campo: "f-pai",
+                    valido: !cfg.pai || !!dados[cfg.pai.campo],
+                    mensagem: cfg.pai
+                        ? `Escolha ${cfg.pai.artigo} ${cfg.pai.rotulo.toLowerCase()}.`
+                        : "",
+                },
+            ]);
+            if (!ok) return;
 
             const existente = itens().some((i) => i.id === dados.id);
             if (existente) updItem(cfg.colecao, dados.id, dados);

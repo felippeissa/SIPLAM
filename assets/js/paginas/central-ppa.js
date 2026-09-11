@@ -14,6 +14,7 @@ import { montarShell, cabecalhoPagina, somenteLeitura } from "../shell.js";
 import { esc } from "../ui.js";
 import { confirmarExclusao } from "../confirmar.js";
 import { avisar } from "../toast.js";
+import { campoErro, validar, limparAoDigitar } from "../validacao.js";
 
 const { estado } = montarShell();
 const leitura = somenteLeitura();
@@ -103,6 +104,7 @@ function render() {
     if (edicao) {
         const el = document.getElementById("modal-ppa");
         prepararCalendarios(el);
+        limparAoDigitar(el);
         new bootstrap.Modal(el).show();
         el.addEventListener("hidden.bs.modal", () => {
             edicao = null;
@@ -159,7 +161,11 @@ function prepararCalendarios(el) {
             defaultDate: new Date(ano, primeiro ? 0 : 11, primeiro ? 1 : 31),
             // O campo guarda o ano; o calendário é só a ajuda para escolhê-lo.
             onChange: (datas) => {
-                if (datas[0]) campo.value = String(datas[0].getFullYear());
+                if (!datas[0]) return;
+                campo.value = String(datas[0].getFullYear());
+                // O campo é readonly e recebe o valor por código: nenhum evento
+                // de digitação acontece para apagar o vermelho da validação.
+                campo.classList.remove("is-invalid");
             },
         }));
     });
@@ -199,6 +205,7 @@ function modal() {
                     <div class="col-12">
                         <label class="form-label" for="f-nome">Nome do plano <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="f-nome" value="${esc(p.nome)}" ${leitura ? "disabled" : ""} />
+                        ${campoErro("f-nome")}
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="f-primeiroAno">Primeiro ano <span class="text-danger">*</span></label>
@@ -207,6 +214,7 @@ function modal() {
                                    data-provider="flatpickr" data-date-format="Y"
                                    value="${esc(p.primeiroAno)}" ${leitura ? "disabled" : ""} />
                             <span class="input-group-text"><i class="ti ti-calendar"></i></span>
+                            ${campoErro("f-primeiroAno")}
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -216,6 +224,7 @@ function modal() {
                                    data-provider="flatpickr" data-date-format="Y"
                                    value="${esc(p.ultimoAno)}" ${leitura ? "disabled" : ""} />
                             <span class="input-group-text"><i class="ti ti-calendar"></i></span>
+                            ${campoErro("f-ultimoAno")}
                         </div>
                     </div>
                     <div class="col-12">
@@ -341,14 +350,27 @@ document.addEventListener("click", (e) => {
 
     if (e.target.closest("#salvar")) {
         const dados = lerModal();
-        if (!dados.nome || !dados.primeiroAno || !dados.ultimoAno) {
-            alert("Nome e vigência são obrigatórios.");
-            return;
-        }
-        if (Number(dados.ultimoAno) < Number(dados.primeiroAno)) {
-            alert("O último ano não pode ser anterior ao primeiro.");
-            return;
-        }
+        const caixa = document.getElementById("modal-ppa");
+
+        const ok = validar(caixa, [
+            { campo: "f-nome", valido: !!dados.nome, mensagem: "Informe o nome do plano." },
+            {
+                campo: "f-primeiroAno",
+                valido: !!dados.primeiroAno,
+                mensagem: "Informe o primeiro ano da vigência.",
+            },
+            {
+                campo: "f-ultimoAno",
+                valido: !!dados.ultimoAno,
+                mensagem: "Informe o último ano da vigência.",
+            },
+            {
+                campo: "f-ultimoAno",
+                valido: Number(dados.ultimoAno) >= Number(dados.primeiroAno),
+                mensagem: "O último ano não pode ser anterior ao primeiro.",
+            },
+        ]);
+        if (!ok) return;
         const existente = estado.ppas.some((p) => p.id === dados.id);
         if (existente) updPpa(dados.id, dados);
         else addPpa(dados);
