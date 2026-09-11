@@ -186,6 +186,6 @@ export function cabecalhoPagina(titulo, subtitulo, acoes = "") {
         <h4 class="fw-bold mb-1">${titulo}</h4>
         <p class="text-muted mb-0 fs-13">${subtitulo}</p>
     </div>
-    <div class="d-flex flex-wrap align-items-center gap-2">${acoes}</div>
+    <div class="barra-filtros">${acoes}</div>
 </div>`;
 }
