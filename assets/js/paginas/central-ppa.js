@@ -79,12 +79,65 @@ function render() {
 
     if (edicao) {
         const el = document.getElementById("modal-ppa");
+        prepararCalendarios(el);
         new bootstrap.Modal(el).show();
         el.addEventListener("hidden.bs.modal", () => {
             edicao = null;
             render();
         }, { once: true });
     }
+}
+
+/** O pacote do Inspinia traz o flatpickr sem tradução; esta é a mínima. */
+const PT_BR = {
+    weekdays: {
+        shorthand: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"],
+        longhand: ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"],
+    },
+    months: {
+        shorthand: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
+        longhand: [
+            "Janeiro",
+            "Fevereiro",
+            "Março",
+            "Abril",
+            "Maio",
+            "Junho",
+            "Julho",
+            "Agosto",
+            "Setembro",
+            "Outubro",
+            "Novembro",
+            "Dezembro",
+        ],
+    },
+    firstDayOfWeek: 0,
+    rangeSeparator: " até ",
+    time_24hr: true,
+};
+
+/**
+ * O calendário dos anos de vigência. O template inicializa o flatpickr pelos
+ * atributos `data-provider` ao carregar a página; como o modal só existe depois,
+ * inicializamos aqui.
+ */
+function prepararCalendarios(el) {
+    if (leitura || typeof flatpickr === "undefined") return;
+
+    el.querySelectorAll("[data-provider='flatpickr']").forEach((campo) => {
+        const ano = Number(campo.value) || new Date().getFullYear();
+        const primeiro = campo.id === "f-primeiroAno";
+
+        flatpickr(campo, {
+            locale: PT_BR,
+            dateFormat: "Y",
+            defaultDate: new Date(ano, primeiro ? 0 : 11, primeiro ? 1 : 31),
+            // O campo guarda o ano; o calendário é só a ajuda para escolhê-lo.
+            onChange: (datas) => {
+                if (datas[0]) campo.value = String(datas[0].getFullYear());
+            },
+        });
+    });
 }
 
 function modal() {
@@ -107,11 +160,21 @@ function modal() {
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="f-primeiroAno">Primeiro ano <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="f-primeiroAno" value="${esc(p.primeiroAno)}" ${leitura ? "disabled" : ""} />
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="f-primeiroAno"
+                                   data-provider="flatpickr" data-date-format="Y"
+                                   value="${esc(p.primeiroAno)}" ${leitura ? "disabled" : ""} />
+                            <span class="input-group-text"><i class="ti ti-calendar"></i></span>
+                        </div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="f-ultimoAno">Último ano <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="f-ultimoAno" value="${esc(p.ultimoAno)}" ${leitura ? "disabled" : ""} />
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="f-ultimoAno"
+                                   data-provider="flatpickr" data-date-format="Y"
+                                   value="${esc(p.ultimoAno)}" ${leitura ? "disabled" : ""} />
+                            <span class="input-group-text"><i class="ti ti-calendar"></i></span>
+                        </div>
                     </div>
                     <div class="col-12">
                         <label class="form-label" for="f-descricao">Descrição</label>
