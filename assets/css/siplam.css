@@ -265,8 +265,8 @@
 }
 .app-search .topbar-search {
     cursor: pointer;
+    width: 15rem;
     padding-right: 3.5rem;
-    min-width: 20rem;
 }
 .app-search-atalho {
     position: absolute;
