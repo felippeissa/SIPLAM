@@ -23,11 +23,19 @@ backlog de front-end (92 histórias) e mapa do sistema (20 telas, 12 lacunas, 20
 apenas textos em português e caminhos apontando para `inspinia/assets/`. Publicada no GitHub Pages
 a partir da raiz de `main`.
 
+### 3 · Camada de dados e primeira tela — `2026-09-11`
+
+Regras do protótipo portadas de TypeScript para JavaScript com esbuild (`seed`, `regras`,
+`financeiro`, `atena`), store sobre `localStorage`, shell com os dois menus, componentes
+compartilhados (chip, faixa de indicadores, trilha) e a **Visão Geral da Área Central** completa:
+filtros, três níveis de expansão e cobertura causal. Corrige três problemas do protótipo —
+T5.1.10, T5.1.11 e T5.1.12.
+
 ---
 
 ## Próxima entrega
 
-### 3 · Fundação visual e shell navegável
+### 4 · Demais telas da Área Central
 
 **Objetivo:** o esqueleto que todas as telas vão usar, navegável nas duas visões.
 
