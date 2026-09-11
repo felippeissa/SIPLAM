@@ -8,7 +8,34 @@
  * Quem altera o estado deve fazê-lo pelas funções daqui — elas cuidam de
  * registrar evento, tocar a data de atualização e gravar.
  */
-import { estadoInicial } from "./seed.js";
+import { estadoInicial, ANOS } from "./seed.js";
+
+/**
+ * O protótipo não tinha o plano como entidade: eixo e objetivo estratégico eram
+ * texto solto dentro de cada Programa. O cadastro do PPA passa a guardá-los em
+ * um lugar só, junto da identificação e do prazo do ciclo.
+ */
+function ppaInicial(programas) {
+    const eixos = [...new Set(programas.map((p) => p.eixo).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    const objetivos = [...new Set(programas.map((p) => p.objetivoEstrategico).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b)
+    );
+
+    return {
+        nome: "Plano Plurianual 2028–2031",
+        primeiroAno: ANOS[0],
+        ultimoAno: ANOS[ANOS.length - 1],
+        lei: "",
+        dataLei: "",
+        orgaoResponsavel: "Secretaria de Estado da Economia",
+        situacao: "em_elaboracao",
+        aberturaContribuicoes: "",
+        encerramentoContribuicoes: "",
+        mensagem: "",
+        eixos,
+        objetivos,
+    };
+}
 
 const CHAVE = "siplam.estado.v1";
 
@@ -21,14 +48,18 @@ const ouvintes = new Set();
 /* ---------- persistência ---------- */
 
 function carregar() {
+    let base = null;
     try {
         const bruto = localStorage.getItem(CHAVE);
-        if (bruto) return JSON.parse(bruto);
+        if (bruto) base = JSON.parse(bruto);
     } catch (e) {
         // Estado incompatível ou armazenamento bloqueado: recomeça do seed.
         console.warn("SIPLAM: não foi possível ler o estado salvo, usando os dados de demonstração.", e);
     }
-    return estadoInicial();
+    if (!base) base = estadoInicial();
+    // Estado gravado antes de o PPA existir como entidade.
+    if (!base.ppa) base.ppa = ppaInicial(base.programas);
+    return base;
 }
 
 function gravar() {
@@ -55,6 +86,14 @@ export function aoMudar(fn) {
 /** Volta aos dados de demonstração. */
 export function reiniciar() {
     estado = estadoInicial();
+    estado.ppa = ppaInicial(estado.programas);
+    gravar();
+}
+
+/* ---------- PPA ---------- */
+
+export function updPpa(patch) {
+    Object.assign(estado.ppa, patch);
     gravar();
 }
 
