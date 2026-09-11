@@ -101,32 +101,31 @@ function topbar(estado, visao) {
 
             <div id="search-box" class="app-search d-none d-lg-flex">
                 <input type="search" class="form-control topbar-search" id="abrir-busca"
-                       placeholder="Buscar Programa, Iniciativa, Entrega…" readonly aria-label="Abrir a busca" />
+                       placeholder="Buscar…" readonly aria-label="Abrir a busca" />
                 <i class="ti ti-search app-search-icon text-muted"></i>
-                <kbd class="app-search-atalho">Ctrl K</kbd>
+                <kbd class="app-search-atalho d-none d-xl-block">Ctrl K</kbd>
             </div>
-        </div>
 
-        <div class="d-flex align-items-center gap-2">
-            <div class="topbar-item d-none d-md-flex">
+            <!-- A navegação entre as duas visões fica no grupo da esquerda, onde o
+                 template põe os itens de menu; a direita é do usuário. -->
+            <div class="topbar-item d-none d-md-flex ms-1">
                 <div class="btn-group btn-group-sm" role="group" aria-label="Alternar visão">
                     <a href="programas.html" class="btn ${central ? "btn-light" : "btn-primary"}">Visão Setorial</a>
                     <a href="central.html" class="btn ${central ? "btn-primary" : "btn-light"}">Visão Área Central</a>
                 </div>
             </div>
+        </div>
 
+        <div class="d-flex align-items-center gap-2">
             <div class="topbar-item nav-user">
                 <div class="dropdown">
                     <a class="topbar-link dropdown-toggle drop-arrow-none px-2" data-bs-toggle="dropdown" href="#!" aria-haspopup="false" aria-expanded="false">
                         <span class="avatar-sm bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center me-lg-2">
                             <i class="ti ti-user"></i>
                         </span>
-                        <div class="d-lg-flex align-items-center gap-1 d-none text-start">
-                            <div>
-                                <h5 class="my-0 fs-13">${quem.nome}</h5>
-                                <span class="fs-12 text-muted">${quem.papel}</span>
-                            </div>
-                            <i class="ti ti-chevron-down align-middle ms-1"></i>
+                        <div class="d-lg-flex align-items-center gap-1 d-none">
+                            <h5 class="my-0 fs-13">${quem.nome}</h5>
+                            <i class="ti ti-chevron-down align-middle"></i>
                         </div>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end">
