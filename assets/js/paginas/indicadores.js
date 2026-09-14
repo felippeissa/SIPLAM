@@ -5,7 +5,7 @@
  * Corrige T6.7.4, o maior buraco do protótipo: a tela era uma vitrine dos dados
  * do seed, sem nenhuma forma de cadastrar ou editar indicador em qualquer
  * visão. Aqui o indicador de Iniciativa é editável pelo órgão; o de Programa
- * continua na Administração de Programas, que é de quem o define.
+ * continua no Cadastro de Programa, que é de quem o define.
  */
 import { obterEstado, updIniciativa } from "../dados/store.js";
 import { ANOS } from "../dados/seed.js";

@@ -104,6 +104,23 @@ flatpickr por cima da própria mensagem ao receber foco; nesses, o campo só é 
 
 ---
 
+### 7 · Valor previsto do PPA e Cadastro de Programa no menu — `2026-09-14`
+
+O plano passa a ter **valor previsto** próprio, informado na criação e na edição: o valor global fixado
+na lei que institui o PPA. Não se confunde com a soma das Ações Orçamentárias, que o sistema continua
+derivando — os dois aparecem juntos no formulário, com a soma numa linha de apoio abaixo do campo,
+para a diferença entre teto e execução ficar explícita em vez de virar discussão depois. A coluna da
+listagem virou **Valor previsto** e mostra o número completo, com centavos.
+
+Campo opcional: um plano pode ser cadastrado antes de a lei fixar o valor, e aí a coluna mostra
+travessão. Texto que não vira número devolve erro em vez de salvar vazio — era o que acontecia antes,
+e o que a pessoa digitava sumia sem aviso.
+
+No menu, **Programas** virou **Cadastro de Programa** e passou para dentro de CADASTROS, junto dos
+outros cinco. A seção Administração ficou sem itens e foi removida.
+
+---
+
 ## Próxima entrega
 
 ### 6 · Atena e documentos

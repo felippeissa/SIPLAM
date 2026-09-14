@@ -22,6 +22,8 @@ function ppaInicial() {
         nome: "Plano Plurianual 2028–2031",
         primeiroAno: "2028",
         ultimoAno: "2031",
+        // Valor global do plano, o da lei. A soma das Ações Orçamentárias é outro número.
+        valorPrevisto: 742700000,
         descricao: "",
     };
 }
@@ -55,6 +57,9 @@ function carregar() {
     for (const colecao of ["diagnosticos", "problemas", "subproblemas", "causas"]) {
         if (!base[colecao]) base[colecao] = [];
     }
+
+    // Planos gravados antes do valor previsto existir.
+    for (const ppa of base.ppas) if (ppa.valorPrevisto === undefined) ppa.valorPrevisto = "";
     return base;
 }
 
@@ -142,6 +147,7 @@ export function ppaVazio() {
         nome: `Plano Plurianual ${inicio}–${inicio + 3}`,
         primeiroAno: String(inicio),
         ultimoAno: String(inicio + 3),
+        valorPrevisto: "",
         descricao: "",
     };
 }

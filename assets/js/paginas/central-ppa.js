@@ -2,7 +2,7 @@
  * PPA — Administração.
  *
  * Tabela dos planos cadastrados e um modal para criar ou editar, no padrão da
- * Administração de Programas.
+ * Cadastro de Programa.
  *
  * São quatro campos por ora: nome, primeiro ano, último ano e descrição. Os
  * demais entram depois de conversar com o usuário.
@@ -22,6 +22,25 @@ const leitura = somenteLeitura();
 let edicao = null;
 let novo = false;
 let busca = "";
+
+/**
+ * O valor previsto do plano, como o usuário digita: 742.700.000,00.
+ * Guardado como número; formatado só na ida e na volta do campo.
+ */
+function moedaCampo(v) {
+    if (v === "" || v === null || v === undefined || Number.isNaN(Number(v))) return "";
+    return Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function lerMoeda(txt) {
+    const bruto = String(txt).trim();
+    if (bruto === "") return "";
+    // Texto que não vira número devolve NaN, e não vazio: quem digitou algo
+    // precisa ser avisado, não ver o que escreveu sumir.
+    const limpo = bruto.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+    if (limpo === "" || limpo === "-") return NaN;
+    const n = Number(limpo);
+    return Number.isNaN(n) ? NaN : n;
+}
 
 /** O previsto de um plano soma apenas os anos da sua vigência. */
 function previstoDoPlano(ppa) {
@@ -66,7 +85,7 @@ function render() {
                         <th style="width:20rem">Plano</th>
                         <th style="width:9rem">Vigência</th>
                         <th>Descrição</th>
-                        <th class="num" style="width:9rem">Previsto</th>
+                        <th class="num" style="width:11rem">Valor previsto</th>
                         <th style="width:7rem">Ações</th>
                     </tr>
                 </thead>
@@ -85,7 +104,7 @@ function render() {
                         <td class="fw-medium">${esc(p.nome)}</td>
                         <td class="codigo">${esc(p.primeiroAno)}–${esc(p.ultimoAno)}</td>
                         <td class="fs-13 text-muted">${esc(p.descricao || "—")}</td>
-                        <td class="num">${moedaCurta(previstoDoPlano(p))}</td>
+                        <td class="num">${p.valorPrevisto === "" || p.valorPrevisto === undefined ? "—" : `R$ ${moedaCampo(p.valorPrevisto)}`}</td>
                         <td>${
                             leitura
                                 ? `<button class="btn btn-sm btn-light" data-editar="${p.id}">Ver</button>`
@@ -191,6 +210,8 @@ function modal() {
     const temContribuicoes = estado.iniciativas.length > 0 && !novo;
     // Plano com diagnóstico vinculado não pode ser excluído.
     const diagnosticos = novo ? 0 : (estado.diagnosticos ?? []).filter((d) => d.ppaId === p.id).length;
+    // A soma das Ações Orçamentárias fica à vista: é o outro número, e ele não se confunde com o da lei.
+    const derivado = novo ? 0 : previstoDoPlano(p);
 
     return `
 <div class="modal fade" id="modal-ppa" tabindex="-1" aria-hidden="true">
@@ -225,6 +246,24 @@ function modal() {
                                    value="${esc(p.ultimoAno)}" ${leitura ? "disabled" : ""} />
                             <span class="input-group-text"><i class="ti ti-calendar"></i></span>
                             ${campoErro("f-ultimoAno")}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="f-valorPrevisto">Valor previsto</label>
+                        <div class="input-group">
+                            <span class="input-group-text">R$</span>
+                            <input type="text" class="form-control num" id="f-valorPrevisto"
+                                   inputmode="decimal" placeholder="0,00"
+                                   value="${moedaCampo(p.valorPrevisto)}" ${leitura ? "disabled" : ""} />
+                            ${campoErro("f-valorPrevisto")}
+                        </div>
+                        <div class="form-text fs-12">
+                            Valor global do plano, como fixado na lei que o institui.
+                            ${
+                                derivado > 0
+                                    ? `Já somam <strong>${moedaCurta(derivado)}</strong> nas Ações Orçamentárias das Entregas.`
+                                    : ""
+                            }
                         </div>
                     </div>
                     <div class="col-12">
@@ -286,6 +325,7 @@ function lerModal() {
         nome: v("f-nome").trim(),
         primeiroAno: v("f-primeiroAno").trim(),
         ultimoAno: v("f-ultimoAno").trim(),
+        valorPrevisto: lerMoeda(v("f-valorPrevisto")),
         descricao: v("f-descricao").trim(),
     };
 }
@@ -368,6 +408,16 @@ document.addEventListener("click", (e) => {
                 campo: "f-ultimoAno",
                 valido: Number(dados.ultimoAno) >= Number(dados.primeiroAno),
                 mensagem: "O último ano não pode ser anterior ao primeiro.",
+            },
+            {
+                campo: "f-valorPrevisto",
+                valido: !Number.isNaN(dados.valorPrevisto),
+                mensagem: "Informe um valor numérico, como 742.700.000,00.",
+            },
+            {
+                campo: "f-valorPrevisto",
+                valido: dados.valorPrevisto === "" || dados.valorPrevisto >= 0,
+                mensagem: "O valor previsto não pode ser negativo.",
             },
         ]);
         if (!ok) return;

@@ -1,5 +1,5 @@
 /**
- * Administração de Programas — Área Central.
+ * Cadastro de Programa — Área Central.
  * Porta `central_.programas.tsx`.
  *
  * Corrige dois problemas graves do protótipo:
@@ -81,7 +81,7 @@ function render() {
 
     document.getElementById("conteudo").innerHTML = `
     ${cabecalhoPagina(
-        "Administração de Programas",
+        "Cadastro de Programa",
         "Diagnóstico, aptidão e disponibilização dos Programas aos órgãos.",
         `
         <div class="app-search">
