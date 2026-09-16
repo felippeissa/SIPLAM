@@ -25,7 +25,7 @@ import {
 } from "../dados/regras.js";
 import { linhasDoPrograma } from "../dados/financeiro.js";
 import { montarShell, cabecalhoPagina } from "../shell.js";
-import { chip, statusChip, esc, faixaIndicadores, secao, contexto } from "../ui.js";
+import { chip, statusChip, esc, faixaIndicadores, secao, contexto, medidor, faisca } from "../ui.js";
 
 const { estado } = montarShell();
 const ANOS = ["2028", "2029", "2030", "2031"];
@@ -61,37 +61,6 @@ const previstoPorAno = (pid) => {
     const linhas = linhasDoPrograma(estado, pid);
     return ANOS.map((a) => linhas.reduce((s, l) => s + (l.anos[a] ?? 0), 0));
 };
-
-/* ---------- micro-gráficos ----------
-   Uma matiz só e o número sempre ao lado: o verde da marca fica abaixo de 3:1
-   contra o branco, então a cor nunca é a única portadora da informação. */
-
-/** Medidor de proporção, com o rótulo por fora. */
-function medidor(parte, total, opcoes = {}) {
-    const p = total > 0 ? Math.min(100, (parte / total) * 100) : 0;
-    return `<div class="medidor ${opcoes.pequeno ? "medidor-sm" : ""}" role="img"
-                 aria-label="${p.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% de ${esc(opcoes.de ?? "total")}"
-                 title="${esc(opcoes.titulo ?? "")}"><span style="width:${p}%"></span></div>`;
-}
-
-/**
- * Trajetória das metas de uma Entrega: quatro barras, sem eixo.
- * Só a forma importa — as unidades mudam de Entrega para Entrega, então
- * comparar a altura entre linhas não diria nada. Os números estão nas colunas.
- */
-function faisca(valores, rotulo) {
-    const nums = valores.map((v) => (v === null || v === undefined ? null : v));
-    const max = Math.max(...nums.filter((v) => v !== null), 0);
-    return `<span class="faisca" role="img" aria-label="${esc(rotulo)}" title="${esc(rotulo)}">
-        ${nums
-            .map((v) =>
-                v === null
-                    ? `<i class="vazio" style="height:2px"></i>`
-                    : `<i style="height:${max > 0 ? Math.max(2, (v / max) * 22) : 2}px"></i>`
-            )
-            .join("")}
-    </span>`;
-}
 
 /* ---------- escolha do Programa ---------- */
 
@@ -361,7 +330,9 @@ function abaEntregas(p) {
                     return `
                 <tr>
                     <td>
-                        <div class="fw-medium">${esc(e.nome) || '<span class="text-muted">Sem nome</span>'}</div>
+                        <div class="fw-medium">
+                            <a href="central-hub-entrega.html?entrega=${e.id}">${esc(e.nome) || "Sem nome"}</a>
+                        </div>
                         <div class="fs-12 text-muted">${esc(ini.nome)} · ${esc(nomeComportamento(e.comportamento))} · ${esc(
                         TERRITORIO_LABEL[e.territorio?.tipo] ?? "Território não definido"
                     )}</div>

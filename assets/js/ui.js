@@ -81,3 +81,34 @@ export function contexto(elos) {
         .join("")}
 </nav>`;
 }
+
+/* ---------- micro-gráficos ----------
+   Uma matiz só e o número sempre ao lado: o verde da marca fica abaixo de 3:1
+   contra o branco, então a cor nunca é a única portadora da informação. */
+
+/** Medidor de proporção, com o rótulo por fora. */
+export function medidor(parte, total, opcoes = {}) {
+    const p = total > 0 ? Math.min(100, (parte / total) * 100) : 0;
+    return `<div class="medidor ${opcoes.pequeno ? "medidor-sm" : ""}" role="img"
+                 aria-label="${p.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% de ${esc(opcoes.de ?? "total")}"
+                 title="${esc(opcoes.titulo ?? "")}"><span style="width:${p}%"></span></div>`;
+}
+
+/**
+ * Trajetória de uma série curta: barras sem eixo, só a forma.
+ * Usada onde comparar altura entre linhas não diria nada — as unidades mudam
+ * de uma linha para outra. Os números ficam nas colunas ao lado.
+ */
+export function faisca(valores, rotulo) {
+    const nums = valores.map((v) => (v === null || v === undefined ? null : v));
+    const max = Math.max(...nums.filter((v) => v !== null), 0);
+    return `<span class="faisca" role="img" aria-label="${esc(rotulo)}" title="${esc(rotulo)}">
+        ${nums
+            .map((v) =>
+                v === null
+                    ? `<i class="vazio" style="height:2px"></i>`
+                    : `<i style="height:${max > 0 ? Math.max(2, (v / max) * 22) : 2}px"></i>`
+            )
+            .join("")}
+    </span>`;
+}
