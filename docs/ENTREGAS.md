@@ -121,6 +121,31 @@ outros cinco. A seção Administração ficou sem itens e foi removida.
 
 ---
 
+### 8 · Hub de Programas — `2026-09-16`
+
+Visão consolidada de um Programa, pedida pelo cliente. A informação que hoje está espalhada por
+seis telas passa a caber numa só: abre pela lista dos Programas, e o Programa escolhido abre num
+hub com cinco abas — Visão geral (o diagnóstico inteiro), Iniciativas, Entregas, Projetos e
+Documentos. A URL guarda programa e aba, então dá para mandar o link de uma aba específica.
+
+**É tela de leitura e navegação.** Nada se edita a partir do hub: os botões levam às telas de
+origem. Duplicar formulários criaria dois lugares para a mesma verdade.
+
+**Documentos não existe no modelo de dados** — não há tipo, campo nem exemplo. Em vez de inventar
+conteúdo, a aba mostra o estado vazio com a proposta de campos e quatro perguntas para o usuário.
+É mais fácil reagir a algo concreto do que responder no abstrato.
+
+Quatro gráficos, cada um escolhido pelo trabalho que a informação faz: colunas do previsto por ano
+(dinheiro é a mesma unidade, pode somar), medidor de executado sobre previsto, trajetória das metas
+por Entrega e barra de execução por Projeto. **Uma matiz só, e o número sempre visível ao lado** — o
+verde da marca tem 2,6:1 contra o branco, abaixo dos 3:1 mínimos, então a cor acompanha e nunca
+informa sozinha. As metas das Entregas não viraram gráfico agregado: as unidades mudam entre
+Entregas e a soma não significaria nada.
+
+No menu, o Hub entra em CADASTROS, depois do Cadastro de Programa. Só para Administrador central.
+
+---
+
 ## Próxima entrega
 
 ### 6 · Atena e documentos

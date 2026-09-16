@@ -338,3 +338,71 @@
     letter-spacing: 0.03em;
     user-select: all;
 }
+
+/* Ficha de identificação — pares rótulo/valor dentro de um card.
+   Usada no Hub de Programas; o rótulo segue o padrão dos cabeçalhos de tabela. */
+.ficha {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin: 0;
+}
+.ficha dt {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    color: var(--bs-secondary-color, #9ba6b7);
+    margin-top: 0.75rem;
+}
+.ficha dt:first-child { margin-top: 0; }
+.ficha dd {
+    font-size: 13px;
+    margin: 0.15rem 0 0;
+}
+
+/* Linha de tabela que abre outra tela ao ser clicada. */
+.cursor-pointer { cursor: pointer; }
+
+/* ---------- Micro-gráficos ----------
+   Marcas finas, uma só matiz e o número sempre visível ao lado: o verde da
+   marca tem 2,6:1 contra o branco, abaixo de 3:1, então a cor nunca carrega
+   a informação sozinha. */
+
+/* Medidor de proporção — trilho claro, preenchimento na matiz da marca. */
+.medidor {
+    height: 6px;
+    border-radius: 3px;
+    background-color: var(--siplam-aninhado-bg-2);
+    overflow: hidden;
+}
+.medidor > span {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    background-color: #1ab394;
+}
+.medidor-sm { height: 4px; }
+
+/* Barras de trajetória dentro da célula da tabela. */
+.faisca {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 22px;
+}
+.faisca i {
+    display: block;
+    width: 6px;
+    min-height: 2px;
+    border-radius: 2px 2px 0 0;
+    background-color: #1ab394;
+    opacity: 0.85;
+}
+.faisca i.vazio { background-color: var(--siplam-aninhado-traco); opacity: 0.5; }
+
+/* Legenda miúda sob um número. */
+.nota-grafico {
+    font-size: 11px;
+    color: #9ba6b7;
+}
