@@ -11,9 +11,8 @@ validado no protótipo React que está em `prototipo-lovable/`.
 
 ## Estado atual
 
-A tela de acesso (`index.html`) está publicada, montada sobre a página de autenticação padrão do
-Inspinia. As telas do sistema entram nas próximas entregas; o roteiro está em
-[docs/ENTREGAS.md](docs/ENTREGAS.md).
+As telas da Área Central e do órgão estão construídas e publicadas. O que já existe, o que falta
+e em que ordem está em [docs/escopo-ux.md](docs/escopo-ux.md).
 
 ## Estrutura
 
@@ -22,14 +21,16 @@ index.html           tela de acesso — entrada publicada no GitHub Pages
 src/                 telas do SIPLAM (a partir da próxima entrega)
 inspinia/            template Inspinia 5 — referência de markup e componentes
 prototipo-lovable/   protótipo React/TanStack que define o comportamento a reproduzir
-docs/                backlog, mapa do sistema e registro de entregas
+docs/                escopo, perguntas, backlog e mapas do sistema
 ```
 
 ## Documentação
 
 | Arquivo | O que é |
 |---|---|
-| [docs/ENTREGAS.md](docs/ENTREGAS.md) | O que já foi entregue e qual é a próxima |
+| [docs/escopo-ux.md](docs/escopo-ux.md) | O que já existe, as telas que faltam e a ordem |
+| [docs/perguntas.md](docs/perguntas.md) | Decisões dos stakeholders e perguntas em aberto |
+| [docs/discovery/](docs/discovery/README.md) | Lean Inception feita com o cliente |
 | [docs/backlog-frontend.html](docs/backlog-frontend.html) | 92 histórias de front-end e design, em 7 épicos |
 | [docs/mapa-sistema.html](docs/mapa-sistema.html) | Mapa das 20 telas: ações, lacunas, problemas e perguntas em aberto |
 | [docs/mapa-area-central.html](docs/mapa-area-central.html) | Mapa detalhado da visão da Área Central |

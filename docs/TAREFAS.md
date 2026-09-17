@@ -34,7 +34,7 @@ controle.
 - Marque a caixa quando a subtarefa estiver no `main`.
 - Cada tarefa tem código (`T5.8.6`) e cada subtarefa também (`T5.8.6.2`), para os commits
   referenciarem.
-- `ENTREGAS.md` diz qual é o recorte da entrega da vez.
+- `escopo-ux.md` diz o que falta construir e em que ordem.
 
 Marcadores ao fim da linha:
 

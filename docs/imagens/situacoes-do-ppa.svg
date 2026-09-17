@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="600" viewBox="0 0 680 600" role="img">
+  <title>Situações do PPA — SIPLAM</title>
+  <desc>Elaboração leva a submetido, que se bifurca em aprovado ou reprovado. Aprovado segue para vigente e depois encerrado. Reprovado retorna para elaboração.</desc>
+  <defs>
+    <marker id="seta" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect width="680" height="600" fill="#ffffff"/>
+  <text x="40" y="34" font-family="IBM Plex Sans, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="500" fill="#4C4C5C">Situações do PPA</text>
+
+  <g>
+    <rect x="150" y="60" width="180" height="56" rx="8" fill="#e4eef6" stroke="#1f5c8b" stroke-opacity="0.35" stroke-width="1"/>
+    <text x="240.0" y="79.0" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Sans, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="500" fill="#1f5c8b">Elaboração</text>
+    <text x="240.0" y="99.0" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Sans, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#1f5c8b" fill-opacity="0.78">órgãos preenchem</text>
+  </g>
+  <line x1="240" y1="116" x2="240" y2="166" stroke="#8a97a6" stroke-width="1.5" marker-end="url(#seta)"/>
+
+  <g>
+    <rect x="150" y="176" width="180" height="56" rx="8" fill="#f7eddb" stroke="#8a5a12" stroke-opacity="0.35" stroke-width="1"/>
+    <text x="240.0" y="195.0" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Sans, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="500" fill="#8a5a12">Submetido</text>
+    <text x="240.0" y="215.0" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Sans, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#8a5a12" fill-opacity="0.78">congelado para edição</text>
+  </g>
+  <path d="M 330 204 L 490 204 L 490 282" fill="none" stroke="#8a97a6" stroke-width="1.5" marker-end="url(#seta)"/>
+  <line x1="240" y1="232" x2="240" y2="282" stroke="#8a97a6" stroke-width="1.5" marker-end="url(#seta)"/>
+
+  <g>
+    <rect x="150" y="292" width="180" height="56" rx="8" fill="#e2f0e9" stroke="#1f6b4d" stroke-opacity="0.35" stroke-width="1"/>
+    <text x="240.0" y="311.0" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Sans, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="500" fill="#1f6b4d">Aprovado</text>
+    <text x="240.0" y="331.0" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Sans, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#1f6b4d" fill-opacity="0.78">aguarda a vigência</text>
+  </g>
+
+  <g>
+    <rect x="400" y="292" width="180" height="56" rx="8" fill="#f8e5e2" stroke="#9b3324" stroke-opacity="0.35" stroke-width="1"/>
+    <text x="490.0" y="311.0" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Sans, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="500" fill="#9b3324">Reprovado</text>
+    <text x="490.0" y="331.0" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Sans, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#9b3324" fill-opacity="0.78">volta para elaboração</text>
+  </g>
+  <path d="M 580 320 L 632 320 L 632 88 L 340 88" fill="none" stroke="#9b3324" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#seta)"/>
+  <line x1="240" y1="348" x2="240" y2="398" stroke="#8a97a6" stroke-width="1.5" marker-end="url(#seta)"/>
+
+  <g>
+    <rect x="150" y="408" width="180" height="56" rx="8" fill="#e2f0e9" stroke="#1f6b4d" stroke-opacity="0.35" stroke-width="1"/>
+    <text x="240.0" y="427.0" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Sans, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="500" fill="#1f6b4d">Vigente</text>
+    <text x="240.0" y="447.0" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Sans, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#1f6b4d" fill-opacity="0.78">só muda por alteração</text>
+  </g>
+  <line x1="240" y1="464" x2="240" y2="514" stroke="#8a97a6" stroke-width="1.5" marker-end="url(#seta)"/>
+
+  <g>
+    <rect x="150" y="524" width="180" height="56" rx="8" fill="#eef1f5" stroke="#5b6873" stroke-opacity="0.35" stroke-width="1"/>
+    <text x="240.0" y="543.0" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Sans, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="500" fill="#5b6873">Encerrado</text>
+    <text x="240.0" y="563.0" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Sans, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="12.5" fill="#5b6873" fill-opacity="0.78">permanece para consulta</text>
+  </g>
+</svg>
