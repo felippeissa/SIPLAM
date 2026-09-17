@@ -36,11 +36,12 @@ const MENU_CENTRAL = [
     { href: "central-ipofs.html", rotulo: "IPOFs", icone: "ti-receipt" },
     { grupo: "Cadastros" },
     { href: "central-ppa.html", rotulo: "Cadastro de PPA", icone: "ti-calendar-stats" },
-    { href: "central-diagnostico.html", rotulo: "Cadastro de Diagnóstico", icone: "ti-stethoscope" },
-    { href: "central-causa.html", rotulo: "Cadastro de Causa", icone: "ti-binary-tree" },
-    { href: "central-problema.html", rotulo: "Cadastro de Problemas", icone: "ti-alert-triangle" },
-    { href: "central-subproblema.html", rotulo: "Cadastro de Subproblemas", icone: "ti-subtask" },
     { href: "central-programas.html", rotulo: "Cadastro de Programa", icone: "ti-layout-grid" },
+    { href: "central-diagnostico.html", rotulo: "Cadastro de Diagnóstico", icone: "ti-stethoscope" },
+    { href: "central-problema.html", rotulo: "Cadastro de Problemas", icone: "ti-alert-triangle" },
+    { href: "central-causa.html", rotulo: "Cadastro de Causas", icone: "ti-binary-tree" },
+    { href: "central-subcausa.html", rotulo: "Cadastro de Subcausas", icone: "ti-subtask" },
+    { href: "central-usuarios.html", rotulo: "Cadastro de Usuários", icone: "ti-users" },
     { href: "central-hub.html", rotulo: "Hub de Programas", icone: "ti-layout-dashboard" },
 ];
 
@@ -48,13 +49,16 @@ const MENU_CENTRAL = [
  * Perfis do sistema. A visão, o modo de leitura e o menu decorrem daqui.
  * Espelha `assets/js/acesso.js`, que é a fonte usada no fluxo de acesso.
  *
- * `construcao: true` marca o perfil cujas telas ainda não existem: ele não tem
- * menu, para não oferecer caminho que não é dele.
+ * `construcao: true` marca o perfil cuja tela inicial ainda não existe: ele não
+ * tem menu, para não oferecer caminho que não é dele.
+ *
+ * `leitura: true` é só dos órgãos de controle. A alta gestão preenche e ainda
+ * aprova — ela só está em construção porque a tela inicial dela não existe.
  */
 const PERFIL = {
-    setorial: { nome: "Setorial", visao: "setorial", leitura: false, construcao: true },
+    setorial: { nome: "Setorial", visao: "setorial", leitura: false, construcao: false },
     "admin-central": { nome: "Administrador central", visao: "central", leitura: false, construcao: false },
-    "gestao-setorial": { nome: "Alta gestão setorial", visao: "setorial", leitura: true, construcao: true },
+    "gestao-setorial": { nome: "Alta gestão setorial", visao: "setorial", leitura: false, construcao: true },
     "gestao-central": { nome: "Alta gestão central", visao: "central", leitura: true, construcao: true },
     controle: { nome: "Órgãos de controle", visao: "central", leitura: true, construcao: true },
 };
@@ -64,19 +68,23 @@ export function emConstrucao() {
     return PERFIL[perfilDaSessao()]?.construcao === true;
 }
 
-/** Perfis de acompanhamento não operam o plano. */
+/** Só os órgãos de controle não escrevem; a alta gestão preenche e ainda aprova. */
 export function somenteLeitura() {
     return PERFIL[perfilDaSessao()]?.leitura === true;
 }
 
 /**
- * Visão da página aberta: tudo que começa com "central" é área central.
- * A home provisória não pertence a nenhuma das duas, então segue o perfil.
+ * Visão de quem está olhando — consequência do perfil, não do nome do arquivo.
+ *
+ * Telas como `programa.html`, `iniciativa.html` e `entrega.html` servem às duas
+ * visões. Decidir pelo nome do arquivo fazia o menu do Administrador central
+ * virar o menu do órgão só por ele abrir um Programa a partir do cadastro.
  */
 export function visaoAtual() {
-    const pagina = paginaAtual();
-    if (pagina === "em-construcao.html") return PERFIL[perfilDaSessao()]?.visao ?? "setorial";
-    return pagina.startsWith("central") ? "central" : "setorial";
+    const doPerfil = PERFIL[perfilDaSessao()]?.visao;
+    if (doPerfil) return doPerfil;
+    // Sem perfil na sessão — tela aberta direto — o nome do arquivo é o que sobra.
+    return paginaAtual().startsWith("central") ? "central" : "setorial";
 }
 
 /** Perfil escolhido no acesso. */
@@ -264,7 +272,7 @@ function rodape() {
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-6 text-center text-md-start">
-                © <span data-current-year></span> <span class="fw-semibold">Estado de Goiás</span> · PPA 2028–2031
+                © <span data-current-year></span> <span class="fw-semibold">Estado de Goiás</span> · SIPLAM
             </div>
             <div class="col-md-6">
                 <div class="text-md-end d-none d-md-block text-muted">

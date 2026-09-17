@@ -25,23 +25,23 @@
     };
 
     /**
-     * Só o Administrador central tem telas construídas; os demais perfis caem na
-     * home provisória e ficam sem menu, até que as telas deles existam.
-     *
      * A visão é consequência do perfil, não uma escolha na interface.
      *
-     * `leitura: true` marca quem acompanha o plano sem operá-lo — alta gestão e
-     * órgãos de controle veem tudo da sua visão, sem preencher, enviar, analisar
-     * ou administrar. O recorte de cada perfil ainda precisa ser confirmado com
-     * os stakeholders; aqui vale a leitura mais conservadora.
+     * Os perfis de alta gestão são acumulativos: fazem tudo que o perfil do seu
+     * nível faz, mais aprovar. Por isso não têm telas próprias — usam as mesmas,
+     * e a camada de aprovação virá por cima.
+     *
+     * `leitura: true` é só dos órgãos de controle, o único perfil que não escreve.
+     *
+     * Por ora só Setorial e Administrador central têm tela inicial. Os outros
+     * três caem na home provisória, até que a vez deles chegue.
      */
     var PERFIS = [
         {
             id: "setorial",
             nome: "Setorial",
             visao: "setorial",
-            // Sem tela própria ainda: cai na home provisória.
-            inicio: null,
+            inicio: "programas.html",
             leitura: false,
             descricao: "Elabora e envia as contribuições do órgão",
         },
@@ -57,10 +57,11 @@
             id: "gestao-setorial",
             nome: "Alta gestão setorial",
             visao: "setorial",
-            // Sem tela própria ainda: cai na home provisória.
+            // Acumulativo: fará tudo que o Setorial faz, mais aprovar. A tela
+            // inicial dele entra numa entrega adiante; por ora, home provisória.
             inicio: null,
-            leitura: true,
-            descricao: "Acompanha as contribuições do próprio órgão",
+            leitura: false,
+            descricao: "Faz tudo que o Setorial faz e aprova a proposta do órgão",
         },
         {
             id: "gestao-central",
@@ -165,7 +166,7 @@
         return perfilPorId(perfilId)?.visao || "setorial";
     }
 
-    /** Perfis de acompanhamento não operam o plano. */
+    /** Só os órgãos de controle não escrevem; a alta gestão preenche e ainda aprova. */
     function somenteLeitura(perfilId) {
         return perfilPorId(perfilId)?.leitura === true;
     }

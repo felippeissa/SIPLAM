@@ -54,8 +54,8 @@ document.getElementById("conteudo").innerHTML = `
                 </div>
 
                 <p class="fs-12 text-muted mb-0">
-                    Por enquanto só o perfil <strong>Administrador central</strong> tem telas
-                    construídas.
+                    Por enquanto os perfis <strong>Setorial</strong> e
+                    <strong>Administrador central</strong> têm telas construídas.
                 </p>
             </div>
         </div>

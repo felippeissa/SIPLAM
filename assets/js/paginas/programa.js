@@ -8,13 +8,16 @@
  */
 import { obterEstado } from "../dados/store.js";
 import { iniciativasDoOrgao, entregasDaIniciativa, APTIDAO_LABEL, DISPONIBILIZACAO_LABEL } from "../dados/regras.js";
-import { montarShell } from "../shell.js";
+import { montarShell, visaoAtual } from "../shell.js";
 import { chip, statusChip, esc, secao, contexto } from "../ui.js";
 
 const { estado } = montarShell();
 const id = new URLSearchParams(location.search).get("id");
+// A ficha serve às duas visões: voltar tem que devolver a pessoa à lista de onde
+// ela veio, não à lista da outra visão.
+const central = visaoAtual() === "central";
+const voltarPara = central ? "central-programas.html" : "programas.html";
 const p = estado.programas.find((x) => x.id === id);
-const central = location.pathname.includes("central");
 
 if (!p) {
     document.getElementById("conteudo").innerHTML = `
@@ -25,8 +28,23 @@ if (!p) {
     </div>`;
 } else {
     const orgao = estado.orgaoAtual;
-    const inis = iniciativasDoOrgao(estado, p.id, orgao);
+    // A Área Central enxerga a contribuição de todos os órgãos; o órgão só a sua.
+    const inis = central
+        ? estado.iniciativas.filter((i) => i.programaId === p.id)
+        : iniciativasDoOrgao(estado, p.id, orgao);
     const causasDoOrgao = new Set(inis.flatMap((i) => i.causas));
+
+    /**
+     * Quem enfrenta esta causa. "Seu órgão" só faz sentido para quem é de um
+     * órgão: a Área Central precisa saber quantos órgãos atuam, não se ela atua.
+     */
+    function marcaDeAtuacao(causaId) {
+        if (!central) return causasDoOrgao.has(causaId) ? chip("seu órgão atua", "ok") : "";
+        const orgaos = new Set(inis.filter((i) => i.causas.includes(causaId)).map((i) => i.orgao));
+        if (orgaos.size === 0) return chip("sem órgão atuando", "alerta");
+        if (orgaos.size === 1) return chip(`${esc([...orgaos][0])} atua`, "ok");
+        return chip(`${orgaos.size} órgãos atuam`, "ok");
+    }
 
     const lista = (itens, vazio) =>
         itens?.length
@@ -35,7 +53,7 @@ if (!p) {
 
     document.getElementById("conteudo").innerHTML = `
     <div class="my-3">
-        ${contexto([{ rotulo: "Programas", href: "programas.html" }, { rotulo: `${p.codigo} — ${p.nome}` }])}
+        ${contexto([{ rotulo: "Programas", href: voltarPara }, { rotulo: `${p.codigo} — ${p.nome}` }])}
         <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
             <div>
                 <h4 class="fw-bold mb-1">${esc(p.nome)}</h4>
@@ -71,14 +89,14 @@ if (!p) {
                     <li class="list-group-item px-0">
                         <div class="d-flex justify-content-between align-items-start gap-2">
                             <span>${esc(c.texto)}</span>
-                            ${causasDoOrgao.has(c.id) ? chip("seu órgão atua", "ok") : ""}
+                            ${marcaDeAtuacao(c.id)}
                         </div>
                         ${
                             c.subcausas.length
                                 ? `<ul class="mt-2 mb-0 fs-13">${c.subcausas
                                       .map(
                                           (s) =>
-                                              `<li>${esc(s.texto)} ${causasDoOrgao.has(s.id) ? chip("seu órgão atua", "ok") : ""}</li>`
+                                              `<li>${esc(s.texto)} ${marcaDeAtuacao(s.id)}</li>`
                                       )
                                       .join("")}</ul>`
                                 : ""
@@ -131,14 +149,21 @@ if (!p) {
             )}
 
             ${secao(
-                `Iniciativas de ${esc(orgao)} neste Programa`,
+                central ? "Iniciativas neste Programa" : `Iniciativas de ${esc(orgao)} neste Programa`,
                 inis.length === 0
-                    ? '<p class="fs-12 text-muted mb-0">Seu órgão ainda não cadastrou Iniciativas neste Programa.</p>'
+                    ? `<p class="fs-12 text-muted mb-0">${
+                          central
+                              ? "Nenhum órgão cadastrou Iniciativas neste Programa."
+                              : "Seu órgão ainda não cadastrou Iniciativas neste Programa."
+                      }</p>`
                     : `<ul class="list-group list-group-flush">${inis
                           .map(
                               (i) => `
                     <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2">
-                        <a href="iniciativa.html?id=${i.id}">${esc(i.nome)}</a>
+                        <span>
+                            <a href="${central ? "central-iniciativa" : "iniciativa"}.html?id=${i.id}">${esc(i.nome)}</a>
+                            ${central ? `<span class="fs-12 text-muted d-block">${esc(i.orgao)}</span>` : ""}
+                        </span>
                         <span class="d-flex gap-2 align-items-center">
                             <span class="fs-12 text-muted">${entregasDaIniciativa(estado, i.id).length} entrega(s)</span>
                             ${statusChip(i.status)}
@@ -146,7 +171,7 @@ if (!p) {
                     </li>`
                           )
                           .join("")}</ul>`,
-                `<a href="programas.html" class="btn btn-sm btn-outline-primary">Nova Iniciativa</a>`
+                central ? "" : `<a href="programas.html" class="btn btn-sm btn-outline-primary">Nova Iniciativa</a>`
             )}
         </div>
     </div>`;

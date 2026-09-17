@@ -56,7 +56,7 @@ function render() {
     document.getElementById("conteudo").innerHTML = `
     ${cabecalhoPagina(
         "Iniciativas",
-        `Contribuições de ${esc(orgao)} ao PPA 2028–2031.`,
+        `Contribuições de ${esc(orgao)} ao PPA.`,
         `
         <div class="app-search">
             <input type="search" id="busca" class="form-control form-control-sm" placeholder="Buscar Iniciativa" value="${esc(busca)}" />

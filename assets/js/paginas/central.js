@@ -232,7 +232,7 @@ function render() {
 
     document.getElementById("conteudo").innerHTML = `
     ${cabecalhoPagina(
-        "Programas do PPA 2028–2031",
+        "Programas do PPA",
         "Participação dos órgãos e situação das Iniciativas encaminhadas.",
         filtros()
     )}

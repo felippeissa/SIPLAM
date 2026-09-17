@@ -277,7 +277,7 @@ function render() {
     const comContribuicao = ls.filter((l) => l.inis.length > 0).length;
 
     document.getElementById("conteudo").innerHTML = `
-    ${cabecalhoPagina("Programas do PPA 2028–2031", `Iniciativas e Entregas cadastradas por ${esc(orgao)}.`, filtros())}
+    ${cabecalhoPagina("Programas do PPA", `Iniciativas e Entregas cadastradas por ${esc(orgao)}.`, filtros())}
     ${faixaIndicadores(
         [
             { valor: ls.length, rotulo: "Programas do PPA" },

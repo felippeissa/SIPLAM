@@ -72,7 +72,7 @@ function filtros() {
         ).join("")}
     </select>
     <select class="form-select form-select-sm w-auto" id="ano">
-        <option value="todos">2028–2031</option>
+        <option value="todos">Todos os anos</option>
         ${ANOS.map((a) => `<option value="${a}"${a === ano ? " selected" : ""}>${a}</option>`).join("")}
     </select>
     <select class="form-select form-select-sm w-auto" id="eixo">${opcoes(eixos(estado.programas), eixo, "Todos os Eixos", "todos")}</select>
