@@ -7,8 +7,7 @@
  * São quatro campos por ora: nome, primeiro ano, último ano e descrição. Os
  * demais entram depois de conversar com o usuário.
  */
-import { obterEstado, addPpa, updPpa, removePpa, ppaVazio, SITUACOES_PPA, situacaoPpa } from "../dados/store.js";
-import { moedaCurta } from "../dados/regras.js";
+import { obterEstado, addPpa, updPpa, removePpa, ppaVazio, situacaoPpa } from "../dados/store.js";
 import { linhasFinanceiras } from "../dados/financeiro.js";
 import { montarShell, cabecalhoPagina, somenteLeitura } from "../shell.js";
 import { esc, chip } from "../ui.js";
@@ -31,18 +30,25 @@ function moedaCampo(v) {
     if (v === "" || v === null || v === undefined || Number.isNaN(Number(v))) return "";
     return Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
-function lerMoeda(txt) {
-    const bruto = String(txt).trim();
-    if (bruto === "") return "";
-    // Texto que não vira número devolve NaN, e não vazio: quem digitou algo
-    // precisa ser avisado, não ver o que escreveu sumir.
-    const limpo = bruto.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
-    if (limpo === "" || limpo === "-") return NaN;
-    const n = Number(limpo);
-    return Number.isNaN(n) ? NaN : n;
-}
 
 /** O previsto de um plano soma apenas os anos da sua vigência. */
+/**
+ * Anos que o seletor oferece. Só o ano importa: o plano sempre começa em 1º de
+ * janeiro e termina em 31 de dezembro, então a data em si nunca é escolhida.
+ */
+function anosPossiveis() {
+    const base = new Date().getFullYear();
+    const anos = [];
+    for (let a = base - 2; a <= base + 14; a++) anos.push(a);
+    // Um plano gravado fora da faixa não pode sumir do seletor.
+    for (const ppa of estado.ppas) {
+        for (const a of [Number(ppa.primeiroAno), Number(ppa.ultimoAno)]) {
+            if (a && !anos.includes(a)) anos.push(a);
+        }
+    }
+    return anos.sort((x, y) => x - y);
+}
+
 function previstoDoPlano(ppa) {
     const anos = [];
     for (let a = Number(ppa.primeiroAno); a <= Number(ppa.ultimoAno); a++) anos.push(String(a));
@@ -106,7 +112,7 @@ function render() {
                         <td class="codigo">${esc(p.primeiroAno)}–${esc(p.ultimoAno)}</td>
                         <td>${chip(situacaoPpa(p.situacao).rotulo, situacaoPpa(p.situacao).tom)}</td>
                         <td class="fs-13 text-muted">${esc(p.descricao || "—")}</td>
-                        <td class="num">${p.valorPrevisto === "" || p.valorPrevisto === undefined ? "—" : `R$ ${moedaCampo(p.valorPrevisto)}`}</td>
+                        <td class="num">R$ ${moedaCampo(previstoDoPlano(p))}</td>
                         <td>${
                             leitura
                                 ? `<button class="btn btn-sm btn-light" data-editar="${p.id}">Ver</button>`
@@ -124,7 +130,7 @@ function render() {
 
     if (edicao) {
         const el = document.getElementById("modal-ppa");
-        prepararCalendarios(el);
+        ligarVigencia(el);
         limparAoDigitar(el);
         new bootstrap.Modal(el).show();
         el.addEventListener("hidden.bs.modal", () => {
@@ -134,86 +140,29 @@ function render() {
     }
 }
 
-/** O pacote do Inspinia traz o flatpickr sem tradução; esta é a mínima. */
-const PT_BR = {
-    weekdays: {
-        shorthand: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"],
-        longhand: ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"],
-    },
-    months: {
-        shorthand: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
-        longhand: [
-            "Janeiro",
-            "Fevereiro",
-            "Março",
-            "Abril",
-            "Maio",
-            "Junho",
-            "Julho",
-            "Agosto",
-            "Setembro",
-            "Outubro",
-            "Novembro",
-            "Dezembro",
-        ],
-    },
-    firstDayOfWeek: 0,
-    rangeSeparator: " até ",
-    time_24hr: true,
-};
-
 /**
- * O calendário dos anos de vigência. O template inicializa o flatpickr pelos
- * atributos `data-provider` ao carregar a página; como o modal só existe depois,
- * inicializamos aqui.
+ * Ao trocar o primeiro ano, o último acompanha se tiver ficado para trás. O
+ * ciclo costuma ter quatro anos, mas pode ser menor quando um vice assume, então
+ * a sugestão é só ponto de partida — o campo segue livre.
  */
-function prepararCalendarios(el) {
-    if (leitura || typeof flatpickr === "undefined") return;
+function ligarVigencia(el) {
+    const primeiro = el.querySelector("#f-primeiroAno");
+    const ultimo = el.querySelector("#f-ultimoAno");
+    if (!primeiro || !ultimo) return;
 
-    const calendarios = [];
-
-    el.querySelectorAll("[data-provider='flatpickr']").forEach((campo) => {
-        const ano = Number(campo.value) || new Date().getFullYear();
-        const primeiro = campo.id === "f-primeiroAno";
-
-        calendarios.push(flatpickr(campo, {
-            locale: PT_BR,
-            dateFormat: "Y",
-            defaultDate: new Date(ano, primeiro ? 0 : 11, primeiro ? 1 : 31),
-            // O campo guarda o ano; o calendário é só a ajuda para escolhê-lo.
-            onChange: (datas) => {
-                if (!datas[0]) return;
-                campo.value = String(datas[0].getFullYear());
-                // O campo é readonly e recebe o valor por código: nenhum evento
-                // de digitação acontece para apagar o vermelho da validação.
-                campo.classList.remove("is-invalid");
-            },
-        }));
+    primeiro.addEventListener("change", () => {
+        if (Number(ultimo.value) >= Number(primeiro.value)) return;
+        const alvo = Number(primeiro.value) + 3;
+        const existe = [...ultimo.options].some((o) => Number(o.value) === alvo);
+        ultimo.value = String(existe ? alvo : primeiro.value);
+        ultimo.classList.remove("is-invalid");
     });
-
-    // Com o calendário aberto, Esc precisa fechar só o calendário. O flatpickr
-    // deixa a tecla subir e o modal do Bootstrap se fecha junto, levando embora
-    // a edição em andamento.
-    el.addEventListener(
-        "keydown",
-        (e) => {
-            if (e.key !== "Escape") return;
-            const abertos = calendarios.filter((c) => c.isOpen);
-            if (!abertos.length) return;
-            e.stopPropagation();
-            abertos.forEach((c) => c.close());
-        },
-        true // captura: antes de o Bootstrap ouvir
-    );
 }
 
 function modal() {
     const p = edicao;
-    const temContribuicoes = estado.iniciativas.length > 0 && !novo;
     // Plano com diagnóstico vinculado não pode ser excluído.
     const diagnosticos = novo ? 0 : (estado.diagnosticos ?? []).filter((d) => d.ppaId === p.id).length;
-    // A soma das Ações Orçamentárias fica à vista: é o outro número, e ele não se confunde com o da lei.
-    const derivado = novo ? 0 : previstoDoPlano(p);
 
     return `
 <div class="modal fade" id="modal-ppa" tabindex="-1" aria-hidden="true">
@@ -231,52 +180,22 @@ function modal() {
                         ${campoErro("f-nome")}
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label" for="f-primeiroAno">Primeiro ano <span class="text-danger">*</span></label>
+                        <label class="form-label" for="f-primeiroAno">Vigência <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="f-primeiroAno"
-                                   data-provider="flatpickr" data-date-format="Y"
-                                   value="${esc(p.primeiroAno)}" ${leitura ? "disabled" : ""} />
-                            <span class="input-group-text"><i class="ti ti-calendar"></i></span>
-                            ${campoErro("f-primeiroAno")}
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label" for="f-ultimoAno">Último ano <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="f-ultimoAno"
-                                   data-provider="flatpickr" data-date-format="Y"
-                                   value="${esc(p.ultimoAno)}" ${leitura ? "disabled" : ""} />
-                            <span class="input-group-text"><i class="ti ti-calendar"></i></span>
+                            <select class="form-select" id="f-primeiroAno" ${leitura || !novo ? "disabled" : ""}>
+                                ${anosPossiveis().map((a) => `<option value="${a}" ${String(p.primeiroAno) === String(a) ? "selected" : ""}>${a}</option>`).join("")}
+                            </select>
+                            <span class="input-group-text">a</span>
+                            <select class="form-select" id="f-ultimoAno" ${leitura || !novo ? "disabled" : ""}>
+                                ${anosPossiveis().map((a) => `<option value="${a}" ${String(p.ultimoAno) === String(a) ? "selected" : ""}>${a}</option>`).join("")}
+                            </select>
                             ${campoErro("f-ultimoAno")}
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label" for="f-valorPrevisto">Valor previsto</label>
-                        <div class="input-group">
-                            <span class="input-group-text">R$</span>
-                            <input type="text" class="form-control num" id="f-valorPrevisto"
-                                   inputmode="decimal" placeholder="0,00"
-                                   value="${moedaCampo(p.valorPrevisto)}" ${leitura ? "disabled" : ""} />
-                            ${campoErro("f-valorPrevisto")}
-                        </div>
-                        <div class="form-text fs-12">
-                            Valor global do plano, como fixado na lei que o institui.
-                            ${
-                                derivado > 0
-                                    ? `Já somam <strong>${moedaCurta(derivado)}</strong> nas Ações Orçamentárias das Entregas.`
-                                    : ""
-                            }
-                        </div>
-                    </div>
-                    <div class="col-12">
                         <label class="form-label" for="f-situacao">Situação</label>
-                        <select class="form-select" id="f-situacao" ${leitura ? "disabled" : ""}>
-                            ${SITUACOES_PPA.map(
-                                (s) => `<option value="${s.id}" ${(p.situacao ?? "elaboracao") === s.id ? "selected" : ""}>${s.rotulo}</option>`
-                            ).join("")}
-                        </select>
-                        <div class="form-text fs-12" id="ajuda-situacao">${situacaoPpa(p.situacao).ajuda}</div>
-                        ${campoErro("f-situacao")}
+                        <input type="text" class="form-control" id="f-situacao"
+                               value="${esc(situacaoPpa(p.situacao).rotulo)}" disabled />
                     </div>
                     <div class="col-12">
                         <label class="form-label" for="f-descricao">Descrição</label>
@@ -284,14 +203,6 @@ function modal() {
                     </div>
                 </div>
 
-                ${
-                    temContribuicoes
-                        ? `<div class="alert alert-light py-2 px-3 fs-12 mt-3 mb-0">
-                    A vigência define os anos das metas das Entregas. Alterá-la com contribuições já
-                    cadastradas afeta as séries preenchidas.
-                </div>`
-                        : ""
-                }
                 ${
                     diagnosticos
                         ? `<div class="alert alert-warning py-2 px-3 fs-12 mt-3 mb-0">
@@ -330,11 +241,6 @@ function fecharModal() {
     });
 }
 
-/** Outro plano já vigente, se houver. Um só pode estar em execução por vez. */
-function outroVigente(id) {
-    return estado.ppas.find((p) => p.situacao === "vigente" && p.id !== id);
-}
-
 function lerModal() {
     const v = (id) => document.getElementById(id)?.value ?? "";
     return {
@@ -342,17 +248,9 @@ function lerModal() {
         nome: v("f-nome").trim(),
         primeiroAno: v("f-primeiroAno").trim(),
         ultimoAno: v("f-ultimoAno").trim(),
-        valorPrevisto: lerMoeda(v("f-valorPrevisto")),
-        situacao: v("f-situacao") || "elaboracao",
         descricao: v("f-descricao").trim(),
     };
 }
-
-document.addEventListener("change", (e) => {
-    if (e.target.id !== "f-situacao") return;
-    const ajuda = document.getElementById("ajuda-situacao");
-    if (ajuda) ajuda.textContent = situacaoPpa(e.target.value).ajuda;
-});
 
 document.addEventListener("input", (e) => {
     if (e.target.id === "busca") {
@@ -419,36 +317,9 @@ document.addEventListener("click", (e) => {
         const ok = validar(caixa, [
             { campo: "f-nome", valido: !!dados.nome, mensagem: "Informe o nome do plano." },
             {
-                campo: "f-primeiroAno",
-                valido: !!dados.primeiroAno,
-                mensagem: "Informe o primeiro ano da vigência.",
-            },
-            {
-                campo: "f-ultimoAno",
-                valido: !!dados.ultimoAno,
-                mensagem: "Informe o último ano da vigência.",
-            },
-            {
                 campo: "f-ultimoAno",
                 valido: Number(dados.ultimoAno) >= Number(dados.primeiroAno),
                 mensagem: "O último ano não pode ser anterior ao primeiro.",
-            },
-            {
-                campo: "f-valorPrevisto",
-                valido: !Number.isNaN(dados.valorPrevisto),
-                mensagem: "Informe um valor numérico, como 742.700.000,00.",
-            },
-            {
-                campo: "f-valorPrevisto",
-                valido: dados.valorPrevisto === "" || dados.valorPrevisto >= 0,
-                mensagem: "O valor previsto não pode ser negativo.",
-            },
-            {
-                // Um plano em execução por vez: dois vigentes significariam duas
-                // leis valendo ao mesmo tempo para os mesmos anos.
-                campo: "f-situacao",
-                valido: dados.situacao !== "vigente" || !outroVigente(dados.id),
-                mensagem: `Já existe um plano vigente: ${esc(outroVigente(dados.id)?.nome ?? "")}. Encerre-o antes.`,
             },
         ]);
         if (!ok) return;

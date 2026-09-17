@@ -119,10 +119,15 @@ formal. **Reprovado é o único estado que anda para trás**, e anda porque prec
 devolve o plano à edição.
 
 **Só um plano pode estar vigente por vez** — dois seriam duas leis valendo para os mesmos anos.
-Hoje isso é validado no Cadastro de PPA.
 
-Tudo que o sistema faz hoje pressupõe **Elaboração**. O congelamento a partir de Submetido ainda
-não está aplicado nas telas dos órgãos.
+**A situação não é escolhida, é reflexo.** O Cadastro de PPA a exibe e não a edita: mudar de
+Elaboração para Submetido trava o plano para todos os órgãos, então é um ato do fluxo, não um
+campo de formulário. O ato em si ainda não existe — e, enquanto não existir, todo plano fica em
+Elaboração, que é o que o sistema inteiro pressupõe.
+
+**O valor previsto também não é digitado.** É a soma das Ações Orçamentárias vinculadas às
+Entregas do plano, dentro dos anos dele. Plano recém-criado vale zero, e cresce conforme as
+Entregas são vinculadas.
 
 ### O PPA sobrevive à troca de governo
 
