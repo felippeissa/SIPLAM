@@ -152,13 +152,20 @@ prevê empenhado, liquidado e pago vindos do SIAFIC.
 pedir duas vezes o que o sistema já sabe. A tela passa a valer só para quem acumula mais de um
 papel.
 
-**2 ✅ O Expresso devolve mais de um papel para a mesma pessoa?**
+**2 ❓ O SIPLAM tem credencial própria, além do Expresso?**
+O cadastro de usuários passou a ter **login** e **solicitar troca de senha**, o que implica
+credencial guardada aqui. Mas vocês confirmaram que quem autentica é o Aplicações Expresso — foi
+por isso que a tela nasceu sem campo de senha. Podem conviver (servidor pelo Expresso, externo
+pelo registro em `registrar.html`), mas precisamos saber qual é qual.
+*Muda:* a tela de entrada, o registro e o que "solicitar troca de senha" de fato dispara.
+
+**3 ✅ O Expresso devolve mais de um papel para a mesma pessoa?**
 → **Vai poder ter.**
 *Mudou:* `perfil.html` continua existindo, mas como **confirmação, não escolha**. Quem tem um
 papel só entra direto na sua tela — mostrar uma lista de uma opção é fazer a pessoa clicar à toa.
 A tela só aparece para quem acumula.
 
-**3 ✅ Os anos do ciclo vêm do PPA ou ficam fixos?**
+**4 ✅ Os anos do ciclo vêm do PPA ou ficam fixos?**
 → **Dependem do PPA criado.** E o ciclo **nem sempre tem quatro anos**: se um governador sai e o
 vice assume, o plano pode cobrir dois.
 *Mudou:* mais do que tirar a constante do código. A Ficha da Entrega, a tela financeira e as
@@ -168,24 +175,24 @@ quebrar o layout nem a leitura. É desenho de tabela de largura variável, não 
 *Falta:* se um plano de dois anos é um PPA novo ou revisão do anterior — pergunta 12 com a
 Shirley.
 
-**4 ✅ Existe cadastro corporativo de órgãos e unidades?**
+**5 ✅ Existe cadastro corporativo de órgãos e unidades?**
 → **Existe lista oficial, mas no protótipo usamos a do IBGE.**
 *Mudou:* destrava a lista dos 246 municípios. O campo já nasce com o mesmo formato da fonte
 oficial, para a troca depois ser só de origem do dado.
 
-**5 🟡 GoMap e SIAFIC: o que dá para ler, e quando?**
+**6 🟡 GoMap e SIAFIC: o que dá para ler, e quando?**
 → **Não existe API hoje** — vai precisar ser construída. O PO confirma que **será endpoint**.
 *Mudou:* dá para desenhar as telas assumindo que o dado chega, mas **ainda não sabemos quais
 campos**. Continuamos sem poder prometer nada específico em tela.
 *Falta:* a lista de campos de cada integração, a frequência de atualização e o que a tela mostra
 quando a chamada falha — esse último é desenho nosso e pode começar agora.
 
-**6 🟡 O SEI entra?**
+**7 🟡 O SEI entra?**
 → **Entra**, e o Alexandre já conhece a integração.
 *Falta:* em que ponto do fluxo. Provavelmente na tramitação e na aprovação, mas é preciso ouvir
 do Alexandre antes de desenhar.
 
-**7 ✅ Já existe back-end ou banco definido?**
+**8 ✅ Já existe back-end ou banco definido?**
 → **Não para esta fase.** A orientação é padronizar de um jeito que fique **leve para mostrar no
 protótipo**.
 *Mudou:* confirma o que já fazíamos — estado no navegador, sem servidor. Interações que só se

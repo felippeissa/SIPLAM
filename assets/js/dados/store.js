@@ -49,32 +49,57 @@ function ppaInicial() {
         nome: "Plano Plurianual 2028–2031",
         primeiroAno: "2028",
         ultimoAno: "2031",
-        // Valor global do plano, o da lei. A soma das Ações Orçamentárias é outro número.
-        valorPrevisto: 742700000,
         descricao: "",
         situacao: "elaboracao",
     };
 }
 
 /**
- * Usuários com acesso ao sistema.
+ * Situações do usuário, na ordem do fluxo.
  *
- * O SIPLAM não cria conta nem guarda senha: quem autentica é o Aplicações
- * Expresso, pelo ID Goiás ou pelo gov.br. Aqui se concede o acesso e se define
- * o papel de quem já existe lá.
+ *   aguardando → aprovado → revogado → aprovado (reativado)
+ *        ↓
+ *    reprovado
  *
- * `perfis` é lista porque a mesma pessoa pode acumular papéis.
- * Órgão só vale para perfis da visão setorial.
+ * Quem se registra em `registrar.html` entra como **aguardando**, sem perfil.
+ * O perfil é escolhido pelo Administrador central no momento da aprovação — é
+ * ele que decide o papel, não quem se cadastrou.
+ */
+export const SITUACOES_USUARIO = [
+    { id: "aguardando", rotulo: "Aguardando aprovação", tom: "alerta" },
+    { id: "aprovado", rotulo: "Aprovado", tom: "ok" },
+    { id: "reprovado", rotulo: "Reprovado", tom: "impeditivo" },
+    { id: "revogado", rotulo: "Acesso revogado", tom: "neutro" },
+];
+
+export const situacaoUsuario = (id) => SITUACOES_USUARIO.find((s) => s.id === id) ?? SITUACOES_USUARIO[0];
+
+/**
+ * Usuários do sistema.
+ *
+ * `perfis` é lista porque a mesma pessoa pode acumular papéis. Fica vazia
+ * enquanto o cadastro aguarda aprovação: quem se registra informa quem é, não
+ * o que pode fazer.
  */
 function usuariosIniciais() {
     return [
-        { id: "us-1", nome: "Vagner Ribeiro", email: "vagner.ribeiro@goias.gov.br", orgao: "Secretaria de Desenvolvimento Social", perfis: ["setorial"], situacao: "ativo", criadoEm: "02/03/2026" },
-        { id: "us-2", nome: "Maria Fonseca", email: "maria.fonseca@goias.gov.br", orgao: "", perfis: ["admin-central"], situacao: "ativo", criadoEm: "02/03/2026" },
-        { id: "us-3", nome: "João Peixoto", email: "joao.peixoto@goias.gov.br", orgao: "", perfis: ["admin-central", "gestao-central"], situacao: "ativo", criadoEm: "15/03/2026" },
-        { id: "us-4", nome: "Cláudia Bastos", email: "claudia.bastos@goias.gov.br", orgao: "Secretaria de Saúde", perfis: ["setorial", "gestao-setorial"], situacao: "ativo", criadoEm: "20/04/2026" },
-        { id: "us-5", nome: "Renato Camargo", email: "renato.camargo@goias.gov.br", orgao: "Secretaria de Educação", perfis: ["setorial"], situacao: "ativo", criadoEm: "20/04/2026" },
-        { id: "us-6", nome: "Tereza Nunes", email: "tereza.nunes@tce.go.gov.br", orgao: "", perfis: ["controle"], situacao: "ativo", criadoEm: "11/05/2026" },
-        { id: "us-7", nome: "Paulo Medeiros", email: "paulo.medeiros@goias.gov.br", orgao: "Secretaria de Infraestrutura", perfis: ["setorial"], situacao: "inativo", criadoEm: "03/02/2026" },
+        { id: "us-1", nome: "Vagner Ribeiro", email: "vagner.ribeiro@exemplo.go", login: "vagner.ribeiro", orgao: "Secretaria de Desenvolvimento Social", perfis: ["setorial"], situacao: "aprovado", criadoEm: "02/03/2026", decididoEm: "04/03/2026", decididoPor: "Maria Fonseca" },
+        { id: "us-2", nome: "Maria Fonseca", email: "maria.fonseca@exemplo.go", login: "maria.fonseca", orgao: "", perfis: ["admin-central"], situacao: "aprovado", criadoEm: "02/03/2026", decididoEm: "02/03/2026", decididoPor: "Maria Fonseca" },
+        { id: "us-3", nome: "João Peixoto", email: "joao.peixoto@exemplo.go", login: "joao.peixoto", orgao: "", perfis: ["admin-central", "gestao-central"], situacao: "aprovado", criadoEm: "15/03/2026", decididoEm: "16/03/2026", decididoPor: "Maria Fonseca" },
+        { id: "us-4", nome: "Cláudia Bastos", email: "claudia.bastos@exemplo.go", login: "claudia.bastos", orgao: "Secretaria de Saúde", perfis: ["setorial", "gestao-setorial"], situacao: "aprovado", criadoEm: "20/04/2026", decididoEm: "22/04/2026", decididoPor: "Maria Fonseca" },
+        { id: "us-5", nome: "Tereza Nunes", email: "tereza.nunes@exemplo.go", login: "tereza.nunes", orgao: "", perfis: ["controle"], situacao: "aprovado", criadoEm: "11/05/2026", decididoEm: "12/05/2026", decididoPor: "João Peixoto" },
+        { id: "us-6", nome: "Helena Arantes", email: "helena.arantes@exemplo.go", login: "helena.arantes", orgao: "Secretaria de Educação", perfis: ["gestao-setorial"], situacao: "aprovado", criadoEm: "03/06/2026", decididoEm: "05/06/2026", decididoPor: "Maria Fonseca" },
+        { id: "us-7", nome: "Marcos Tavares", email: "marcos.tavares@exemplo.go", login: "marcos.tavares", orgao: "Secretaria de Meio Ambiente", perfis: ["setorial"], situacao: "aprovado", criadoEm: "19/06/2026", decididoEm: "19/06/2026", decididoPor: "João Peixoto" },
+
+        { id: "us-8", nome: "Renato Camargo", email: "renato.camargo@exemplo.go", login: "renato.camargo", orgao: "Secretaria de Agricultura", perfis: [], situacao: "aguardando", criadoEm: "14/09/2026" },
+        { id: "us-9", nome: "Bianca Siqueira", email: "bianca.siqueira@exemplo.go", login: "bianca.siqueira", orgao: "Secretaria de Segurança Pública", perfis: [], situacao: "aguardando", criadoEm: "16/09/2026" },
+        { id: "us-10", nome: "Otávio Lemes", email: "otavio.lemes@exemplo.go", login: "otavio.lemes", orgao: "Secretaria de Infraestrutura", perfis: [], situacao: "aguardando", criadoEm: "17/09/2026" },
+
+        { id: "us-11", nome: "Paulo Medeiros", email: "paulo.medeiros@exemplo.go", login: "paulo.medeiros", orgao: "Secretaria de Infraestrutura", perfis: ["setorial"], situacao: "revogado", criadoEm: "03/02/2026", decididoEm: "05/02/2026", decididoPor: "João Peixoto" },
+        { id: "us-12", nome: "Lúcia Andrade", email: "lucia.andrade@exemplo.go", login: "lucia.andrade", orgao: "Secretaria de Indústria e Comércio", perfis: ["setorial", "gestao-setorial"], situacao: "revogado", criadoEm: "27/01/2026", decididoEm: "29/01/2026", decididoPor: "Maria Fonseca" },
+
+        { id: "us-13", nome: "Sérgio Vilela", email: "sergio.vilela@exemplo.go", login: "sergio.vilela", orgao: "Secretaria de Agricultura", perfis: [], situacao: "reprovado", criadoEm: "28/08/2026", decididoEm: "30/08/2026", decididoPor: "Maria Fonseca" },
+        { id: "us-14", nome: "Daniel Prado", email: "daniel.prado@exemplo.go", login: "daniel.prado", orgao: "Secretaria de Saúde", perfis: [], situacao: "reprovado", criadoEm: "09/09/2026", decididoEm: "10/09/2026", decididoPor: "João Peixoto" },
     ];
 }
 
@@ -171,10 +196,17 @@ function carregar() {
 
     // Estado gravado antes de existir o cadastro de usuários.
     if (!base.usuarios) base.usuarios = usuariosIniciais();
+    // Usuários gravados quando a situação era só "ativo"/"inativo" e não havia login.
+    for (const u of base.usuarios) {
+        if (u.situacao === "ativo") u.situacao = "aprovado";
+        if (u.situacao === "inativo") u.situacao = "revogado";
+        if (!u.login) u.login = (u.email ?? "").split("@")[0];
+    }
 
-    // Planos gravados antes do valor previsto e da situação existirem.
+    // O valor previsto deixou de ser campo: passou a ser a soma das Ações
+    // Orçamentárias vinculadas. Planos gravados com o número digitado o perdem.
     for (const ppa of base.ppas) {
-        if (ppa.valorPrevisto === undefined) ppa.valorPrevisto = "";
+        delete ppa.valorPrevisto;
         if (!ppa.situacao) ppa.situacao = "elaboracao";
     }
     return base;
@@ -262,7 +294,6 @@ export function ppaVazio() {
         nome: `Plano Plurianual ${inicio}–${inicio + 3}`,
         primeiroAno: String(inicio),
         ultimoAno: String(inicio + 3),
-        valorPrevisto: "",
         descricao: "",
         situacao: "elaboracao",
     };
