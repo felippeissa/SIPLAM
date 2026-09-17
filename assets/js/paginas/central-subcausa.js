@@ -1,23 +1,24 @@
 import { montarCadastro } from "../cadastro-crud.js";
 
 /**
- * Cadastro de Subproblemas.
- * O subproblema detalha um problema, e herda o número dele: o problema 1.0 tem
- * os subproblemas 1.1, 1.2, e assim por diante.
+ * Cadastro de Subcausas.
+ * A subcausa detalha uma causa, e herda o número dela: a causa 1.0 tem as
+ * subcausas 1.1, 1.2, e assim por diante.
  */
 montarCadastro({
-    colecao: "subproblemas",
-    titulo: "Cadastro de Subproblemas",
-    subtitulo: "Desdobramentos de cada problema.",
-    novoRotulo: "Novo subproblema",
-    singular: "Subproblema",
-    pai: { colecao: "problemas", campo: "problemaId", rotulo: "Problema", artigo: "um", href: "central-problema.html" },
+    colecao: "subcausas",
+    titulo: "Cadastro de Subcausas",
+    subtitulo: "Desdobramentos de cada causa.",
+    novoRotulo: "Nova subcausa",
+    singular: "Subcausa",
+    genero: "f",
+    pai: { colecao: "causas", campo: "causaId", rotulo: "Causa", artigo: "uma", href: "central-causa.html" },
     codigo: (item, estado) => {
-        const problema = estado.problemas.find((p) => p.id === item.problemaId);
-        if (!problema) return "—";
-        const problemasDaCausa = estado.problemas.filter((p) => p.causaId === problema.causaId);
-        const numero = problemasDaCausa.findIndex((p) => p.id === problema.id) + 1;
-        const irmaos = estado.subproblemas.filter((s) => s.problemaId === problema.id);
-        return `${numero}.${irmaos.findIndex((s) => s.id === item.id) + 1}`;
+        const causa = estado.causas.find((c) => c.id === item.causaId);
+        if (!causa) return "—";
+        const causasDoProblema = estado.causas.filter((c) => c.problemaId === causa.problemaId);
+        const numero = causasDoProblema.findIndex((c) => c.id === causa.id) + 1;
+        const irmas = estado.subcausas.filter((s) => s.causaId === causa.id);
+        return `${numero}.${irmas.findIndex((s) => s.id === item.id) + 1}`;
     },
 });

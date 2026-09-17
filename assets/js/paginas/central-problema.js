@@ -2,19 +2,15 @@ import { montarCadastro } from "../cadastro-crud.js";
 
 /**
  * Cadastro de Problemas.
- * O problema pertence a uma causa e se desdobra em subproblemas.
- * Numeração 1.0, 2.0… dentro de cada causa.
+ * O problema central de cada diagnóstico — o que o Programa existe para
+ * enfrentar. Dele decorrem as causas.
  */
 montarCadastro({
     colecao: "problemas",
     titulo: "Cadastro de Problemas",
-    subtitulo: "Problemas que decorrem de cada causa.",
+    subtitulo: "O problema central que cada diagnóstico caracteriza.",
     novoRotulo: "Novo problema",
     singular: "Problema",
-    pai: { colecao: "causas", campo: "causaId", rotulo: "Causa", artigo: "uma", href: "central-causa.html" },
-    filhos: [{ colecao: "subproblemas", campo: "problemaId", rotulo: "Subproblemas", href: "central-subproblema.html", tela: "Cadastro de Subproblemas" }],
-    codigo: (item, estado) => {
-        const irmaos = estado.problemas.filter((p) => p.causaId === item.causaId);
-        return `${irmaos.findIndex((p) => p.id === item.id) + 1}.0`;
-    },
+    pai: { colecao: "diagnosticos", campo: "diagnosticoId", rotulo: "Diagnóstico", artigo: "um", href: "central-diagnostico.html" },
+    filhos: [{ colecao: "causas", campo: "problemaId", rotulo: "Causas", href: "central-causa.html", tela: "Cadastro de Causas" }],
 });

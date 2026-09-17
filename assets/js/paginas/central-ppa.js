@@ -7,11 +7,11 @@
  * São quatro campos por ora: nome, primeiro ano, último ano e descrição. Os
  * demais entram depois de conversar com o usuário.
  */
-import { obterEstado, addPpa, updPpa, removePpa, ppaVazio } from "../dados/store.js";
+import { obterEstado, addPpa, updPpa, removePpa, ppaVazio, SITUACOES_PPA, situacaoPpa } from "../dados/store.js";
 import { moedaCurta } from "../dados/regras.js";
 import { linhasFinanceiras } from "../dados/financeiro.js";
 import { montarShell, cabecalhoPagina, somenteLeitura } from "../shell.js";
-import { esc } from "../ui.js";
+import { esc, chip } from "../ui.js";
 import { confirmarExclusao } from "../confirmar.js";
 import { avisar } from "../toast.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
@@ -84,6 +84,7 @@ function render() {
                     <tr>
                         <th style="width:20rem">Plano</th>
                         <th style="width:9rem">Vigência</th>
+                        <th style="width:8rem">Situação</th>
                         <th>Descrição</th>
                         <th class="num" style="width:11rem">Valor previsto</th>
                         <th style="width:7rem">Ações</th>
@@ -92,7 +93,7 @@ function render() {
                 <tbody>
                 ${
                     ppas.length === 0
-                        ? `<tr><td colspan="5" class="text-center text-muted py-4 fs-12">${
+                        ? `<tr><td colspan="6" class="text-center text-muted py-4 fs-12">${
                               estado.ppas.length === 0
                                   ? "Nenhum plano cadastrado. Comece por “Novo PPA”."
                                   : "Nenhum plano corresponde à busca."
@@ -103,6 +104,7 @@ function render() {
                     <tr>
                         <td class="fw-medium">${esc(p.nome)}</td>
                         <td class="codigo">${esc(p.primeiroAno)}–${esc(p.ultimoAno)}</td>
+                        <td>${chip(situacaoPpa(p.situacao).rotulo, situacaoPpa(p.situacao).tom)}</td>
                         <td class="fs-13 text-muted">${esc(p.descricao || "—")}</td>
                         <td class="num">${p.valorPrevisto === "" || p.valorPrevisto === undefined ? "—" : `R$ ${moedaCampo(p.valorPrevisto)}`}</td>
                         <td>${
@@ -267,6 +269,16 @@ function modal() {
                         </div>
                     </div>
                     <div class="col-12">
+                        <label class="form-label" for="f-situacao">Situação</label>
+                        <select class="form-select" id="f-situacao" ${leitura ? "disabled" : ""}>
+                            ${SITUACOES_PPA.map(
+                                (s) => `<option value="${s.id}" ${(p.situacao ?? "elaboracao") === s.id ? "selected" : ""}>${s.rotulo}</option>`
+                            ).join("")}
+                        </select>
+                        <div class="form-text fs-12" id="ajuda-situacao">${situacaoPpa(p.situacao).ajuda}</div>
+                        ${campoErro("f-situacao")}
+                    </div>
+                    <div class="col-12">
                         <label class="form-label" for="f-descricao">Descrição</label>
                         <textarea class="form-control" id="f-descricao" rows="3" ${leitura ? "disabled" : ""}>${esc(p.descricao ?? "")}</textarea>
                     </div>
@@ -318,6 +330,11 @@ function fecharModal() {
     });
 }
 
+/** Outro plano já vigente, se houver. Um só pode estar em execução por vez. */
+function outroVigente(id) {
+    return estado.ppas.find((p) => p.situacao === "vigente" && p.id !== id);
+}
+
 function lerModal() {
     const v = (id) => document.getElementById(id)?.value ?? "";
     return {
@@ -326,9 +343,16 @@ function lerModal() {
         primeiroAno: v("f-primeiroAno").trim(),
         ultimoAno: v("f-ultimoAno").trim(),
         valorPrevisto: lerMoeda(v("f-valorPrevisto")),
+        situacao: v("f-situacao") || "elaboracao",
         descricao: v("f-descricao").trim(),
     };
 }
+
+document.addEventListener("change", (e) => {
+    if (e.target.id !== "f-situacao") return;
+    const ajuda = document.getElementById("ajuda-situacao");
+    if (ajuda) ajuda.textContent = situacaoPpa(e.target.value).ajuda;
+});
 
 document.addEventListener("input", (e) => {
     if (e.target.id === "busca") {
@@ -418,6 +442,13 @@ document.addEventListener("click", (e) => {
                 campo: "f-valorPrevisto",
                 valido: dados.valorPrevisto === "" || dados.valorPrevisto >= 0,
                 mensagem: "O valor previsto não pode ser negativo.",
+            },
+            {
+                // Um plano em execução por vez: dois vigentes significariam duas
+                // leis valendo ao mesmo tempo para os mesmos anos.
+                campo: "f-situacao",
+                valido: dados.situacao !== "vigente" || !outroVigente(dados.id),
+                mensagem: `Já existe um plano vigente: ${esc(outroVigente(dados.id)?.nome ?? "")}. Encerre-o antes.`,
             },
         ]);
         if (!ok) return;
