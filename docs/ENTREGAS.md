@@ -146,22 +146,17 @@ No menu, o Hub entra em CADASTROS, depois do Cadastro de Programa. Só para Admi
 
 ---
 
-### 9 · Hub de Entregas — `2026-09-16`
+### 9 · Hub de Entregas — feito e revertido — `2026-09-16`
 
-O Hub de Programas responde "como está o Programa?". Este responde a pergunta de baixo, onde a
-discussão trava: **"esta Entrega está de pé?"** — porque a Entrega é o ponto onde três mundos se
-encontram: a meta do PPA, a Ação Orçamentária da LOA e o Projeto do GOMAP, hoje cada um numa tela.
+Foi construído um Hub de Entregas, espelhando o de Programas, com abas de visão geral, financeiro,
+projetos, pendências e apontamentos. **Removido no dia seguinte, a pedido: a ideia não se sustentou.**
 
-Cinco abas: Visão geral (metas do ciclo com trajetória, comportamento, território e origem),
-Financeiro (previsto por ano, Ações Orçamentárias e IPOFs), Projetos, Pendências e Apontamentos.
+Fica o registro para ninguém reconstruir sem conversa. O que o hub mostrava de próprio era o
+descompasso entre o valor global do Projeto no GOMAP e o quanto dele foi apropriado no PPA — se
+isso voltar a interessar, o lugar natural é dentro do Hub de Programas ou da análise da Iniciativa,
+não numa tela nova.
 
-**A aba Projetos é a que justifica o hub.** Ela põe lado a lado o valor global do Projeto no GOMAP
-e quanto dele foi apropriado no PPA — e o descompasso aparece sozinho: um Projeto com R$ 4 mi a
-mais no PPA do que custa, outro com R$ 18 mi inteiramente fora. Os dados sempre estiveram lá.
-
-Os dois hubs se ligam: na aba Entregas do Hub de Programas o nome da Entrega abre aqui, e a trilha
-volta pelo Programa. `medidor` e `faisca` saíram de `central-hub.js` para `ui.js`, agora que duas
-telas usam.
+Sobrou da tentativa, em uso: `medidor` e `faisca` em `assets/js/ui.js`.
 
 ---
 

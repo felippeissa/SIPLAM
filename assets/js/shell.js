@@ -42,7 +42,6 @@ const MENU_CENTRAL = [
     { href: "central-subproblema.html", rotulo: "Cadastro de Subproblemas", icone: "ti-subtask" },
     { href: "central-programas.html", rotulo: "Cadastro de Programa", icone: "ti-layout-grid" },
     { href: "central-hub.html", rotulo: "Hub de Programas", icone: "ti-layout-dashboard" },
-    { href: "central-hub-entrega.html", rotulo: "Hub de Entregas", icone: "ti-package" },
 ];
 
 /**

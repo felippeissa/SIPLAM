@@ -330,9 +330,7 @@ function abaEntregas(p) {
                     return `
                 <tr>
                     <td>
-                        <div class="fw-medium">
-                            <a href="central-hub-entrega.html?entrega=${e.id}">${esc(e.nome) || "Sem nome"}</a>
-                        </div>
+                        <div class="fw-medium">${esc(e.nome) || '<span class="text-muted">Sem nome</span>'}</div>
                         <div class="fs-12 text-muted">${esc(ini.nome)} · ${esc(nomeComportamento(e.comportamento))} · ${esc(
                         TERRITORIO_LABEL[e.territorio?.tipo] ?? "Território não definido"
                     )}</div>
