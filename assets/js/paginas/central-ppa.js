@@ -4,34 +4,38 @@
  * Tabela dos planos cadastrados e um modal para criar ou editar, no padrão da
  * Cadastro de Programa.
  *
- * São quatro campos por ora: nome, primeiro ano, último ano e descrição. Os
- * demais entram depois de conversar com o usuário.
+ * Quatro campos: nome, vigência, situação e descrição. Situação é reflexo, nunca
+ * escolha; a vigência só é editável na criação.
  */
-import { obterEstado, addPpa, updPpa, removePpa, ppaVazio, situacaoPpa } from "../dados/store.js";
-import { linhasFinanceiras } from "../dados/financeiro.js";
-import { montarShell, cabecalhoPagina, somenteLeitura } from "../shell.js";
+import {
+    obterEstado,
+    addPpa,
+    updPpa,
+    removePpa,
+    ppaVazio,
+    situacaoPpa,
+    anoDeElaboracao,
+    ppaQueColide,
+} from "../dados/store.js";
+import { montarShell, cabecalhoPagina, somenteLeitura, perfilAtual } from "../shell.js";
 import { esc, chip } from "../ui.js";
 import { confirmarExclusao } from "../confirmar.js";
 import { avisar } from "../toast.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
 
 const { estado } = montarShell();
-const leitura = somenteLeitura();
+
+/**
+ * O cadastro do PPA é exclusivo do Administrador central. Os demais perfis
+ * enxergam o plano — precisam dele para se situar — mas não o criam nem o
+ * alteram: abrir o ciclo é ato da administração do plano.
+ */
+const leitura = somenteLeitura() || perfilAtual() !== "admin-central";
 
 let edicao = null;
 let novo = false;
 let busca = "";
 
-/**
- * O valor previsto do plano, como o usuário digita: 742.700.000,00.
- * Guardado como número; formatado só na ida e na volta do campo.
- */
-function moedaCampo(v) {
-    if (v === "" || v === null || v === undefined || Number.isNaN(Number(v))) return "";
-    return Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-/** O previsto de um plano soma apenas os anos da sua vigência. */
 /**
  * Anos que o seletor oferece. Só o ano importa: o plano sempre começa em 1º de
  * janeiro e termina em 31 de dezembro, então a data em si nunca é escolhida.
@@ -47,12 +51,6 @@ function anosPossiveis() {
         }
     }
     return anos.sort((x, y) => x - y);
-}
-
-function previstoDoPlano(ppa) {
-    const anos = [];
-    for (let a = Number(ppa.primeiroAno); a <= Number(ppa.ultimoAno); a++) anos.push(String(a));
-    return linhasFinanceiras(estado).reduce((s, l) => s + anos.reduce((t, a) => t + (l.anos[a] ?? 0), 0), 0);
 }
 
 function render() {
@@ -78,7 +76,7 @@ function render() {
         </div>
         ${
             leitura
-                ? `<span class="fs-12 text-muted">Perfil de acompanhamento — sem edição.</span>`
+                ? `<span class="fs-12 text-muted">O cadastro do PPA é exclusivo do Administrador central.</span>`
                 : `<button class="btn btn-sm btn-primary" id="novo"><i class="ti ti-plus me-1"></i>Novo PPA</button>`
         }`
     )}
@@ -92,14 +90,13 @@ function render() {
                         <th style="width:9rem">Vigência</th>
                         <th style="width:8rem">Situação</th>
                         <th>Descrição</th>
-                        <th class="num" style="width:11rem">Valor previsto</th>
                         <th style="width:7rem">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                 ${
                     ppas.length === 0
-                        ? `<tr><td colspan="6" class="text-center text-muted py-4 fs-12">${
+                        ? `<tr><td colspan="5" class="text-center text-muted py-4 fs-12">${
                               estado.ppas.length === 0
                                   ? "Nenhum plano cadastrado. Comece por “Novo PPA”."
                                   : "Nenhum plano corresponde à busca."
@@ -112,7 +109,6 @@ function render() {
                         <td class="codigo">${esc(p.primeiroAno)}–${esc(p.ultimoAno)}</td>
                         <td>${chip(situacaoPpa(p.situacao).rotulo, situacaoPpa(p.situacao).tom)}</td>
                         <td class="fs-13 text-muted">${esc(p.descricao || "—")}</td>
-                        <td class="num">R$ ${moedaCampo(previstoDoPlano(p))}</td>
                         <td>${
                             leitura
                                 ? `<button class="btn btn-sm btn-light" data-editar="${p.id}">Ver</button>`
@@ -174,14 +170,19 @@ function modal() {
             </div>
             <div class="modal-body">
                 <div class="row g-3">
-                    <div class="col-12">
+                    <div class="col-md-8">
                         <label class="form-label" for="f-nome">Nome do plano <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="f-nome" value="${esc(p.nome)}" ${leitura ? "disabled" : ""} />
                         ${campoErro("f-nome")}
                     </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="f-processoSei">Processo SEI</label>
+                        <input type="text" class="form-control codigo" id="f-processoSei"
+                               value="${esc(p.processoSei ?? "")}" disabled />
+                    </div>
                     <div class="col-md-6">
                         <label class="form-label" for="f-primeiroAno">Vigência <span class="text-danger">*</span></label>
-                        <div class="input-group">
+                        <div class="input-group" id="f-vigencia">
                             <select class="form-select" id="f-primeiroAno" ${leitura || !novo ? "disabled" : ""}>
                                 ${anosPossiveis().map((a) => `<option value="${a}" ${String(p.primeiroAno) === String(a) ? "selected" : ""}>${a}</option>`).join("")}
                             </select>
@@ -189,8 +190,8 @@ function modal() {
                             <select class="form-select" id="f-ultimoAno" ${leitura || !novo ? "disabled" : ""}>
                                 ${anosPossiveis().map((a) => `<option value="${a}" ${String(p.ultimoAno) === String(a) ? "selected" : ""}>${a}</option>`).join("")}
                             </select>
-                            ${campoErro("f-ultimoAno")}
                         </div>
+                        <div class="invalid-feedback d-block" id="f-vigencia-erro"></div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="f-situacao">Situação</label>
@@ -314,12 +315,29 @@ document.addEventListener("click", (e) => {
         const dados = lerModal();
         const caixa = document.getElementById("modal-ppa");
 
+        document.getElementById("f-vigencia-erro").textContent = "";
+
         const ok = validar(caixa, [
             { campo: "f-nome", valido: !!dados.nome, mensagem: "Informe o nome do plano." },
             {
-                campo: "f-ultimoAno",
+                campo: "f-vigencia",
                 valido: Number(dados.ultimoAno) >= Number(dados.primeiroAno),
                 mensagem: "O último ano não pode ser anterior ao primeiro.",
+            },
+            {
+                // Dois planos no mesmo ano seriam duas leis regendo o mesmo
+                // exercício. Basta um ano em comum para haver conflito.
+                campo: "f-vigencia",
+                valido: !ppaQueColide(estado, dados),
+                mensagem: `Já existe um plano para esse período: ${esc(ppaQueColide(estado, dados)?.nome ?? "")}.`,
+            },
+            {
+                // O plano é construído no ano anterior ao início da vigência.
+                // Criar antes disso é abrir um ciclo que ainda não começou a ser
+                // pensado; criar depois é atraso, e atraso a interface não impede.
+                campo: "f-vigencia",
+                valido: !novo || anoDeElaboracao(dados) <= new Date().getFullYear(),
+                mensagem: `Este plano só pode ser criado a partir de ${anoDeElaboracao(dados)}, seu ano de elaboração.`,
             },
         ]);
         if (!ok) return;

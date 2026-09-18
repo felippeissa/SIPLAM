@@ -12,6 +12,7 @@
  * Substitui `src/components/ppa/shell.tsx` do protótipo.
  */
 import { obterEstado } from "./dados/store.js";
+import { confirmarExclusao } from "./confirmar.js";
 import { instalarBusca } from "./busca.js";
 import { instalarAtena } from "./atena.js";
 import { instalarNotificacoes } from "./notificacoes.js";
@@ -27,23 +28,22 @@ const MENU_SETORIAL = [
 /** Menu da área central — o analista analisa, valida e administra. */
 const MENU_CENTRAL = [
     { href: "central.html", rotulo: "Visão Geral", icone: "ti-gauge" },
-    { href: "central-entregas.html", rotulo: "Entregas", icone: "ti-box" },
-    { href: "central-orgaos.html", rotulo: "Órgãos participantes", icone: "ti-building" },
-    { grupo: "Análises" },
-    { href: "central-causas.html", rotulo: "Por Causas", icone: "ti-binary-tree" },
-    { href: "central-financeira.html", rotulo: "Financeira", icone: "ti-coins" },
-    { href: "central-projetos.html", rotulo: "Projetos", icone: "ti-git-branch" },
-    { href: "central-ipofs.html", rotulo: "IPOFs", icone: "ti-receipt" },
-    { grupo: "Cadastros" },
-    { href: "central-ppa.html", rotulo: "Cadastro de PPA", icone: "ti-calendar-stats" },
-    { href: "central-programas.html", rotulo: "Cadastro de Programa", icone: "ti-layout-grid" },
-    { href: "central-diagnostico.html", rotulo: "Cadastro de Diagnóstico", icone: "ti-stethoscope" },
-    { href: "central-problema.html", rotulo: "Cadastro de Problemas", icone: "ti-alert-triangle" },
-    { href: "central-causa.html", rotulo: "Cadastro de Causas", icone: "ti-binary-tree" },
-    { href: "central-subcausa.html", rotulo: "Cadastro de Subcausas", icone: "ti-subtask" },
-    { href: "central-usuarios.html", rotulo: "Cadastro de Usuários", icone: "ti-users" },
-    { href: "central-hub.html", rotulo: "Hub de Programas", icone: "ti-layout-dashboard" },
+    { href: "central-hub.html", rotulo: "Visão por Programas", icone: "ti-layout-dashboard" },
+    { grupo: "Cadastros Estratégicos" },
+    { href: "central-ppa.html", rotulo: "PPA", icone: "ti-calendar-stats" },
+    { href: "central-eixo.html", rotulo: "Eixos", icone: "ti-layout-columns" },
+    { href: "central-objetivo.html", rotulo: "Objetivos Estratégicos", icone: "ti-target-arrow" },
+    { href: "central-programas.html", rotulo: "Programa", icone: "ti-layout-grid" },
+    { href: "central-diagnostico.html", rotulo: "Diagnóstico", icone: "ti-stethoscope" },
+    { href: "central-problema.html", rotulo: "Problemas", icone: "ti-alert-triangle" },
+    { href: "central-causa.html", rotulo: "Causas", icone: "ti-binary-tree" },
+    { grupo: "Relatórios" },
+    { href: "central-relatorio-lei.html", rotulo: "Relatório final da lei do PPA", icone: "ti-file-text" },
+    { href: "central-relatorio-finalisticas.html", rotulo: "Relatório consolidado de finalísticas", icone: "ti-report" },
+    { grupo: "Administração" },
+    { href: "central-usuarios.html", rotulo: "Usuários", icone: "ti-users" },
 ];
+
 
 /**
  * Perfis do sistema. A visão, o modo de leitura e o menu decorrem daqui.
@@ -56,11 +56,41 @@ const MENU_CENTRAL = [
  * aprova — ela só está em construção porque a tela inicial dela não existe.
  */
 const PERFIL = {
-    setorial: { nome: "Setorial", visao: "setorial", leitura: false, construcao: false },
-    "admin-central": { nome: "Administrador central", visao: "central", leitura: false, construcao: false },
-    "gestao-setorial": { nome: "Alta gestão setorial", visao: "setorial", leitura: false, construcao: true },
-    "gestao-central": { nome: "Alta gestão central", visao: "central", leitura: true, construcao: true },
-    controle: { nome: "Órgãos de controle", visao: "central", leitura: true, construcao: true },
+    setorial: {
+        nome: "Planejamento setorial",
+        visao: "setorial",
+        leitura: false,
+        construcao: false,
+        descricao: "Preenche e envia a contribuição do órgão",
+    },
+    "admin-central": {
+        nome: "Administrador central",
+        visao: "central",
+        leitura: false,
+        construcao: false,
+        descricao: "Analisa, valida e administra os Programas",
+    },
+    "gestao-setorial": {
+        nome: "Alta gestão setorial",
+        visao: "setorial",
+        leitura: false,
+        construcao: true,
+        descricao: "Faz tudo do Planejamento setorial e aprova a proposta do órgão",
+    },
+    "gestao-central": {
+        nome: "Alta gestão central",
+        visao: "central",
+        leitura: true,
+        construcao: true,
+        descricao: "Faz tudo do Administrador central e aprova a consolidação",
+    },
+    controle: {
+        nome: "Consulta",
+        visao: "central",
+        leitura: true,
+        construcao: true,
+        descricao: "Consulta o plano, sem escrever",
+    },
 };
 
 /** O perfil ainda não tem telas construídas? */
@@ -68,9 +98,14 @@ export function emConstrucao() {
     return PERFIL[perfilDaSessao()]?.construcao === true;
 }
 
-/** Só os órgãos de controle não escrevem; a alta gestão preenche e ainda aprova. */
+/** Só o perfil de Consulta não escreve; a alta gestão preenche e ainda aprova. */
 export function somenteLeitura() {
     return PERFIL[perfilDaSessao()]?.leitura === true;
+}
+
+/** O perfil desta sessão, para as telas que restringem por papel. */
+export function perfilAtual() {
+    return perfilDaSessao();
 }
 
 /**
@@ -116,7 +151,7 @@ function quemEntrou(estado, central) {
 
     return {
         nome: usuario || (central ? estado.analista : estado.usuario),
-        papel: PERFIL[perfilId]?.nome || (central ? "Administrador central" : "Setorial"),
+        papel: PERFIL[perfilId]?.nome || (central ? "Administrador central" : "Planejamento setorial"),
         orgao: central ? null : estado.orgaoAtual,
     };
 }
@@ -193,10 +228,14 @@ function topbar(estado, visao) {
                             <span class="fs-12 text-muted d-block">${quem.papel}</span>
                             ${quem.orgao ? `<span class="fs-12 text-muted">${quem.orgao}</span>` : ""}
                         </div>
-                        <a href="perfil.html" class="dropdown-item">
+                        <button type="button" class="dropdown-item" id="trocar-perfil">
                             <i class="ti ti-switch-horizontal me-1 fs-lg align-middle"></i>
                             <span class="align-middle">Trocar perfil</span>
-                        </a>
+                        </button>
+                        <button type="button" class="dropdown-item" id="reiniciar-prototipo">
+                            <i class="ti ti-refresh me-1 fs-lg align-middle"></i>
+                            <span class="align-middle">Reiniciar protótipo</span>
+                        </button>
                         <div class="dropdown-divider"></div>
                         <a href="index.html" class="dropdown-item text-danger fw-semibold">
                             <i class="ti ti-logout me-1 fs-lg align-middle"></i>
@@ -284,6 +323,101 @@ function rodape() {
 </footer>`;
 }
 
+/** A tela em que um perfil entra. Sem tela própria, a home provisória. */
+function telaInicialDoPerfil(id) {
+    const perfil = PERFIL[id];
+    if (!perfil || perfil.construcao) return "em-construcao.html";
+    return inicio(perfil.visao);
+}
+
+/**
+ * Troca de perfil sem sair da tela: um modal com os cinco, o atual marcado.
+ *
+ * Antes isso levava a `perfil.html`, a mesma tela do primeiro acesso. Sair do
+ * sistema para voltar a ele é caro quando a troca serve para conferir como uma
+ * tela aparece para outro papel — que é o uso real disto num protótipo.
+ */
+function instalarTrocaDePerfil() {
+    const gatilho = document.getElementById("trocar-perfil");
+    if (!gatilho) return;
+
+    const atual = perfilDaSessao();
+    const opcoes = Object.entries(PERFIL)
+        .map(
+            ([id, p]) => `
+        <button type="button" class="list-group-item list-group-item-action d-flex align-items-start gap-2 ${
+            id === atual ? "active" : ""
+        }" data-perfil="${id}">
+            <i class="ti ${id === atual ? "ti-circle-check" : "ti-circle"} fs-lg mt-1"></i>
+            <span>
+                <span class="fw-medium d-block">${p.nome}</span>
+                <span class="fs-12 ${id === atual ? "" : "text-muted"}">${p.descricao}</span>
+            </span>
+        </button>`
+        )
+        .join("");
+
+    document.body.insertAdjacentHTML(
+        "beforeend",
+        `<div class="modal fade" id="modal-trocar-perfil" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fs-15">Trocar perfil</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="fs-13 text-muted mb-3">O perfil define a tela inicial, o menu e o que você pode fazer.</p>
+                    <div class="list-group">${opcoes}</div>
+                </div>
+            </div>
+        </div>
+    </div>`
+    );
+
+    const el = document.getElementById("modal-trocar-perfil");
+
+    gatilho.addEventListener("click", () => bootstrap.Modal.getOrCreateInstance(el).show());
+
+    el.addEventListener("click", (e) => {
+        const escolha = e.target.closest("[data-perfil]");
+        if (!escolha) return;
+        const id = escolha.dataset.perfil;
+        if (id === atual) return bootstrap.Modal.getInstance(el).hide();
+        try {
+            localStorage.setItem("siplam.perfilSessao", id);
+        } catch (erro) {
+            console.warn("SIPLAM: não foi possível guardar o perfil.", erro);
+        }
+        window.location.href = telaInicialDoPerfil(id);
+    });
+}
+
+/**
+ * "Reiniciar protótipo": apaga tudo que o navegador guardou — a sessão e o
+ * estado — e volta para a entrada com os dados de demonstração.
+ *
+ * Existe para ninguém precisar abrir o console do navegador para limpar o
+ * `localStorage`, que era a única saída quando uma demonstração ficava suja.
+ */
+function instalarReinicio() {
+    document.getElementById("reiniciar-prototipo")?.addEventListener("click", async () => {
+        const confirmou = await confirmarExclusao({
+            titulo: "Reiniciar protótipo",
+            texto: "Tudo o que foi cadastrado nesta sessão é apagado e os dados de demonstração voltam ao estado original. Não dá para desfazer.",
+            confirmar: "Reiniciar",
+        });
+        if (!confirmou) return;
+        try {
+            localStorage.clear();
+            sessionStorage.clear();
+        } catch (e) {
+            console.warn("SIPLAM: não foi possível limpar o armazenamento.", e);
+        }
+        window.location.href = "index.html";
+    });
+}
+
 /** Monta topbar, sidenav e rodapé nos pontos de ancoragem da página. */
 export function montarShell() {
     const estado = obterEstado();
@@ -300,6 +434,8 @@ export function montarShell() {
     const ano = document.querySelector("[data-current-year]");
     if (ano) ano.textContent = new Date().getFullYear();
 
+    instalarTrocaDePerfil();
+    instalarReinicio();
     instalarBusca(estado, visao);
     instalarNotificacoes(estado, visao);
     instalarAtena(estado);

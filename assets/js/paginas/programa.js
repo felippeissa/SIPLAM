@@ -79,7 +79,7 @@ if (!p) {
             )}
 
             ${secao(
-                "Causas e subcausas",
+                "Causas",
                 (p.causas ?? []).length === 0
                     ? '<div class="alert alert-warning py-2 px-3 fs-12 mb-0">Este Programa não tem causas cadastradas. Sem ao menos uma, a Iniciativa do órgão não pode ser enviada.</div>'
                     : `<ul class="list-group list-group-flush">
@@ -91,16 +91,6 @@ if (!p) {
                             <span>${esc(c.texto)}</span>
                             ${marcaDeAtuacao(c.id)}
                         </div>
-                        ${
-                            c.subcausas.length
-                                ? `<ul class="mt-2 mb-0 fs-13">${c.subcausas
-                                      .map(
-                                          (s) =>
-                                              `<li>${esc(s.texto)} ${marcaDeAtuacao(s.id)}</li>`
-                                      )
-                                      .join("")}</ul>`
-                                : ""
-                        }
                     </li>`
                         )
                         .join("")}

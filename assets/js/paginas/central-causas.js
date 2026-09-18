@@ -16,18 +16,12 @@ let programaId = estado.programas[0]?.id ?? "";
 let modo = "programa";
 const abertas = new Set();
 
-const TOM = { direta: "ok", indireta: "info", sem: "alerta" };
+const TOM = { direta: "ok", sem: "alerta" };
 
 function causasDo(programa) {
     return programa.causas.map((c) => ({
         causa: c,
-        subcausaIds: c.subcausas.map((s) => s.id),
-        resultado: coberturaCausa(
-            estado,
-            programa.id,
-            c.id,
-            c.subcausas.map((s) => s.id)
-        ),
+        resultado: coberturaCausa(estado, programa.id, c.id),
     }));
 }
 
@@ -44,11 +38,6 @@ function linhaCausa(item, programa) {
         </td>
         <td>
             <div>${esc(causa.texto)}</div>
-            ${
-                causa.subcausas.length
-                    ? `<div class="fs-12 text-muted mt-1">${causa.subcausas.length} subcausa(s)</div>`
-                    : ""
-            }
         </td>
         <td>${chip(COBERTURA_LABEL[r.cobertura], TOM[r.cobertura])}</td>
         <td class="num">${r.orgaos.length || "—"}</td>
@@ -59,27 +48,17 @@ function linhaCausa(item, programa) {
         aberta
             ? `<tr class="linha-filha"><td></td><td colspan="5" class="py-3">
         ${
-            causa.subcausas.length
-                ? `<div class="mb-3">
-            <div class="rotulo-secao mb-2">Subcausas</div>
-            <ul class="fs-13 mb-0">${causa.subcausas.map((s) => `<li>${esc(s.texto)}</li>`).join("")}</ul>
-        </div>`
-                : ""
-        }
-        ${
             r.iniciativas.length === 0
-                ? '<p class="fs-12 text-muted mb-0">Nenhuma Iniciativa enfrenta esta causa, nem diretamente nem por subcausa.</p>'
+                ? '<p class="fs-12 text-muted mb-0">Nenhuma Iniciativa enfrenta esta causa.</p>'
                 : `<table class="table table-sm tabela-aninhada mb-0">
-            <thead><tr><th>Iniciativa</th><th style="width:16rem">Órgão</th><th style="width:11rem">Relação</th><th>Entregas</th></tr></thead>
+            <thead><tr><th>Iniciativa</th><th style="width:16rem">Órgão</th><th>Entregas</th></tr></thead>
             <tbody>
                 ${r.iniciativas
                     .map((i) => {
-                        const direta = r.diretas.some((d) => d.id === i.id);
                         const entregas = entregasDaIniciativa(estado, i.id);
                         return `<tr>
                     <td><a href="central-iniciativa.html?id=${i.id}">${esc(i.nome)}</a></td>
                     <td class="fs-12">${esc(i.orgao)}</td>
-                    <td>${chip(direta ? "Direta" : "Por subcausa", direta ? "ok" : "info")}</td>
                     <td class="fs-12">${
                         entregas.length
                             ? entregas
@@ -106,7 +85,6 @@ function panorama() {
                 programa: p,
                 total: itens.length,
                 sem: itens.filter((i) => i.resultado.cobertura === "sem").length,
-                indireta: itens.filter((i) => i.resultado.cobertura === "indireta").length,
                 direta: itens.filter((i) => i.resultado.cobertura === "direta").length,
             };
         })
@@ -122,7 +100,6 @@ function panorama() {
                         <th>Programa</th>
                         <th class="num" style="width:6rem">Causas</th>
                         <th class="num" style="width:8rem">Cobertura direta</th>
-                        <th class="num" style="width:9rem">Por subcausas</th>
                         <th class="num" style="width:8rem">Sem atuação</th>
                         <th style="width:8rem"></th>
                     </tr>
@@ -138,7 +115,6 @@ function panorama() {
                     </td>
                     <td class="num">${l.total}</td>
                     <td class="num">${l.direta || "—"}</td>
-                    <td class="num">${l.indireta || "—"}</td>
                     <td class="num">${l.sem ? chip(String(l.sem), "alerta") : "—"}</td>
                     <td><button class="btn btn-sm btn-outline-primary" data-ver="${l.programa.id}">Analisar</button></td>
                 </tr>`
@@ -186,9 +162,8 @@ function render() {
         ${faixaIndicadores([
             { valor: itens.length, rotulo: "Causas do Programa" },
             { valor: itens.filter((i) => i.resultado.cobertura === "direta").length, rotulo: "Cobertura direta" },
-            { valor: itens.filter((i) => i.resultado.cobertura === "indireta").length, rotulo: "Por subcausas" },
             { valor: sem, rotulo: "Sem atuação" },
-        ], "Cobertura direta é a Iniciativa que marcou a própria causa; por subcausas, a que marcou uma subcausa dela.")}
+        ], "Cobertura direta é a Iniciativa que marcou a causa como enfrentada.")}
         <div class="card">
             <div class="table-responsive">
                 <table class="table table-hover mb-0">

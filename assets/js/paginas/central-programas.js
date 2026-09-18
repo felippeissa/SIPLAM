@@ -5,7 +5,7 @@
  * Corrige dois problemas graves do protótipo:
  *  - T5.8.6: o formulário não editava causas, então Programa novo nascia sem
  *    nenhuma e a Iniciativa do órgão travava numa pendência impeditiva sem
- *    saída. Aqui causas e subcausas são editáveis.
+ *    saída. Aqui as causas são editáveis.
  *  - T5.8.9: dava para disponibilizar aos órgãos um Programa com diagnóstico
  *    incompleto. Agora a tela avisa e pede confirmação.
  */
@@ -159,6 +159,7 @@ function render() {
     document.getElementById("busca").value = busca;
 
     if (edicao) {
+        ligarEixo();
         const modal = new bootstrap.Modal(document.getElementById("modal-programa"));
         modal.show();
         document
@@ -171,6 +172,51 @@ function render() {
 }
 
 /* ---------- formulário ---------- */
+
+/**
+ * Seleção única a partir de um cadastro.
+ *
+ * Eixo e Objetivo Estratégico eram texto livre: cada Programa podia escrever o
+ * nome de um jeito e os filtros passavam a tratar "Goiás que cuida" e "Goias que
+ * cuida" como coisas diferentes. Agora vêm dos cadastros, um de cada.
+ */
+/** Os objetivos de um eixo. Sem eixo escolhido, todos ficam disponíveis. */
+function objetivosDoEixo(eixoId) {
+    const todos = estado.objetivos ?? [];
+    return eixoId ? todos.filter((o) => o.eixoId === eixoId) : todos;
+}
+
+/**
+ * O vínculo estratégico do Programa, gravado de duas formas.
+ *
+ * Os ids são o vínculo de verdade. O texto continua porque os filtros das outras
+ * telas — Visão Geral, Hub, lista do órgão — comparam por nome, e trocá-los
+ * todos é outra entrega.
+ */
+function vinculoEstrategico(eixoId, objetivoId) {
+    const eixo = (estado.eixos ?? []).find((e) => e.id === eixoId);
+    const objetivo = (estado.objetivos ?? []).find((o) => o.id === objetivoId);
+    return {
+        eixoId,
+        objetivoId,
+        eixo: eixo?.nome ?? "",
+        objetivoEstrategico: objetivo?.nome ?? "",
+    };
+}
+
+function campoSelecao(id, rotulo, escolhido, opcoes, { vazio = "Não definido", obrigatorio = false, ajuda = "" } = {}) {
+    return `
+    <div class="mb-3">
+        <label class="form-label" for="${id}">${rotulo}${obrigatorio ? ' <span class="text-danger">*</span>' : ""}</label>
+        <select class="form-select" id="${id}">
+            <option value="">${esc(vazio)}</option>
+            ${opcoes
+                .map((o) => `<option value="${o.id}"${o.id === escolhido ? " selected" : ""}>${esc(o.nome)}</option>`)
+                .join("")}
+        </select>
+        ${ajuda ? `<div class="form-text fs-12" id="${id}-ajuda">${ajuda}</div>` : ""}
+    </div>`;
+}
 
 function campoTexto(id, rotulo, valor, { linhas = 1, obrigatorio = false, ajuda = "" } = {}) {
     const campo =
@@ -214,7 +260,7 @@ function editorCausas() {
     return `
     <div class="mb-3">
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <label class="form-label mb-0">Causas e subcausas <span class="text-danger">*</span></label>
+            <label class="form-label mb-0">Causas <span class="text-danger">*</span></label>
             <button type="button" class="btn btn-sm btn-light" data-add="causa"><i class="ti ti-plus"></i> Adicionar causa</button>
         </div>
         <div class="form-text fs-12 mb-2">
@@ -232,19 +278,6 @@ function editorCausas() {
                 <span class="input-group-text">Causa ${i + 1}</span>
                 <input type="text" class="form-control" value="${esc(c.texto)}" data-causa-texto="${i}" />
                 <button class="btn btn-light" type="button" data-remover-causa="${i}" aria-label="Remover causa"><i class="ti ti-trash"></i></button>
-            </div>
-            <div class="ps-3">
-                ${c.subcausas
-                    .map(
-                        (s, j) => `
-                <div class="input-group input-group-sm mb-1">
-                    <span class="input-group-text fs-12">↳</span>
-                    <input type="text" class="form-control" value="${esc(s.texto)}" data-sub-texto="${i}:${j}" />
-                    <button class="btn btn-light" type="button" data-remover-sub="${i}:${j}" aria-label="Remover subcausa"><i class="ti ti-x"></i></button>
-                </div>`
-                    )
-                    .join("")}
-                <button type="button" class="btn btn-sm btn-link px-0 fs-12" data-add-sub="${i}">+ subcausa</button>
             </div>
         </div>`
                       )
@@ -301,8 +334,16 @@ function formulario() {
                     <div class="col-md-10">${campoTexto("f-nome", "Nome do Programa", edicao.nome, { obrigatorio: true })}</div>
                 </div>
                 <div class="row g-3">
-                    <div class="col-md-6">${campoTexto("f-eixo", "Eixo", edicao.eixo)}</div>
-                    <div class="col-md-6">${campoTexto("f-objetivoEstrategico", "Objetivo Estratégico", edicao.objetivoEstrategico)}</div>
+                    <div class="col-md-6">${campoSelecao("f-eixo", "Eixo", edicao.eixoId, estado.eixos ?? [], {
+                        vazio: "Sem eixo",
+                    })}</div>
+                    <div class="col-md-6">${campoSelecao(
+                        "f-objetivoEstrategico",
+                        "Objetivo Estratégico",
+                        edicao.objetivoId,
+                        objetivosDoEixo(edicao.eixoId),
+                        { vazio: "Sem objetivo", ajuda: "Só os objetivos do eixo escolhido." }
+                    )}</div>
                 </div>
                 ${campoTexto("f-descricao", "Descrição do Programa", edicao.descricao, { linhas: 2 })}
 
@@ -374,8 +415,7 @@ function lerFormulario() {
     Object.assign(edicao, {
         codigo: v("f-codigo").trim(),
         nome: v("f-nome").trim(),
-        eixo: v("f-eixo").trim(),
-        objetivoEstrategico: v("f-objetivoEstrategico").trim(),
+        ...vinculoEstrategico(v("f-eixo"), v("f-objetivoEstrategico")),
         descricao: v("f-descricao").trim(),
         problema: v("f-problema").trim(),
         populacaoAfetada: v("f-populacaoAfetada").trim(),
@@ -394,13 +434,24 @@ function lerFormulario() {
     document.querySelectorAll("[data-causa-texto]").forEach((el) => {
         edicao.causas[Number(el.dataset.causaTexto)].texto = el.value;
     });
-    document.querySelectorAll("[data-sub-texto]").forEach((el) => {
-        const [i, j] = el.dataset.subTexto.split(":").map(Number);
-        edicao.causas[i].subcausas[j].texto = el.value;
-    });
     document.querySelectorAll("[data-ind]").forEach((el) => {
         const [i, campo] = el.dataset.ind.split(":");
         edicao.indicadores[Number(i)][campo] = el.value;
+    });
+}
+
+/**
+ * Trocar o eixo troca os objetivos disponíveis. Um objetivo de outro eixo deixa
+ * de valer, então a escolha anterior é descartada em vez de ficar escondida.
+ */
+function ligarEixo() {
+    document.getElementById("f-eixo")?.addEventListener("change", (e) => {
+        const alvo = document.getElementById("f-objetivoEstrategico");
+        if (!alvo) return;
+        const opcoes = objetivosDoEixo(e.target.value);
+        alvo.innerHTML =
+            `<option value="">Sem objetivo</option>` +
+            opcoes.map((o) => `<option value="${o.id}">${esc(o.nome)}</option>`).join("");
     });
 }
 
@@ -433,17 +484,10 @@ document.addEventListener("click", (e) => {
     if (add) {
         lerFormulario();
         const tipo = add.dataset.add;
-        if (tipo === "causa") edicao.causas.push({ id: `c-${uid()}`, texto: "", subcausas: [] });
+        if (tipo === "causa") edicao.causas.push({ id: `c-${uid()}`, texto: "" });
         else if (tipo === "indicador")
             edicao.indicadores.push({ nome: "", unidade: "", linhaBase: "", meta: "" });
         else edicao[tipo].push("");
-        return reabrir();
-    }
-
-    const addSub = e.target.closest("[data-add-sub]");
-    if (addSub) {
-        lerFormulario();
-        edicao.causas[Number(addSub.dataset.addSub)].subcausas.push({ id: `sc-${uid()}`, texto: "" });
         return reabrir();
     }
 
@@ -463,14 +507,6 @@ document.addEventListener("click", (e) => {
         if (usada.length && !confirm(`${usada.length} Iniciativa(s) referenciam esta causa. Remover assim mesmo?`))
             return;
         edicao.causas.splice(i, 1);
-        return reabrir();
-    }
-
-    const removerSub = e.target.closest("[data-remover-sub]");
-    if (removerSub) {
-        lerFormulario();
-        const [i, j] = removerSub.dataset.removerSub.split(":").map(Number);
-        edicao.causas[i].subcausas.splice(j, 1);
         return reabrir();
     }
 

@@ -202,10 +202,7 @@ function render() {
                                 : `<ul class="mb-0">${ini.causas
                                       .map((cid) => {
                                           const causa = programa?.causas.find((c) => c.id === cid);
-                                          const sub = programa?.causas
-                                              .flatMap((c) => c.subcausas)
-                                              .find((s) => s.id === cid);
-                                          return `<li>${esc(causa?.texto ?? sub?.texto ?? cid)}</li>`;
+                                          return `<li>${esc(causa?.texto ?? cid)}</li>`;
                                       })
                                       .join("")}</ul>`
                         }

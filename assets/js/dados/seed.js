@@ -42,20 +42,12 @@ const PROGRAMAS = [
       "4 das 7 macrorregi\xF5es abaixo do par\xE2metro de leitos de UTI por habitante."
     ],
     causas: [
-      {
-        id: "c1",
-        texto: "Capacidade instalada insuficiente na m\xE9dia e alta complexidade",
-        subcausas: [
-          { id: "c1a", texto: "D\xE9ficit de leitos de UTI fora da regi\xE3o metropolitana" },
-          { id: "c1b", texto: "Equipamentos hospitalares obsoletos" }
-        ]
-      },
-      {
-        id: "c2",
-        texto: "Fragilidade da aten\xE7\xE3o prim\xE1ria como porta de entrada",
-        subcausas: [{ id: "c2a", texto: "Baixa cobertura de equipes de sa\xFAde da fam\xEDlia em munic\xEDpios pequenos" }]
-      },
-      { id: "c3", texto: "Fragmenta\xE7\xE3o da regula\xE7\xE3o assistencial", subcausas: [] }
+      { id: "c1", texto: "Capacidade instalada insuficiente na m\xE9dia e alta complexidade" },
+      { id: "c1a", texto: "D\xE9ficit de leitos de UTI fora da regi\xE3o metropolitana" },
+      { id: "c1b", texto: "Equipamentos hospitalares obsoletos" },
+      { id: "c2", texto: "Fragilidade da aten\xE7\xE3o prim\xE1ria como porta de entrada" },
+      { id: "c2a", texto: "Baixa cobertura de equipes de sa\xFAde da fam\xEDlia em munic\xEDpios pequenos" },
+      { id: "c3", texto: "Fragmenta\xE7\xE3o da regula\xE7\xE3o assistencial" }
     ],
     consequencias: [
       "Agravamento de quadros cl\xEDnicos evit\xE1veis",
@@ -83,9 +75,10 @@ const PROGRAMAS = [
       "Somente 31% dos munic\xEDpios com visita\xE7\xE3o domiciliar estruturada."
     ],
     causas: [
-      { id: "c1", texto: "D\xE9ficit de vagas em creche", subcausas: [{ id: "c1a", texto: "Insufici\xEAncia de infraestrutura em munic\xEDpios de m\xE9dio porte" }] },
-      { id: "c2", texto: "Baixa cobertura de visita\xE7\xE3o domiciliar qualificada", subcausas: [] },
-      { id: "c3", texto: "Aus\xEAncia de acompanhamento intersetorial da crian\xE7a", subcausas: [] }
+      { id: "c1", texto: "D\xE9ficit de vagas em creche" },
+      { id: "c1a", texto: "Insufici\xEAncia de infraestrutura em munic\xEDpios de m\xE9dio porte" },
+      { id: "c2", texto: "Baixa cobertura de visita\xE7\xE3o domiciliar qualificada" },
+      { id: "c3", texto: "Aus\xEAncia de acompanhamento intersetorial da crian\xE7a" }
     ],
     consequencias: ["Atraso no desenvolvimento infantil", "Evas\xE3o do cuidado em sa\xFAde", "Sobrecarga das fam\xEDlias"],
     populacaoAfetada: "Crian\xE7as de 0 a 6 anos e suas fam\xEDlias",
@@ -106,17 +99,12 @@ const PROGRAMAS = [
       "Cobertura de equipamentos p\xFAblicos de alimenta\xE7\xE3o em apenas 22 munic\xEDpios."
     ],
     causas: [
-      { id: "c1", texto: "Baixa renda e informalidade no trabalho", subcausas: [] },
-      {
-        id: "c2",
-        texto: "Cobertura insuficiente de equipamentos p\xFAblicos de alimenta\xE7\xE3o",
-        subcausas: [
-          { id: "c2a", texto: "Aus\xEAncia de restaurantes comunit\xE1rios no interior" },
-          { id: "c2b", texto: "Descontinuidade operacional das cozinhas comunit\xE1rias" }
-        ]
-      },
-      { id: "c3", texto: "Fragilidade da agricultura familiar e das cadeias curtas", subcausas: [] },
-      { id: "c4", texto: "Baixa articula\xE7\xE3o entre cadastro social e transfer\xEAncias", subcausas: [] }
+      { id: "c1", texto: "Baixa renda e informalidade no trabalho" },
+      { id: "c2", texto: "Cobertura insuficiente de equipamentos p\xFAblicos de alimenta\xE7\xE3o" },
+      { id: "c2a", texto: "Aus\xEAncia de restaurantes comunit\xE1rios no interior" },
+      { id: "c2b", texto: "Descontinuidade operacional das cozinhas comunit\xE1rias" },
+      { id: "c3", texto: "Fragilidade da agricultura familiar e das cadeias curtas" },
+      { id: "c4", texto: "Baixa articula\xE7\xE3o entre cadastro social e transfer\xEAncias" }
     ],
     consequencias: ["Desnutri\xE7\xE3o e agravos de sa\xFAde", "Evas\xE3o escolar", "Aprofundamento da pobreza intergeracional"],
     populacaoAfetada: "Fam\xEDlias em situa\xE7\xE3o de inseguran\xE7a alimentar",
@@ -137,9 +125,9 @@ const PROGRAMAS = [
     problema: "Jovens de 16 a 29 anos com alta desocupa\xE7\xE3o e baixa conex\xE3o entre qualifica\xE7\xE3o ofertada e vagas existentes.",
     evidencias: ["Taxa de desocupa\xE7\xE3o juvenil de 18,7%.", "42% dos concluintes de cursos sem inser\xE7\xE3o em 12 meses."],
     causas: [
-      { id: "c1", texto: "Descompasso entre oferta de cursos e demanda das empresas", subcausas: [] },
-      { id: "c2", texto: "Baixa cobertura de intermedia\xE7\xE3o p\xFAblica de emprego", subcausas: [] },
-      { id: "c3", texto: "Dificuldade de deslocamento at\xE9 os centros de qualifica\xE7\xE3o", subcausas: [] }
+      { id: "c1", texto: "Descompasso entre oferta de cursos e demanda das empresas" },
+      { id: "c2", texto: "Baixa cobertura de intermedia\xE7\xE3o p\xFAblica de emprego" },
+      { id: "c3", texto: "Dificuldade de deslocamento at\xE9 os centros de qualifica\xE7\xE3o" }
     ],
     consequencias: ["Informalidade precoce", "Migra\xE7\xE3o juvenil", "Perda de produtividade regional"],
     populacaoAfetada: "Jovens de 16 a 29 anos",
@@ -157,9 +145,9 @@ const PROGRAMAS = [
     problema: "Baixa capacidade municipal de resposta a eventos clim\xE1ticos extremos e cobertura desigual de esgotamento sanit\xE1rio.",
     evidencias: ["58 munic\xEDpios com \xE1reas de risco mapeadas sem plano de conting\xEAncia."],
     causas: [
-      { id: "c1", texto: "Ocupa\xE7\xE3o irregular em \xE1reas de risco", subcausas: [] },
-      { id: "c2", texto: "D\xE9ficit de infraestrutura de drenagem", subcausas: [] },
-      { id: "c3", texto: "Baixa capacidade t\xE9cnica municipal de planejamento", subcausas: [] }
+      { id: "c1", texto: "Ocupa\xE7\xE3o irregular em \xE1reas de risco" },
+      { id: "c2", texto: "D\xE9ficit de infraestrutura de drenagem" },
+      { id: "c3", texto: "Baixa capacidade t\xE9cnica municipal de planejamento" }
     ],
     consequencias: ["Perdas materiais recorrentes", "Doen\xE7as de veicula\xE7\xE3o h\xEDdrica"],
     populacaoAfetada: "Popula\xE7\xE3o urbana em \xE1reas de risco",
@@ -177,8 +165,9 @@ const PROGRAMAS = [
     problema: "Crescimento acelerado da popula\xE7\xE3o idosa sem rede correspondente de cuidado continuado e preven\xE7\xE3o de viol\xEAncia.",
     evidencias: ["Aumento de 27% nas notifica\xE7\xF5es de viol\xEAncia contra a pessoa idosa em cinco anos."],
     causas: [
-      { id: "c1", texto: "Rede de cuidado continuado insuficiente", subcausas: [{ id: "c1a", texto: "Poucos centros-dia em funcionamento" }] },
-      { id: "c2", texto: "Subnotifica\xE7\xE3o de viol\xEAncia contra a pessoa idosa", subcausas: [] }
+      { id: "c1", texto: "Rede de cuidado continuado insuficiente" },
+      { id: "c1a", texto: "Poucos centros-dia em funcionamento" },
+      { id: "c2", texto: "Subnotifica\xE7\xE3o de viol\xEAncia contra a pessoa idosa" }
     ],
     consequencias: ["Institucionaliza\xE7\xE3o precoce", "Sobrecarga de cuidadores familiares"],
     populacaoAfetada: "Pessoas com 60 anos ou mais",
@@ -196,8 +185,8 @@ const PROGRAMAS = [
     problema: "Concentra\xE7\xE3o da atividade econ\xF4mica no eixo metropolitano e baixa diversifica\xE7\xE3o produtiva no norte e nordeste do Estado.",
     evidencias: ["PIB per capita do Nordeste Goiano equivale a 41% da m\xE9dia estadual."],
     causas: [
-      { id: "c1", texto: "Infraestrutura log\xEDstica deficiente", subcausas: [] },
-      { id: "c2", texto: "Baixa diversifica\xE7\xE3o produtiva regional", subcausas: [] }
+      { id: "c1", texto: "Infraestrutura log\xEDstica deficiente" },
+      { id: "c2", texto: "Baixa diversifica\xE7\xE3o produtiva regional" }
     ],
     consequencias: ["Migra\xE7\xE3o interna", "Depend\xEAncia de transfer\xEAncias"],
     populacaoAfetada: "Popula\xE7\xE3o das regi\xF5es de menor dinamismo econ\xF4mico",
@@ -215,8 +204,8 @@ const PROGRAMAS = [
     problema: "Concentra\xE7\xE3o de crimes violentos em territ\xF3rios espec\xEDficos das regi\xF5es metropolitanas e do entorno do DF.",
     evidencias: ["62% dos homic\xEDdios concentrados em 18 munic\xEDpios."],
     causas: [
-      { id: "c1", texto: "Baixa presen\xE7a de programas de preven\xE7\xE3o social", subcausas: [] },
-      { id: "c2", texto: "Fragilidade da integra\xE7\xE3o entre for\xE7as de seguran\xE7a", subcausas: [] }
+      { id: "c1", texto: "Baixa presen\xE7a de programas de preven\xE7\xE3o social" },
+      { id: "c2", texto: "Fragilidade da integra\xE7\xE3o entre for\xE7as de seguran\xE7a" }
     ],
     consequencias: ["Perda de vidas jovens", "Inseguran\xE7a percebida elevada"],
     populacaoAfetada: "Popula\xE7\xE3o residente em territ\xF3rios de alta vulnerabilidade",
@@ -234,8 +223,8 @@ const PROGRAMAS = [
     problema: "Concentra\xE7\xE3o dos equipamentos culturais na capital e degrada\xE7\xE3o de bens tombados no interior.",
     evidencias: ["71% dos equipamentos culturais estaduais localizados na Regi\xE3o Metropolitana."],
     causas: [
-      { id: "c1", texto: "Baixa capilaridade dos equipamentos culturais", subcausas: [] },
-      { id: "c2", texto: "Aus\xEAncia de pol\xEDtica continuada de restauro", subcausas: [] }
+      { id: "c1", texto: "Baixa capilaridade dos equipamentos culturais" },
+      { id: "c2", texto: "Aus\xEAncia de pol\xEDtica continuada de restauro" }
     ],
     consequencias: ["Perda de patrim\xF4nio hist\xF3rico", "Desigualdade de acesso cultural"],
     populacaoAfetada: "Popula\xE7\xE3o do interior e comunidades tradicionais",
@@ -255,8 +244,8 @@ const PROGRAMAS = [
     problema: "Servi\xE7os p\xFAblicos com baixa digitaliza\xE7\xE3o e alto custo de atendimento presencial.",
     evidencias: ["Apenas 38% dos servi\xE7os estaduais dispon\xEDveis integralmente on-line."],
     causas: [
-      { id: "c1", texto: "Sistemas legados sem integra\xE7\xE3o", subcausas: [] },
-      { id: "c2", texto: "Baixa maturidade digital das unidades administrativas", subcausas: [] }
+      { id: "c1", texto: "Sistemas legados sem integra\xE7\xE3o" },
+      { id: "c2", texto: "Baixa maturidade digital das unidades administrativas" }
     ],
     consequencias: ["Custo elevado de atendimento", "Baixa satisfa\xE7\xE3o do cidad\xE3o"],
     populacaoAfetada: "Cidad\xE3os e empresas usu\xE1rios de servi\xE7os estaduais",

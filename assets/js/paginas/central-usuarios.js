@@ -1,5 +1,5 @@
 /**
- * Cadastro de Usuários — Área Central.
+ * Gestão de usuários — Área Central.
  *
  * A pessoa se registra sozinha em `registrar.html` e cai aqui como
  * **aguardando aprovação**, sem perfil. O Administrador central lê os dados,
@@ -10,8 +10,8 @@
  * declarou e decide. Mudar o nome ou o órgão dela aqui seria decidir sobre um
  * dado que não é nosso.
  *
- * Depois de aprovado, as ações são de acesso, não de cadastro: revogar,
- * reativar e solicitar troca de senha.
+ * Depois de aprovado, as ações são de acesso, não de cadastro: revogar e
+ * reativar. Senha não passa por aqui — quem autentica é o Aplicações Expresso.
  */
 import { obterEstado, updItem, SITUACOES_USUARIO, situacaoUsuario } from "../dados/store.js";
 import { montarShell, cabecalhoPagina, somenteLeitura } from "../shell.js";
@@ -24,11 +24,11 @@ const leitura = somenteLeitura();
 
 /** Espelha `assets/js/acesso.js`. Setorial exige órgão; central, não. */
 const PERFIS = [
-    { id: "setorial", nome: "Setorial", visao: "setorial" },
+    { id: "setorial", nome: "Planejamento setorial", visao: "setorial" },
     { id: "gestao-setorial", nome: "Alta gestão setorial", visao: "setorial" },
     { id: "admin-central", nome: "Administrador central", visao: "central" },
     { id: "gestao-central", nome: "Alta gestão central", visao: "central" },
-    { id: "controle", nome: "Órgãos de controle", visao: "central" },
+    { id: "controle", nome: "Consulta", visao: "central" },
 ];
 
 const nomeDoPerfil = (id) => PERFIS.find((p) => p.id === id)?.nome ?? id;
@@ -39,13 +39,26 @@ let filtro = "todos";
 
 const usuarios = () => estado.usuarios ?? [];
 
+/**
+ * A ordem é por urgência, não por cadastro: quem aguarda decisão vem primeiro.
+ * Uma solicitação nova entra no fim da lista e, com dezenas de aprovados na
+ * frente, some da tela — justamente a linha que exige ação.
+ */
+const URGENCIA = { aguardando: 0, aprovado: 1, revogado: 2, reprovado: 3 };
+
 function visiveis() {
     const termo = busca.trim().toLocaleLowerCase("pt-BR");
-    return usuarios().filter((u) => {
-        if (filtro !== "todos" && u.situacao !== filtro) return false;
-        if (!termo) return true;
-        return [u.nome, u.email, u.login, u.orgao].join(" ").toLocaleLowerCase("pt-BR").includes(termo);
-    });
+    return usuarios()
+        .filter((u) => {
+            if (filtro !== "todos" && u.situacao !== filtro) return false;
+            if (!termo) return true;
+            return [u.nome, u.email, u.login, u.orgao].join(" ").toLocaleLowerCase("pt-BR").includes(termo);
+        })
+        .sort(
+            (a, b) =>
+                (URGENCIA[a.situacao] ?? 9) - (URGENCIA[b.situacao] ?? 9) ||
+                a.nome.localeCompare(b.nome, "pt-BR")
+        );
 }
 
 function filtros() {
@@ -76,24 +89,28 @@ function indicadores() {
     );
 }
 
+/**
+ * Uma ação por situação, sempre no mesmo lugar: o menu de três pontos ao fim da
+ * linha. Botões diferentes em colunas diferentes fariam o olho procurar a ação
+ * a cada linha.
+ */
 function acoes(u) {
     if (leitura) return "";
-    if (u.situacao === "aguardando") {
-        return `<button class="btn btn-sm btn-primary" data-analisar="${u.id}">Analisar</button>`;
-    }
-    if (u.situacao === "reprovado") {
-        return `<button class="btn btn-sm btn-light" data-analisar="${u.id}">Rever decisão</button>`;
-    }
-    const revogado = u.situacao === "revogado";
+
+    const itens = {
+        aguardando: { rotulo: "Analisar solicitação", atributo: `data-analisar="${u.id}"`, tom: "" },
+        reprovado: { rotulo: "Rever decisão", atributo: `data-analisar="${u.id}"`, tom: "" },
+        aprovado: { rotulo: "Revogar acesso", atributo: `data-acesso="${u.id}"`, tom: "text-danger" },
+        revogado: { rotulo: "Ativar acesso", atributo: `data-acesso="${u.id}"`, tom: "" },
+    };
+    const item = itens[u.situacao];
+    if (!item) return "";
+
     return `
     <div class="dropdown">
         <button class="btn btn-sm btn-light" data-bs-toggle="dropdown" aria-label="Ações de ${esc(u.nome)}"><i class="ti ti-dots-vertical"></i></button>
         <ul class="dropdown-menu dropdown-menu-end">
-            <li><button class="dropdown-item" data-senha="${u.id}">Solicitar troca de senha</button></li>
-            <li><hr class="dropdown-divider" /></li>
-            <li><button class="dropdown-item ${revogado ? "" : "text-danger"}" data-acesso="${u.id}">
-                ${revogado ? "Ativar acesso" : "Revogar acesso"}
-            </button></li>
+            <li><button class="dropdown-item ${item.tom}" ${item.atributo}>${item.rotulo}</button></li>
         </ul>
     </div>`;
 }
@@ -124,7 +141,7 @@ function linha(u) {
 function render() {
     const lista = visiveis();
     document.getElementById("conteudo").innerHTML = `
-    ${cabecalhoPagina("Cadastro de Usuários", "Solicitações de acesso e perfis concedidos.", filtros())}
+    ${cabecalhoPagina("Gestão de usuários", "Solicitações de acesso e perfis concedidos.", filtros())}
     ${indicadores()}
 
     <div class="card">
@@ -280,14 +297,6 @@ function ligar() {
             updItem("usuarios", u.id, { situacao: revogando ? "revogado" : "aprovado" });
             avisar(revogando ? "Acesso revogado." : "Acesso reativado.");
             render();
-        })
-    );
-
-    // O SIPLAM não troca a senha: pede ao autenticador que a pessoa troque.
-    document.querySelectorAll("[data-senha]").forEach((b) =>
-        b.addEventListener("click", () => {
-            const u = usuarios().find((x) => x.id === b.dataset.senha);
-            if (u) avisar(`Troca de senha solicitada para ${u.nome}.`);
         })
     );
 }

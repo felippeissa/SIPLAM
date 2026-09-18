@@ -11,11 +11,11 @@ const { estado, visao } = montarShell();
 const construcao = emConstrucao();
 
 const PERFIL = {
-    setorial: "Setorial",
+    setorial: "Planejamento setorial",
     "admin-central": "Administrador central",
     "gestao-setorial": "Alta gestão setorial",
     "gestao-central": "Alta gestão central",
-    controle: "Órgãos de controle",
+    controle: "Consulta",
 };
 
 let perfilId = null;
@@ -54,7 +54,7 @@ document.getElementById("conteudo").innerHTML = `
                 </div>
 
                 <p class="fs-12 text-muted mb-0">
-                    Por enquanto os perfis <strong>Setorial</strong> e
+                    Por enquanto os perfis <strong>Planejamento setorial</strong> e
                     <strong>Administrador central</strong> têm telas construídas.
                 </p>
             </div>

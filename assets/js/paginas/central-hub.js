@@ -1,5 +1,5 @@
 /**
- * Hub de Programas — Área Central.
+ * Visão por Programas — Área Central.
  *
  * Visão consolidada de um Programa: tudo o que pende dele, reunido num lugar só.
  * Hoje essa informação está espalhada por seis telas, e ninguém consegue
@@ -72,7 +72,7 @@ function listaProgramas() {
 
     return `
 ${cabecalhoPagina(
-    "Hub de Programas",
+    "Visão por Programas",
     "Escolha um Programa para ver tudo o que pende dele num lugar só.",
     `<div class="app-search">
         <input type="search" id="busca" class="form-control form-control-sm" placeholder="Buscar Programa" value="${esc(busca)}" />
@@ -163,12 +163,7 @@ function abaGeral(p) {
         ? `<ul class="mb-0 ps-3 fs-13">
         ${p.causas
             .map(
-                (c) => `<li class="mb-1">${esc(c.texto)}
-            ${
-                (c.subcausas ?? []).length
-                    ? `<ul class="ps-3 text-muted">${c.subcausas.map((s) => `<li>${esc(s.texto)}</li>`).join("")}</ul>`
-                    : ""
-            }</li>`
+                (c) => `<li class="mb-1">${esc(c.texto)}</li>`
             )
             .join("")}
     </ul>`
@@ -477,7 +472,7 @@ function hub(p) {
     const corpo = { geral: abaGeral, iniciativas: abaIniciativas, entregas: abaEntregas, projetos: abaProjetos, documentos: abaDocumentos }[aba] ?? abaGeral;
 
     return `
-${contexto([{ rotulo: "Hub de Programas", href: "central-hub.html" }, { rotulo: `${p.codigo} · ${p.nome}` }])}
+${contexto([{ rotulo: "Visão por Programas", href: "central-hub.html" }, { rotulo: `${p.codigo} · ${p.nome}` }])}
 ${cabecalhoPagina(
     `${esc(p.codigo)} · ${esc(p.nome)}`,
     esc(p.objetivoEstrategico),

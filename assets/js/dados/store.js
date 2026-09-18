@@ -26,15 +26,51 @@ import { estadoInicial } from "./seed.js";
  * ainda não tem.
  */
 export const SITUACOES_PPA = [
-    { id: "elaboracao", rotulo: "Elaboração", tom: "info", editavel: true, ajuda: "Em construção pelos órgãos e pela Área Central." },
-    { id: "submetido", rotulo: "Submetido", tom: "alerta", editavel: false, ajuda: "Encaminhado para apreciação; não se edita mais." },
+    { id: "elaboracao", rotulo: "Em elaboração", tom: "info", editavel: true, ajuda: "Em construção pelos órgãos e pela Área Central." },
+    { id: "submetido", rotulo: "Submetido para aprovação", tom: "alerta", editavel: false, ajuda: "Encaminhado para apreciação; não se edita mais." },
     { id: "aprovado", rotulo: "Aprovado", tom: "ok", editavel: false, ajuda: "Aprovado, aguardando o início da vigência." },
-    { id: "reprovado", rotulo: "Reprovado", tom: "impeditivo", editavel: false, ajuda: "Não aprovado. Para corrigir, volte o plano para Elaboração." },
+    { id: "reprovado", rotulo: "Reprovado", tom: "impeditivo", editavel: false, ajuda: "Não aprovado. Para corrigir, o plano volta à elaboração." },
     { id: "vigente", rotulo: "Vigente", tom: "ok", editavel: false, ajuda: "Em execução. Mudanças só por alteração do plano." },
     { id: "encerrado", rotulo: "Encerrado", tom: "neutro", editavel: false, ajuda: "Ciclo concluído. Permanece para consulta." },
 ];
 
 export const situacaoPpa = (id) => SITUACOES_PPA.find((s) => s.id === id) ?? SITUACOES_PPA[0];
+
+/**
+ * O ano em que um plano é elaborado: o anterior ao primeiro de vigência.
+ * O PPA é construído no ano que antecede o ciclo que ele rege.
+ */
+export const anoDeElaboracao = (ppa) => Number(ppa.primeiroAno) - 1;
+
+/**
+ * O plano a que pertencem os cadastros feitos agora.
+ *
+ * A visão do sistema é de um PPA por vez: o que está em elaboração é o que
+ * recebe cadastro. Não havendo nenhum, vale o vigente e, por último, o mais
+ * recente — para nada ficar órfão.
+ */
+export function ppaCorrente(estado) {
+    const ppas = estado?.ppas ?? [];
+    return (
+        ppas.find((p) => p.situacao === "elaboracao") ??
+        ppas.find((p) => p.situacao === "vigente") ??
+        [...ppas].sort((a, b) => Number(b.primeiroAno) - Number(a.primeiroAno))[0] ??
+        null
+    );
+}
+
+/** Os anos cobertos por um plano. */
+export function anosDoPpa(ppa) {
+    const anos = [];
+    for (let a = Number(ppa.primeiroAno); a <= Number(ppa.ultimoAno); a++) anos.push(a);
+    return anos;
+}
+
+/** Outro plano que ocupa algum dos mesmos anos. Dois PPAs não se sobrepõem. */
+export function ppaQueColide(estado, candidato) {
+    const anos = new Set(anosDoPpa(candidato));
+    return (estado.ppas ?? []).find((p) => p.id !== candidato.id && anosDoPpa(p).some((a) => anos.has(a))) ?? null;
+}
 
 /**
  * O plano como entidade, que o protótipo não tinha.
@@ -51,6 +87,8 @@ function ppaInicial() {
         ultimoAno: "2031",
         descricao: "",
         situacao: "elaboracao",
+        // Número do processo no SEI. Vem de lá, não daqui.
+        processoSei: "202600006001287",
     };
 }
 
@@ -107,52 +145,112 @@ function usuariosIniciais() {
  * Diagnóstico como cadastro, derivado do que já existe dentro dos Programas.
  *
  * O diagnóstico sempre esteve no Programa — problema central, evidências,
- * causas, subcausas e consequências. As telas de cadastro foram construídas
+ * causas e consequências. As telas de cadastro foram construídas
  * depois, com uma estrutura própria, e nasciam vazias: o sistema mostrava no
  * Hub causas que o Cadastro de Causa jurava não existir.
  *
- * Aqui as duas viram uma só. A hierarquia segue a árvore de problemas, que é o
- * método do diagnóstico e o que os dados já traziam:
+ * Nada aqui é hierarquia rígida: causa, problema e iniciativa se apontam.
  *
- *   Programa → Diagnóstico → Problema central → Causas → Subcausas
+ *   Diagnóstico → aponta para os problemas que ele caracteriza
+ *   Problema    → aponta para as causas que o explicam
+ *   Causa       → aponta para as Iniciativas que a enfrentam
  *
- * Só roda quando as quatro coleções estão vazias, para não passar por cima do
- * que alguém tenha cadastrado à mão.
+ * Assim uma mesma causa pode explicar mais de um problema e ser enfrentada por
+ * mais de uma Iniciativa, o que uma árvore não permitiria.
+ *
+ * Só roda quando as coleções estão vazias, para não passar por cima do que
+ * alguém tenha cadastrado à mão.
  */
-function diagnosticoDosProgramas(programas) {
+function diagnosticoDosProgramas(programas, iniciativas = [], ppaId = "") {
     const diagnosticos = [];
     const problemas = [];
     const causas = [];
-    const subcausas = [];
 
     for (const p of programas) {
-        const diagId = `dg-${p.id}`;
         diagnosticos.push({
-            id: diagId,
-            programaId: p.id,
+            id: `dg-${p.id}`,
+            ppaId,
             nome: `Diagnóstico ${p.codigo}`,
             descricao: (p.evidencias ?? []).join(" · "),
+            problemaIds: p.problema ? [`pb-${p.id}`] : [],
         });
 
-        if (!p.problema) continue;
-        const probId = `pb-${p.id}`;
-        problemas.push({
-            id: probId,
-            diagnosticoId: diagId,
-            nome: p.problema,
-            descricao: (p.consequencias ?? []).join(" · "),
-        });
+        // Cada Iniciativa guarda, em `causas`, o identificador local das causas
+        // que ataca — local porque só é único dentro do Programa. Aqui o vínculo
+        // é virado para o lado da causa, com o id inteiro, que não é ambíguo.
+        const doPrograma = iniciativas.filter((i) => i.programaId === p.id);
+        const vinculadas = [];
 
         for (const c of p.causas ?? []) {
             const causaId = `ca-${p.id}-${c.id}`;
-            causas.push({ id: causaId, problemaId: probId, nome: c.texto, descricao: "" });
-            for (const s of c.subcausas ?? []) {
-                subcausas.push({ id: `sc-${p.id}-${s.id}`, causaId, nome: s.texto, descricao: "" });
-            }
+            causas.push({
+                id: causaId,
+                ppaId,
+                nome: c.texto,
+                descricao: "",
+                iniciativaIds: doPrograma.filter((i) => (i.causas ?? []).includes(c.id)).map((i) => i.id),
+            });
+            vinculadas.push(causaId);
         }
+
+        if (!p.problema) continue;
+        problemas.push({
+            id: `pb-${p.id}`,
+            ppaId,
+            nome: p.problema,
+            descricao: (p.consequencias ?? []).join(" · "),
+            causaIds: vinculadas,
+        });
     }
 
-    return { diagnosticos, problemas, causas, subcausas };
+    return { diagnosticos, problemas, causas };
+}
+
+/**
+ * Eixo e Objetivo Estratégico como cadastro, derivados dos Programas.
+ *
+ * Os dois sempre existiram dentro do Programa, como texto solto: `eixo` e
+ * `objetivoEstrategico`. Os filtros do sistema já os tratavam como estrutura —
+ * escolher um eixo restringe os objetivos —, mas não havia onde cadastrá-los.
+ *
+ *   Eixo → Objetivo Estratégico → Programa
+ *
+ * Os Programas ganham `eixoId` e `objetivoId` para que o vínculo seja por
+ * identidade, não por texto igual. Os campos de texto continuam onde estavam:
+ * as telas que filtram por eles seguem funcionando.
+ */
+function estruturaDosProgramas(programas, ppaId = "") {
+    const eixos = [];
+    const objetivos = [];
+    const porEixo = new Map();
+    const porObjetivo = new Map();
+
+    for (const p of programas) {
+        if (p.eixo && !porEixo.has(p.eixo)) {
+            const eixo = { id: `ex-${porEixo.size + 1}`, ppaId, nome: p.eixo, descricao: "" };
+            porEixo.set(p.eixo, eixo);
+            eixos.push(eixo);
+        }
+        const chave = p.objetivoEstrategico;
+        if (chave && !porObjetivo.has(chave)) {
+            const objetivo = {
+                id: `ob-${porObjetivo.size + 1}`,
+                ppaId,
+                eixoId: porEixo.get(p.eixo)?.id ?? "",
+                nome: chave,
+                descricao: "",
+            };
+            porObjetivo.set(chave, objetivo);
+            objetivos.push(objetivo);
+        }
+        p.ppaId = ppaId;
+        p.eixoId = porEixo.get(p.eixo)?.id ?? "";
+        p.objetivoId = porObjetivo.get(chave)?.id ?? "";
+    }
+
+    eixos.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    objetivos.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    return { eixos, objetivos };
 }
 
 const CHAVE = "siplam.estado.v1";
@@ -180,18 +278,25 @@ function carregar() {
     if (!base.ppas) base.ppas = base.ppa ? [base.ppa] : [ppaInicial()];
     delete base.ppa;
 
-    // Coleções de cadastro do diagnóstico.
-    for (const colecao of ["diagnosticos", "problemas", "causas", "subcausas"]) {
+    // Estrutura do plano: eixos e objetivos, derivados dos Programas.
+    for (const colecao of ["eixos", "objetivos"]) {
         if (!base[colecao]) base[colecao] = [];
     }
-    // Estado gravado quando o nível abaixo da causa se chamava "subproblema".
-    if (base.subproblemas) {
-        if (!base.subcausas.length) base.subcausas = base.subproblemas;
-        delete base.subproblemas;
+    if (!base.eixos.length && !base.objetivos.length) {
+        Object.assign(base, estruturaDosProgramas(base.programas ?? [], ppaCorrente(base)?.id ?? ""));
     }
-    // Cadastros vazios: derivam do diagnóstico que já vive dentro dos Programas.
-    if (!base.diagnosticos.length && !base.problemas.length && !base.causas.length && !base.subcausas.length) {
-        Object.assign(base, diagnosticoDosProgramas(base.programas ?? []));
+
+    // Coleções de cadastro do diagnóstico.
+    for (const colecao of ["diagnosticos", "problemas", "causas"]) {
+        if (!base[colecao]) base[colecao] = [];
+    }
+    // O nível abaixo da causa deixou de existir, e a causa deixou de pendurar no
+    // problema. Estado gravado em qualquer dessas formas é refeito do seed.
+    delete base.subproblemas;
+    delete base.subcausas;
+    const forma = base.causas.some((c) => c.problemaId !== undefined || c.diagnosticoId !== undefined);
+    if (forma || (!base.diagnosticos.length && !base.problemas.length && !base.causas.length)) {
+        Object.assign(base, diagnosticoDosProgramas(base.programas ?? [], base.iniciativas ?? [], ppaCorrente(base)?.id ?? ""));
     }
 
     // Estado gravado antes de existir o cadastro de usuários.
@@ -208,6 +313,7 @@ function carregar() {
     for (const ppa of base.ppas) {
         delete ppa.valorPrevisto;
         if (!ppa.situacao) ppa.situacao = "elaboracao";
+        if (ppa.processoSei === undefined) ppa.processoSei = "";
     }
     return base;
 }
@@ -237,12 +343,13 @@ export function aoMudar(fn) {
 export function reiniciar() {
     estado = estadoInicial();
     estado.ppas = [ppaInicial()];
-    Object.assign(estado, diagnosticoDosProgramas(estado.programas));
+    Object.assign(estado, estruturaDosProgramas(estado.programas, ppaCorrente(estado)?.id ?? ""));
+    Object.assign(estado, diagnosticoDosProgramas(estado.programas, estado.iniciativas, ppaCorrente(estado)?.id ?? ""));
     estado.usuarios = usuariosIniciais();
     gravar();
 }
 
-/* ---------- Cadastros (diagnóstico, problema, causa, subcausa) ---------- */
+/* ---------- Cadastros (diagnóstico, problema, causa) ---------- */
 
 /**
  * CRUD genérico das coleções de cadastro. Todas têm a mesma forma —
@@ -250,8 +357,16 @@ export function reiniciar() {
  * serve as quatro.
  */
 export function addItem(colecao, item) {
-    estado[colecao].push({ ...item, id: item.id || `${colecao}-${uid()}`, criadoEm: hoje() });
+    // O PPA é o vínculo de tudo que se cadastra dentro dele.
+    const novo = {
+        ppaId: ppaCorrente(estado)?.id ?? "",
+        ...item,
+        id: item.id || `${colecao}-${uid()}`,
+        criadoEm: hoje(),
+    };
+    estado[colecao].push(novo);
     gravar();
+    return novo;
 }
 
 export function updItem(colecao, id, patch) {
@@ -296,6 +411,8 @@ export function ppaVazio() {
         ultimoAno: String(inicio + 3),
         descricao: "",
         situacao: "elaboracao",
+        // Em branco até o plano ser cadastrado no SEI e o número voltar de lá.
+        processoSei: "",
     };
 }
 

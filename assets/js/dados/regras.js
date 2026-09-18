@@ -333,18 +333,20 @@ function buscaGlobal(state, termo, orgao) {
 }
 const COBERTURA_LABEL = {
   direta: "Cobertura direta",
-  indireta: "Cobertura por subcausas",
   sem: "Sem atua\xE7\xE3o cadastrada"
 };
-function coberturaCausa(state, programaId, causaId, subcausaIds) {
+function coberturaCausa(state, programaId, causaId) {
   const inisPrograma = state.iniciativas.filter((i) => i.programaId === programaId);
   const diretas = inisPrograma.filter((i) => i.causas.includes(causaId));
-  const indiretas = inisPrograma.filter((i) => i.causas.some((c) => subcausaIds.includes(c)));
-  const iniciativas = [.../* @__PURE__ */ new Set([...diretas, ...indiretas])];
-  const entregas = state.entregas.filter((e) => iniciativas.some((i) => i.id === e.iniciativaId));
-  const orgaos = [...new Set(iniciativas.map((i) => i.orgao))].sort((a, b) => a.localeCompare(b));
-  const cobertura = diretas.length > 0 ? "direta" : indiretas.length > 0 ? "indireta" : "sem";
-  return { cobertura, iniciativas, entregas, orgaos, diretas, indiretas };
+  const entregas = state.entregas.filter((e) => diretas.some((i) => i.id === e.iniciativaId));
+  const orgaos = [...new Set(diretas.map((i) => i.orgao))].sort((a, b) => a.localeCompare(b));
+  return {
+    cobertura: diretas.length > 0 ? "direta" : "sem",
+    iniciativas: diretas,
+    entregas,
+    orgaos,
+    diretas
+  };
 }
 export {
   APTIDAO_LABEL,

@@ -39,7 +39,7 @@
     var PERFIS = [
         {
             id: "setorial",
-            nome: "Setorial",
+            nome: "Planejamento setorial",
             visao: "setorial",
             inicio: "programas.html",
             leitura: false,
@@ -61,7 +61,7 @@
             // inicial dele entra numa entrega adiante; por ora, home provisória.
             inicio: null,
             leitura: false,
-            descricao: "Faz tudo que o Setorial faz e aprova a proposta do órgão",
+            descricao: "Faz tudo que o Planejamento setorial faz e aprova a proposta do órgão",
         },
         {
             id: "gestao-central",
@@ -74,7 +74,7 @@
         },
         {
             id: "controle",
-            nome: "Órgãos de controle",
+            nome: "Consulta",
             visao: "central",
             // Sem tela própria ainda: cai na home provisória.
             inicio: null,

@@ -244,16 +244,7 @@ function modalNova() {
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="${c.id}" id="c-${c.id}" data-causa />
                         <label class="form-check-label" for="c-${c.id}">${esc(c.texto)}</label>
-                    </div>
-                    ${c.subcausas
-                        .map(
-                            (s) => `
-                    <div class="form-check ms-4">
-                        <input class="form-check-input" type="checkbox" value="${s.id}" id="c-${s.id}" data-causa />
-                        <label class="form-check-label fs-13" for="c-${s.id}">${esc(s.texto)}</label>
                     </div>`
-                        )
-                        .join("")}`
                                   )
                                   .join("")
                     }

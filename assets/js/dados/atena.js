@@ -155,7 +155,7 @@ function sugestoesCentral(state) {
       rotuloAcao: "Abrir administra\xE7\xE3o"
     });
   const semAtuacao = state.programas.flatMap(
-    (p) => p.causas.filter((c) => coberturaCausa(state, p.id, c.id, c.subcausas.map((s) => s.id)).cobertura === "sem").map((c) => ({ p, c }))
+    (p) => p.causas.filter((c) => coberturaCausa(state, p.id, c.id).cobertura === "sem").map((c) => ({ p, c }))
   );
   if (semAtuacao.length > 0)
     out.push({
@@ -237,7 +237,7 @@ function responderAtena(state, pergunta) {
   const linhas = linhasFinanceiras(state);
   if (/causa.*(sem|não).*atua|quais causas/.test(q)) {
     const itens = state.programas.flatMap(
-      (p) => p.causas.filter((c) => coberturaCausa(state, p.id, c.id, c.subcausas.map((s) => s.id)).cobertura === "sem").map((c) => `${p.codigo}: ${c.texto}`)
+      (p) => p.causas.filter((c) => coberturaCausa(state, p.id, c.id).cobertura === "sem").map((c) => `${p.codigo}: ${c.texto}`)
     );
     return itens.length === 0 ? "Todas as causas cadastradas possuem ao menos uma Iniciativa relacionada." : `Causas sem atua\xE7\xE3o cadastrada:
 \u2022 ${itens.slice(0, 6).join("\n\u2022 ")}`;

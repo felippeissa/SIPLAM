@@ -20,10 +20,15 @@ import { campoErro, validar, limparAoDigitar } from "./validacao.js";
  * @param {string} cfg.subtitulo    linha de apoio
  * @param {string} cfg.singular     nome do item, como aparece na coluna
  * @param {string} cfg.novoRotulo   texto do botão de criar, já com o artigo
- * @param {object} [cfg.pai]        vínculo com o nível acima
+ * @param {object} [cfg.pai]        vínculo com o nível acima; `opcional: true` permite deixá-lo vazio
  * @param {object[]} [cfg.filhos]   coleções que dependem deste item, com a tela onde vivem
  * @param {function} [cfg.codigo]   numeração do item (ex.: 1.0, 1.1)
  * @param {"m"|"f"} [cfg.genero]    concordância dos avisos ("criada" x "criado")
+ * @param {object} [cfg.extra]      campo próprio da tela, além de nome e descrição:
+ *                                  `html(item, estado)` desenha, `ligar(escopo, estado)` conecta o
+ *                                  comportamento, `ler()` devolve o que vai para o registro,
+ *                                  `regras(dados)` valida, `aoSalvar(item, estado)` grava o que
+ *                                  vive em outra coleção e `coluna` o mostra na tabela
  */
 export function montarCadastro(cfg) {
     const { estado } = montarShell();
@@ -41,8 +46,12 @@ export function montarCadastro(cfg) {
      */
     const avisoDeVinculo = (usos) => {
         const filho = cfg.filhos[0];
-        const plural = filho.rotulo.toLowerCase();            // "causas"
-        const singular = plural.replace(/s$/, "");            // "causa"
+        const plural = filho.rotulo.toLowerCase();            // "objetivos estratégicos"
+        // Cada palavra perde o "s": tirar só do fim daria "objetivos estratégico".
+        const singular = plural
+            .split(" ")
+            .map((palavra) => palavra.replace(/s$/, ""))
+            .join(" ");                                       // "objetivo estratégico"
         const nome = usos === 1 ? singular : plural;
         const verbo = usos === 1 ? "depende" : "dependem";
         // Sem demonstrativo ("essa causa"/"esse problema"): o gênero muda a cada
@@ -80,7 +89,7 @@ export function montarCadastro(cfg) {
 
     function vazio() {
         const base = { id: "", nome: "", descricao: "" };
-        if (cfg.pai) base[cfg.pai.campo] = opcoesPai()[0]?.id ?? "";
+        if (cfg.pai) base[cfg.pai.campo] = cfg.pai.opcional ? "" : (opcoesPai()[0]?.id ?? "");
         return base;
     }
 
@@ -92,7 +101,7 @@ export function montarCadastro(cfg) {
             (i) => !termo || i.nome.toLowerCase().includes(termo) || (i.descricao ?? "").toLowerCase().includes(termo)
         );
 
-        const semPai = cfg.pai && opcoesPai().length === 0;
+        const semPai = cfg.pai && !cfg.pai.opcional && opcoesPai().length === 0;
 
         document.getElementById("conteudo").innerHTML = `
         ${cabecalhoPagina(
@@ -129,6 +138,7 @@ export function montarCadastro(cfg) {
                             ${cfg.codigo ? '<th class="codigo" style="width:5rem">Nº</th>' : ""}
                             <th style="width:22rem">${esc(cfg.singular)}</th>
                             ${cfg.pai ? `<th style="width:18rem">${esc(cfg.pai.rotulo)}</th>` : ""}
+                            ${cfg.extra?.coluna ? `<th style="width:18rem">${esc(cfg.extra.coluna.rotulo)}</th>` : ""}
                             <th>Descrição</th>
                             ${cfg.filhos?.length ? `<th class="num" style="width:9rem">${esc(cfg.filhos[0].rotulo)}</th>` : ""}
                             <th style="width:7rem">Ações</th>
@@ -137,7 +147,7 @@ export function montarCadastro(cfg) {
                     <tbody>
                     ${
                         lista.length === 0
-                            ? `<tr><td colspan="${3 + (cfg.pai ? 1 : 0) + (cfg.filhos?.length ? 1 : 0) + (cfg.codigo ? 1 : 0)}" class="text-center text-muted py-4 fs-12">
+                            ? `<tr><td colspan="${3 + (cfg.pai ? 1 : 0) + (cfg.extra?.coluna ? 1 : 0) + (cfg.filhos?.length ? 1 : 0) + (cfg.codigo ? 1 : 0)}" class="text-center text-muted py-4 fs-12">
                             ${itens().length === 0 ? `Nenhum registro. Comece por “${esc(cfg.novoRotulo)}”.` : "Nenhum registro corresponde à busca."}
                         </td></tr>`
                             : lista
@@ -147,6 +157,7 @@ export function montarCadastro(cfg) {
                             ${cfg.codigo ? `<td class="codigo text-muted">${esc(cfg.codigo(i, estado))}</td>` : ""}
                             <td class="fw-medium">${esc(i.nome)}</td>
                             ${cfg.pai ? `<td class="fs-13 text-muted">${esc(nomeDoPai(i))}</td>` : ""}
+                            ${cfg.extra?.coluna ? `<td class="fs-13 text-muted">${cfg.extra.coluna.valor(i, estado)}</td>` : ""}
                             <td class="fs-13 text-muted">${esc(i.descricao || "—")}</td>
                             ${cfg.filhos?.length ? `<td class="num">${dependentes(i) || "—"}</td>` : ""}
                             <td>${
@@ -167,6 +178,7 @@ export function montarCadastro(cfg) {
         if (edicao) {
             const el = document.getElementById("modal-cadastro");
             limparAoDigitar(el);
+            if (!leitura) cfg.extra?.ligar?.(el, estado);
             new bootstrap.Modal(el).show();
             el.addEventListener("hidden.bs.modal", () => {
                 edicao = null;
@@ -209,8 +221,9 @@ export function montarCadastro(cfg) {
                         ${
                             cfg.pai
                                 ? `<div class="col-12">
-                            <label class="form-label" for="f-pai">${esc(cfg.pai.rotulo)} <span class="text-danger">*</span></label>
+                            <label class="form-label" for="f-pai">${esc(cfg.pai.rotulo)}${cfg.pai.opcional ? "" : ` <span class="text-danger">*</span>`}</label>
                             <select class="form-select" id="f-pai" ${leitura ? "disabled" : ""}>
+                                ${cfg.pai.opcional ? `<option value="">Sem ${esc(cfg.pai.rotulo.toLowerCase())}</option>` : ""}
                                 ${opcoesPai()
                                     .map(
                                         (p) =>
@@ -222,6 +235,7 @@ export function montarCadastro(cfg) {
                         </div>`
                                 : ""
                         }
+                        ${cfg.extra ? `<div class="col-12">${cfg.extra.html(edicao, estado)}</div>` : ""}
                         <div class="col-12">
                             <label class="form-label" for="f-descricao">Descrição</label>
                             <textarea class="form-control" id="f-descricao" rows="3" ${leitura ? "disabled" : ""}>${esc(edicao.descricao ?? "")}</textarea>
@@ -268,6 +282,7 @@ export function montarCadastro(cfg) {
         const v = (id) => document.getElementById(id)?.value ?? "";
         const dados = { ...edicao, nome: v("f-nome").trim(), descricao: v("f-descricao").trim() };
         if (cfg.pai) dados[cfg.pai.campo] = v("f-pai");
+        Object.assign(dados, cfg.extra?.ler?.() ?? {});
         return dados;
     }
 
@@ -326,17 +341,22 @@ export function montarCadastro(cfg) {
                 },
                 {
                     campo: "f-pai",
-                    valido: !cfg.pai || !!dados[cfg.pai.campo],
+                    valido: !cfg.pai || cfg.pai.opcional || !!dados[cfg.pai.campo],
                     mensagem: cfg.pai
                         ? `Escolha ${cfg.pai.artigo} ${cfg.pai.rotulo.toLowerCase()}.`
                         : "",
                 },
+                ...(cfg.extra?.regras?.(dados) ?? []),
             ]);
             if (!ok) return;
 
             const existente = itens().some((i) => i.id === dados.id);
+            let salvo = dados;
             if (existente) updItem(cfg.colecao, dados.id, dados);
-            else addItem(cfg.colecao, dados);
+            else salvo = addItem(cfg.colecao, dados);
+            // Vínculos que vivem em outra coleção só podem ser gravados depois,
+            // porque um registro novo só tem id a partir daqui.
+            cfg.extra?.aoSalvar?.(salvo, estado);
             avisar(avisoDe(existente ? "editad" : "criad"));
 
             bootstrap.Modal.getInstance(document.getElementById("modal-cadastro")).hide();

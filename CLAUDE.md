@@ -43,6 +43,9 @@ Não leia `prototipo-lovable/` inteiro nem `inspinia/` inteiro. São referência
 
 - **Programa** → **Iniciativa** (contribuição de um órgão) → **Entrega** (produto concreto, com
   metas **por ano do ciclo**).
+- **Não existe subcausa**, e o diagnóstico não é uma árvore: cada nível **aponta** para o
+  seguinte, de muitos para muitos. `Diagnóstico → Problemas → Causas → Iniciativas`. Assim uma
+  mesma causa explica mais de um problema e é enfrentada por mais de uma Iniciativa.
 - **O ciclo não tem tamanho fixo.** Os anos vêm do PPA criado, e podem ser menos de quatro — se um
   governador sai e o vice assume, o plano pode cobrir dois. Toda tabela de meta precisa funcionar
   com um número variável de colunas.
@@ -58,11 +61,11 @@ tudo que o perfil correspondente faz, **mais** aprovar.
 
 | Perfil | Visão | Faz |
 |---|---|---|
-| Setorial | setorial | preenche e envia a contribuição do órgão |
-| Alta gestão setorial | setorial | **tudo que o Setorial faz + aprova** a proposta do órgão |
+| Planejamento setorial | setorial | preenche e envia a contribuição do órgão |
+| Alta gestão setorial | setorial | **tudo que o Planejamento setorial faz + aprova** a proposta do órgão |
 | Administrador central | central | analisa, valida e administra os Programas |
 | Alta gestão central | central | **tudo que o Administrador central faz + aprova** a consolidação |
-| Órgãos de controle | central | consulta; único perfil sem escrita |
+| Consulta | central | consulta; único perfil sem escrita |
 
 **Alta gestão não é perfil de leitura** e não tem telas próprias: reaproveita as telas do perfil
 que ela estende, com a camada de aprovação por cima. São duas aprovações em cadeia — a setorial
@@ -107,23 +110,35 @@ elaboração → submetido → aprovado → vigente → encerrado
 
 | Situação | O que significa | Edita? |
 |---|---|---|
-| **Elaboração** | em construção pelos órgãos e pela Área Central | sim |
-| **Submetido** | encaminhado para apreciação | não |
+| **Em elaboração** | em construção pelos órgãos e pela Área Central | sim |
+| **Submetido para aprovação** | encaminhado para apreciação | não |
 | **Aprovado** | aprovado, aguardando o início da vigência | não |
-| **Reprovado** | não aprovado; volta para Elaboração para ser corrigido | não |
+| **Reprovado** | não aprovado; volta à elaboração para ser corrigido | não |
 | **Vigente** | em execução | só por alteração |
 | **Encerrado** | ciclo concluído, permanece para consulta | não |
 
-O corte está entre **Elaboração** e **Submetido**: antes o plano é construído, depois vira peça
-formal. **Reprovado é o único estado que anda para trás**, e anda porque precisa — é o que
+O corte está entre **Em elaboração** e **Submetido para aprovação**: antes o plano é construído,
+depois vira peça formal. **Reprovado é o único estado que anda para trás**, e anda porque precisa — é o que
 devolve o plano à edição.
+
+### Regras do PPA
+
+- **Dois planos não ocupam o mesmo ano.** Basta um ano em comum para haver conflito — seriam duas
+  leis regendo o mesmo exercício. Validado no Cadastro de PPA.
+- **O plano é elaborado no ano anterior ao início da vigência.** Criar antes disso é abrir um
+  ciclo que ainda não começou a ser pensado, e a interface impede. Criar depois é atraso, e atraso
+  a interface não impede.
+- **O cadastro do PPA é exclusivo do Administrador central.** Os demais perfis veem o plano, mas
+  não o criam nem o alteram.
+- **O PPA é o vínculo de tudo que se cadastra dentro dele.** Todo registro nasce com o `ppaId` do
+  plano corrente — o que está em elaboração, ou o vigente na falta dele.
 
 **Só um plano pode estar vigente por vez** — dois seriam duas leis valendo para os mesmos anos.
 
-**A situação não é escolhida, é reflexo.** O Cadastro de PPA a exibe e não a edita: mudar de
-Elaboração para Submetido trava o plano para todos os órgãos, então é um ato do fluxo, não um
-campo de formulário. O ato em si ainda não existe — e, enquanto não existir, todo plano fica em
-Elaboração, que é o que o sistema inteiro pressupõe.
+**A situação não é escolhida, é reflexo.** O Cadastro de PPA a exibe e não a edita: submeter um
+plano o trava para todos os órgãos, então é um ato do fluxo, não um campo de
+formulário. O ato em si ainda não existe — e, enquanto não existir, todo plano fica **Em
+elaboração**, que é o que o sistema inteiro pressupõe.
 
 **O valor previsto também não é digitado.** É a soma das Ações Orçamentárias vinculadas às
 Entregas do plano, dentro dos anos dele. Plano recém-criado vale zero, e cresce conforme as

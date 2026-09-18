@@ -144,16 +144,7 @@ function render() {
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" value="${c.id}" id="ca-${c.id}" data-causa ${ini.causas.includes(c.id) ? "checked" : ""}${dis} />
                     <label class="form-check-label" for="ca-${c.id}">${esc(c.texto)}</label>
-                </div>
-                ${c.subcausas
-                    .map(
-                        (s) => `
-                <div class="form-check ms-4">
-                    <input class="form-check-input" type="checkbox" value="${s.id}" id="ca-${s.id}" data-causa ${ini.causas.includes(s.id) ? "checked" : ""}${dis} />
-                    <label class="form-check-label fs-13" for="ca-${s.id}">${esc(s.texto)}</label>
                 </div>`
-                    )
-                    .join("")}`
                           )
                           .join("")
             )}

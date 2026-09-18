@@ -202,12 +202,11 @@ function abrirCobertura(programaId) {
     if (!p) return;
 
     const itens = p.causas
-        .flatMap((c) => [c, ...c.subcausas.map((s) => ({ ...s, sub: true }))])
         .map((c) => {
             const rel = estado.iniciativas.filter((i) => i.programaId === p.id && i.causas.includes(c.id));
             const orgaos = new Set(rel.map((i) => i.orgao)).size;
             return `
-        <li class="list-group-item d-flex justify-content-between align-items-start gap-3 ${c.sub ? "ps-4" : ""}">
+        <li class="list-group-item d-flex justify-content-between align-items-start gap-3">
             <span>${esc(c.texto)}</span>
             ${
                 rel.length === 0
@@ -219,7 +218,7 @@ function abrirCobertura(programaId) {
         .join("");
 
     document.getElementById("corpo-cobertura").innerHTML = `
-        <p class="fs-12 text-muted">Causas e subcausas com Iniciativas relacionadas. Não confundir com participação dos órgãos.</p>
+        <p class="fs-12 text-muted">Causas com Iniciativas relacionadas. Não confundir com participação dos órgãos.</p>
         <ul class="list-group list-group-flush">${itens}</ul>`;
     document.getElementById("titulo-cobertura").textContent = `Cobertura causal — ${p.codigo} ${p.nome}`;
     bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-cobertura")).show();
