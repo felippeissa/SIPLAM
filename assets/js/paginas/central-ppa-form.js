@@ -18,7 +18,7 @@ import {
     anoDeElaboracao,
     ppaQueColide,
 } from "../dados/store.js";
-import { montarShell, somenteLeitura, perfilAtual, url } from "../shell.js";
+import { montarShell, barraTitulo, somenteLeitura, perfilAtual, url } from "../shell.js";
 import { esc, chip } from "../ui.js";
 import { confirmarExclusao } from "../confirmar.js";
 import { avisar } from "../toast.js";
@@ -63,24 +63,10 @@ export function montarFormularioPpa({ novo }) {
 
     const diagnosticos = novo ? 0 : (estado.diagnosticos ?? []).filter((d) => d.ppaId === p.id).length;
 
-    function trilha() {
-        return `
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="${url("central.html")}">Área Central</a></li>
-            <li class="breadcrumb-item"><a href="${voltar}">Cadastro de PPA</a></li>
-            <li class="breadcrumb-item active">${novo ? "Novo" : "Editar"}</li>
-        </ol>`;
-    }
-
     function render() {
         const anos = anosPossiveis();
         document.getElementById("conteudo").innerHTML = `
-        <div class="page-title-head d-flex align-items-center my-3">
-            <div class="flex-grow-1">
-                <h4 class="page-main-title m-0">${novo ? "Novo PPA" : `Editar ${esc(p.nome)}`}</h4>
-            </div>
-            <div class="text-end">${trilha()}</div>
-        </div>
+        ${barraTitulo(novo ? "Novo PPA" : `Editar ${esc(p.nome)}`, [novo ? "Novo" : "Editar"])}
 
         <div class="row">
             <div class="col-xxl-8">

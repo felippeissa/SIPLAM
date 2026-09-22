@@ -8,8 +8,8 @@
  */
 import { obterEstado } from "../dados/store.js";
 import { iniciativasDoOrgao, entregasDaIniciativa, APTIDAO_LABEL, DISPONIBILIZACAO_LABEL } from "../dados/regras.js";
-import { montarShell, visaoAtual } from "../shell.js";
-import { chip, statusChip, esc, secao, contexto } from "../ui.js";
+import { montarShell, barraTitulo, visaoAtual } from "../shell.js";
+import { chip, statusChip, esc, secao } from "../ui.js";
 
 const { estado } = montarShell();
 const id = new URLSearchParams(location.search).get("id");
@@ -52,8 +52,8 @@ if (!p) {
             : `<p class="fs-12 text-muted mb-0">${vazio}</p>`;
 
     document.getElementById("conteudo").innerHTML = `
+    ${barraTitulo(esc(p.nome), [`${esc(p.codigo)} — ${esc(p.nome)}`])}
     <div class="my-3">
-        ${contexto([{ rotulo: "Programas", href: voltarPara }, { rotulo: `${p.codigo} — ${p.nome}` }])}
         <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
             <div>
                 <h4 class="fw-bold mb-1">${esc(p.nome)}</h4>

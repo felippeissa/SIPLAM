@@ -70,18 +70,6 @@ export function esc(valor) {
 }
 
 /** Trilha de contexto com separador "›". */
-export function contexto(elos) {
-    return `
-<nav class="trilha-contexto">
-    ${elos
-        .map((e, i) =>
-            `${i > 0 ? '<span class="sep">›</span>' : ""}` +
-            (e.href ? `<a href="${e.href}">${esc(e.rotulo)}</a>` : `<span>${esc(e.rotulo)}</span>`)
-        )
-        .join("")}
-</nav>`;
-}
-
 /* ---------- micro-gráficos ----------
    Uma matiz só e o número sempre ao lado: o verde da marca fica abaixo de 3:1
    contra o branco, então a cor nunca é a única portadora da informação. */

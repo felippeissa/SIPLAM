@@ -27,7 +27,7 @@ import { ANOS } from "../dados/seed.js";
 import { ppaCorrente } from "../dados/store.js";
 import { linhasDoPrograma } from "../dados/financeiro.js";
 import { montarShell, cabecalhoPagina } from "../shell.js";
-import { chip, statusChip, esc, faixaIndicadores, secao, contexto, medidor, faisca } from "../ui.js";
+import { chip, statusChip, esc, faixaIndicadores, secao, medidor, faisca } from "../ui.js";
 
 const { estado } = montarShell();
 
@@ -476,13 +476,13 @@ function hub(p) {
     const corpo = { geral: abaGeral, iniciativas: abaIniciativas, entregas: abaEntregas, projetos: abaProjetos, documentos: abaDocumentos }[aba] ?? abaGeral;
 
     return `
-${contexto([{ rotulo: "Visão por Programas", href: "central-hub.html" }, { rotulo: `${p.codigo} · ${p.nome}` }])}
 ${cabecalhoPagina(
     `${esc(p.codigo)} · ${esc(p.nome)}`,
     esc(p.objetivoEstrategico),
     `${chip(APTIDAO_LABEL[p.aptidao], p.aptidao === "apto" ? "ok" : "alerta")}
      ${chip(DISPONIBILIZACAO_LABEL[p.disponibilizacao], p.disponibilizacao === "disponivel" ? "info" : "neutro")}
-     <a class="btn btn-sm btn-outline-primary" href="central-programas.html">Editar Programa</a>`
+     <a class="btn btn-sm btn-outline-primary" href="central-programas.html">Editar Programa</a>`,
+    [`${esc(p.codigo)} · ${esc(p.nome)}`]
 )}
 ${faixaIndicadores(
     [

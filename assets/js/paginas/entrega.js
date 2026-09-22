@@ -25,8 +25,8 @@ import {
     TERRITORIO_LABEL,
 } from "../dados/regras.js";
 import { acoesDoOrgao, acoesDaEntrega, linhasDaEntrega, totalDaAcao } from "../dados/financeiro.js";
-import { montarShell , somenteLeitura } from "../shell.js";
-import { chip, esc, secao, contexto, faixaIndicadores } from "../ui.js";
+import { montarShell, barraTitulo, somenteLeitura } from "../shell.js";
+import { chip, esc, secao, faixaIndicadores } from "../ui.js";
 import { quadroFinanceiro, listaPendencias, chipsPendencias } from "../ui-financeiro.js";
 
 const { estado } = montarShell();
@@ -85,13 +85,12 @@ function render() {
     const marca = (campo) => (apontados.has(campo) ? `<span class="ms-1">${chip("apontado", "alerta")}</span>` : "");
 
     document.getElementById("conteudo").innerHTML = `
+    ${barraTitulo(esc(e.nome || "Nova Entrega"), [
+        { rotulo: programa?.nome ?? "Programa", href: `programa.html?id=${programa?.id}` },
+        { rotulo: ini?.nome ?? "Iniciativa", href: `iniciativa.html?id=${ini?.id}` },
+        { rotulo: e.nome || "Nova Entrega" },
+    ])}
     <div class="my-3">
-        ${contexto([
-            { rotulo: "Programas", href: "programas.html" },
-            { rotulo: programa?.nome ?? "Programa", href: `programa.html?id=${programa?.id}` },
-            { rotulo: ini?.nome ?? "Iniciativa", href: `iniciativa.html?id=${ini?.id}` },
-            { rotulo: e.nome || "Nova Entrega" },
-        ])}
         <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
             <div>
                 <h4 class="fw-bold mb-1">${esc(e.nome || "Nova Entrega")}</h4>

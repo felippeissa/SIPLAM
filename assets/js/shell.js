@@ -523,13 +523,105 @@ export function montarShell() {
 }
 
 /** Cabeçalho de página: título, subtítulo e espaço para os filtros. */
-export function cabecalhoPagina(titulo, subtitulo, acoes = "") {
+/**
+ * Páginas que não estão no menu: de onde vêm e como se chamam.
+ *
+ * O menu já diz o nome e o lugar de quase tudo. Aqui ficam só as telas que ele
+ * não lista — as consultas transversais e as fichas de um registro.
+ */
+const TRILHAS = {
+    "central-entregas.html": { rotulo: "Entregas do PPA" },
+    "central-financeira.html": { rotulo: "Análise Financeira" },
+    "central-ipofs.html": { rotulo: "IPOFs" },
+    "central-orgaos.html": { rotulo: "Órgãos participantes" },
+    "central-projetos.html": { rotulo: "Projetos GOMAP" },
+    "central-causas.html": { rotulo: "Cobertura das Causas" },
+    // Fichas de um registro. O rótulo aqui é só o que aparece quando a ficha
+    // não diz de quem é — abertas de verdade, quem nomeia a trilha é o registro.
+    "central-iniciativa.html": { rotulo: "Iniciativa" },
+    "programa.html": { rotulo: "Programa" },
+    "iniciativa.html": { rotulo: "Iniciativa" },
+    "entrega.html": { rotulo: "Entrega" },
+    "em-construcao.html": { rotulo: "Em construção" },
+};
+
+/** O menu da visão de quem está olhando. */
+const menuAtual = () => (visaoAtual() === "central" ? MENU_CENTRAL : MENU_SETORIAL);
+
+/**
+ * A trilha da página, de onde se está até a raiz da visão.
+ *
+ * Monta-se sozinha a partir do menu: cada tela sabe o seu nome e o seu lugar, e
+ * não precisa repeti-los. `elos` acrescenta o que o menu não tem — o registro
+ * aberto, ou o “Novo” de um formulário.
+ *
+ * O último elo nunca é link: é onde a pessoa está.
+ */
+export function trilha(elos = []) {
+    const central = visaoAtual() === "central";
+    const arquivo = paginaAtual();
+
+    const caminho = [
+        central ? { rotulo: "Área Central", href: "central.html" } : { rotulo: "Programas", href: "programas.html" },
+    ];
+
+    const doMenu = menuAtual().find((i) => i.href === arquivo)?.rotulo;
+    const proprio = TRILHAS[arquivo]?.rotulo;
+
+    for (const acima of TRILHAS[arquivo]?.acima ?? []) {
+        const rotulo = menuAtual().find((i) => i.href === acima)?.rotulo ?? TRILHAS[acima]?.rotulo ?? "";
+        if (rotulo && rotulo !== caminho[0].rotulo) caminho.push({ rotulo, href: acima });
+    }
+
+    // O nome de uma ficha é genérico — “Iniciativa” — e cede a vez ao registro
+    // que a tela está mostrando. O nome de uma tela do menu nunca cede.
+    if (doMenu && doMenu !== caminho[0].rotulo) caminho.push({ rotulo: doMenu, href: arquivo });
+    else if (!doMenu && proprio && !elos.length) caminho.push({ rotulo: proprio, href: arquivo });
+
+    caminho.push(...elos.map((e) => (typeof e === "string" ? { rotulo: e } : e)));
+
     return `
-<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 my-3">
-    <div>
-        <h4 class="fw-bold mb-1">${titulo}</h4>
-        <p class="text-muted mb-0 fs-13">${subtitulo}</p>
+    <ol class="breadcrumb m-0 py-0">
+        ${caminho
+            .map((e, i) => {
+                const ultimo = i === caminho.length - 1;
+                const texto = esc(e.rotulo);
+                return ultimo
+                    ? `<li class="breadcrumb-item active">${texto}</li>`
+                    : `<li class="breadcrumb-item"><a href="${url(e.href)}">${texto}</a></li>`;
+            })
+            .join("")}
+    </ol>`;
+}
+
+/**
+ * A barra de título, encostada no cabeçalho.
+ *
+ * Título à esquerda, trilha à direita. É o `page-title-head` do Inspinia, sem
+ * margem própria — o tema já cuida do espaçamento, e acrescentar margem abre um
+ * vão entre ela e o cabeçalho.
+ */
+export function barraTitulo(titulo, elos = []) {
+    return `
+<div class="page-title-head d-flex align-items-center">
+    <div class="flex-grow-1">
+        <h4 class="page-main-title m-0">${titulo}</h4>
     </div>
+    <div class="text-end">${trilha(elos)}</div>
+</div>`;
+}
+
+/**
+ * O cabeçalho de uma tela de listagem ou painel.
+ *
+ * O título sobe para a barra, junto da trilha; embaixo ficam a explicação e os
+ * filtros. Antes o título vinha aqui e a trilha não existia.
+ */
+export function cabecalhoPagina(titulo, subtitulo, acoes = "", elos = []) {
+    return `
+${barraTitulo(titulo, elos)}
+<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 my-3">
+    <p class="text-muted mb-0 fs-13">${subtitulo}</p>
     <div class="barra-filtros">${acoes}</div>
 </div>`;
 }

@@ -37,6 +37,10 @@ export function montarLista(cfg) {
             0
         );
 
+    // Um cadastro pode mostrar mais de um vínculo na tabela. `coluna` no
+    // singular continua valendo para quem tem só um.
+    const extras = cfg.extra?.colunas ?? (cfg.extra?.coluna ? [cfg.extra.coluna] : []);
+
     const criar = url(`${cfg.pasta}/criar.html`);
     const editar = (id) => url(`${cfg.pasta}/editar.html?id=${encodeURIComponent(id)}`);
 
@@ -54,7 +58,7 @@ export function montarLista(cfg) {
         // procurando uma ação que existe.
         const semPai = cfg.pai && !cfg.pai.opcional && opcoesPai().length === 0;
 
-        const colunas = 3 + (cfg.pai ? 1 : 0) + (cfg.extra?.coluna ? 1 : 0) + (cfg.filhos?.length ? 1 : 0) + (cfg.codigo ? 1 : 0);
+        const colunas = 3 + (cfg.pai ? 1 : 0) + extras.length + (cfg.filhos?.length ? 1 : 0) + (cfg.codigo ? 1 : 0);
 
         document.getElementById("conteudo").innerHTML = `
         ${cabecalhoPagina(
@@ -92,7 +96,7 @@ export function montarLista(cfg) {
                             ${cfg.codigo ? '<th class="codigo" style="width:5rem">Nº</th>' : ""}
                             <th style="width:22rem">${esc(cfg.singular)}</th>
                             ${cfg.pai ? `<th style="width:18rem">${esc(cfg.pai.rotulo)}</th>` : ""}
-                            ${cfg.extra?.coluna ? `<th style="width:18rem">${esc(cfg.extra.coluna.rotulo)}</th>` : ""}
+                            ${extras.map((c) => `<th style="width:12rem">${esc(c.rotulo)}</th>`).join("")}
                             <th>Descrição</th>
                             ${cfg.filhos?.length ? `<th class="num" style="width:9rem">${esc(cfg.filhos[0].rotulo)}</th>` : ""}
                             <th style="width:7rem">Ações</th>
@@ -111,7 +115,7 @@ export function montarLista(cfg) {
                             ${cfg.codigo ? `<td class="codigo text-muted">${esc(cfg.codigo(i, estado))}</td>` : ""}
                             <td class="fw-medium">${esc(i.nome)}</td>
                             ${cfg.pai ? `<td class="fs-13 text-muted">${esc(nomeDoPai(i))}</td>` : ""}
-                            ${cfg.extra?.coluna ? `<td class="fs-13 text-muted">${cfg.extra.coluna.valor(i, estado)}</td>` : ""}
+                            ${extras.map((c) => `<td class="fs-13 text-muted">${c.valor(i, estado)}</td>`).join("")}
                             <td class="fs-13 text-muted">${esc(i.descricao || "—")}</td>
                             ${cfg.filhos?.length ? `<td class="num">${dependentes(i) || "—"}</td>` : ""}
                             <td>

@@ -25,8 +25,8 @@ import {
 } from "../dados/regras.js";
 import { linhasDaIniciativa } from "../dados/financeiro.js";
 import { ANOS } from "../dados/seed.js";
-import { montarShell , somenteLeitura } from "../shell.js";
-import { chip, statusChip, esc, secao, contexto, faixaIndicadores } from "../ui.js";
+import { montarShell, barraTitulo, somenteLeitura } from "../shell.js";
+import { chip, statusChip, esc, secao, faixaIndicadores } from "../ui.js";
 import { quadroFinanceiro, listaPendencias, chipsPendencias } from "../ui-financeiro.js";
 
 const { estado } = montarShell();
@@ -69,8 +69,7 @@ function render() {
 
     document.getElementById("conteudo").innerHTML = `
     <div class="my-3">
-        ${contexto([
-            { rotulo: "Programas", href: "programas.html" },
+        ${barraTitulo(esc(ini.nome), [
             { rotulo: programa ? `${programa.codigo} — ${programa.nome}` : "Programa", href: `programa.html?id=${ini.programaId}` },
             { rotulo: ini.nome },
         ])}

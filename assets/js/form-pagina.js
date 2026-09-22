@@ -14,7 +14,7 @@
  * discordarem sobre o que o cadastro tem.
  */
 import { obterEstado, addItem, updItem, removeItem } from "./dados/store.js";
-import { montarShell, cabecalhoPagina, somenteLeitura, url } from "./shell.js";
+import { montarShell, barraTitulo, somenteLeitura, url } from "./shell.js";
 import { esc } from "./ui.js";
 import { confirmarExclusao } from "./confirmar.js";
 import { avisar } from "./toast.js";
@@ -67,15 +67,6 @@ export function montarFormulario(cfg) {
     const artigo = cfg.genero === "f" ? "a" : "o";
 
     /* ---------- desenho ---------- */
-
-    function trilha() {
-        return `
-        <ol class="breadcrumb m-0 py-0">
-            <li class="breadcrumb-item"><a href="${url("central.html")}">Área Central</a></li>
-            <li class="breadcrumb-item"><a href="${voltar}">${esc(cfg.titulo)}</a></li>
-            <li class="breadcrumb-item active">${novo ? "Novo" : "Editar"}</li>
-        </ol>`;
-    }
 
     function camposPrincipais() {
         return `
@@ -184,12 +175,7 @@ export function montarFormulario(cfg) {
     function render() {
         const lateral = apoio();
         document.getElementById("conteudo").innerHTML = `
-        <div class="page-title-head d-flex align-items-center my-3">
-            <div class="flex-grow-1">
-                <h4 class="page-main-title m-0">${novo ? esc(cfg.novoRotulo) : `Editar ${esc(cfg.singular.toLowerCase())}`}</h4>
-            </div>
-            <div class="text-end">${trilha()}</div>
-        </div>
+        ${barraTitulo(novo ? esc(cfg.novoRotulo) : `Editar ${esc(cfg.singular.toLowerCase())}`, [novo ? "Novo" : "Editar"])}
 
         <div class="row">
             <div class="${lateral ? "col-xxl-8" : "col-xxl-12"}">

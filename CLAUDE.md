@@ -43,9 +43,12 @@ Não leia `prototipo-lovable/` inteiro nem `inspinia/` inteiro. São referência
 
 - **Programa** → **Iniciativa** (contribuição de um órgão) → **Entrega** (produto concreto, com
   metas **por ano do ciclo**).
-- **Não existe subcausa**, e o diagnóstico não é uma árvore: cada nível **aponta** para o
-  seguinte, de muitos para muitos. `Diagnóstico → Problemas → Causas → Iniciativas`. Assim uma
-  mesma causa explica mais de um problema e é enfrentada por mais de uma Iniciativa.
+- O diagnóstico não é uma árvore: cada nível **aponta** para o seguinte, de muitos para muitos.
+  `Diagnóstico → Problemas → Causas → Iniciativas`. Assim uma mesma causa explica mais de um
+  problema e é enfrentada por mais de uma Iniciativa.
+- A **Subcausa** é exceção, e a única: detalha **uma** causa, e é guardada dentro dela — nome,
+  justificativa e evidência. Solta na base não haveria de onde alcançá-la. Foi retirada do
+  protótipo em 18/09/2026 e repedida em 22/09/2026.
 - **O ciclo não tem tamanho fixo.** Os anos vêm do PPA criado, e podem ser menos de quatro — se um
   governador sai e o vice assume, o plano pode cobrir dois. Toda tabela de meta precisa funcionar
   com um número variável de colunas.
