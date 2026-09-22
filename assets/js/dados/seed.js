@@ -1,3 +1,5 @@
+import { anosCorrentes } from "./anos.js";
+
 const ORGAOS = [
   "Secretaria de Desenvolvimento Social",
   "Secretaria de Sa\xFAde",
@@ -9,7 +11,12 @@ const ORGAOS = [
   "Secretaria de Seguran\xE7a P\xFAblica"
 ];
 const PERIODICIDADES = ["Mensal", "Trimestral", "Semestral", "Anual"];
-const ANOS = ["2028", "2029", "2030", "2031"];
+// Os anos do plano corrente, não uma lista fixa: o ciclo pode ter menos de
+// quatro anos, e o sistema atravessa mais de um plano.
+const ANOS = anosCorrentes();
+
+/** Valores na ordem dos anos do ciclo, virados em mapa ano → valor. */
+const porAno = (vals) => Object.fromEntries(ANOS.map((ano, i) => [ano, vals[i] ?? null]));
 const ORGAO_SETORIAL = "Secretaria de Desenvolvimento Social";
 const REGIOES = [
   "Metropolitana de Goi\xE2nia",
@@ -399,12 +406,7 @@ const PROJETOS = [
   }
 ];
 let seqParcela = 0;
-const serie = (a, b, c, d) => ({
-  "2028": a,
-  "2029": b,
-  "2030": c,
-  "2031": d
-});
+const serie = (a, b, c, d) => porAno([a, b, c, d]);
 const parcelas = (acaoId, fonte, classificacao, vals) => ANOS.flatMap((ano) => {
   const total = vals[ano] ?? 0;
   if (total <= 0) return [];
@@ -609,12 +611,7 @@ const IPOFS = [
     parcelas: parcelas("2240", "Opera\xE7\xF5es de Cr\xE9dito", "4490.61 \u2014 Aquisi\xE7\xE3o de im\xF3veis", serie(mi(6), mi(9), mi(9), mi(6)))
   }
 ];
-const meta = (a, b, c, d) => ({
-  "2028": a ?? null,
-  "2029": b ?? null,
-  "2030": c ?? null,
-  "2031": d ?? null
-});
+const meta = (a, b, c, d) => porAno([a, b, c, d]);
 const SEDS = ORGAO_SETORIAL;
 const iniciativas = [
   {

@@ -2,7 +2,7 @@
  * Entregas do órgão — listagem.
  * Porta `entregas.tsx`.
  */
-import { obterEstado } from "../dados/store.js";
+import { obterEstado, noPlano } from "../dados/store.js";
 import { ANOS } from "../dados/seed.js";
 import {
     eixos,
@@ -28,7 +28,8 @@ let situacao = "todas";
 function linhas() {
     const q = busca.trim().toLowerCase();
 
-    return estado.entregas
+    const plano = noPlano(estado);
+    return estado.entregas.filter(plano.entrega)
         .map((e) => {
             const ini = estado.iniciativas.find((i) => i.id === e.iniciativaId);
             const p = ini ? estado.programas.find((x) => x.id === ini.programaId) : null;
@@ -53,7 +54,7 @@ function render() {
     document.getElementById("conteudo").innerHTML = `
     ${cabecalhoPagina(
         "Entregas",
-        `Produtos que ${esc(orgao)} se compromete a entregar até 2031.`,
+        `Produtos que ${esc(orgao)} se compromete a entregar até ${ANOS.at(-1)}.`,
         `
         <div class="app-search">
             <input type="search" id="busca" class="form-control form-control-sm" placeholder="Buscar Entrega" value="${esc(busca)}" />
@@ -61,15 +62,15 @@ function render() {
         </div>
         <select class="form-select form-select-sm" id="eixo">
             <option value="todos">Todos os Eixos</option>
-            ${eixos(estado.programas).map((e) => `<option value="${esc(e)}"${e === eixo ? " selected" : ""}>${esc(e)}</option>`).join("")}
+            ${eixos(noPlano(estado).programas).map((e) => `<option value="${esc(e)}"${e === eixo ? " selected" : ""}>${esc(e)}</option>`).join("")}
         </select>
         <select class="form-select form-select-sm" id="objetivo">
             <option value="todos">Todos os Objetivos</option>
-            ${objetivos(estado.programas, eixo).map((o) => `<option value="${esc(o)}"${o === objetivo ? " selected" : ""}>${esc(o)}</option>`).join("")}
+            ${objetivos(noPlano(estado).programas, eixo).map((o) => `<option value="${esc(o)}"${o === objetivo ? " selected" : ""}>${esc(o)}</option>`).join("")}
         </select>
         <select class="form-select form-select-sm" id="programa">
             <option value="todos">Todos os Programas</option>
-            ${estado.programas.map((p) => `<option value="${p.id}"${p.id === programa ? " selected" : ""}>${esc(p.codigo)} — ${esc(p.nome)}</option>`).join("")}
+            ${noPlano(estado).programas.map((p) => `<option value="${p.id}"${p.id === programa ? " selected" : ""}>${esc(p.codigo)} — ${esc(p.nome)}</option>`).join("")}
         </select>
         <select class="form-select form-select-sm" id="situacao">
             <option value="todas">Todas as situações</option>

@@ -11,7 +11,8 @@
  *
  * Substitui `src/components/ppa/shell.tsx` do protótipo.
  */
-import { obterEstado } from "./dados/store.js";
+import { obterEstado, ppaCorrente, situacaoPpa, selecionarPpa } from "./dados/store.js";
+import { esc } from "./ui.js";
 import { confirmarExclusao } from "./confirmar.js";
 import { instalarBusca } from "./busca.js";
 import { instalarAtena } from "./atena.js";
@@ -131,12 +132,88 @@ function perfilDaSessao() {
     }
 }
 
+/**
+ * A raiz da aplicação, deduzida de onde este módulo mora.
+ *
+ * As telas de criar e editar ficam em subpastas — `central-ppa/criar.html` —, e
+ * um link relativo como `central-eixo.html` resolveria para dentro da subpasta.
+ * Como `shell.js` está sempre em `assets/js/`, dois níveis acima dele é a raiz,
+ * valha o endereço que valer: `/` no local, `/SIPLAM/` no GitHub Pages.
+ */
+export const RAIZ = new URL("../../", import.meta.url).pathname;
+
+/** Endereço de uma tela a partir da raiz, funcione de onde funcionar. */
+export const url = (caminho) => RAIZ + caminho;
+
 function paginaAtual() {
-    return location.pathname.split("/").pop() || "programas.html";
+    const partes = location.pathname.split("/").filter(Boolean);
+    const arquivo = partes.at(-1) || "programas.html";
+    // Numa subpasta, o menu deve marcar a listagem: `central-ppa/criar.html`
+    // pertence ao item `central-ppa.html`.
+    if (arquivo === "criar.html" || arquivo === "editar.html") {
+        return partes.at(-2) + ".html";
+    }
+    return arquivo;
 }
 
 function inicio(visao) {
-    return visao === "central" ? "central.html" : "programas.html";
+    return url(visao === "central" ? "central.html" : "programas.html");
+}
+
+/**
+ * O plano em que se está trabalhando.
+ *
+ * Tudo que se cadastra nasce vinculado a um PPA, e o sistema atende um por vez.
+ * Sem isso à vista, quem cadastra não tem como saber em qual ciclo está
+ * mexendo — e quando houver dois planos, a pergunta fica sem resposta na tela.
+ */
+function chipDoPlano(estado) {
+    const ppa = ppaCorrente(estado);
+    if (!ppa) return "";
+
+    const outros = [...(estado.ppas ?? [])].sort((a, b) => Number(b.primeiroAno) - Number(a.primeiroAno));
+
+    return `
+    <div class="dropdown ms-2 d-flex align-items-center">
+        <button class="chip chip-neutro border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                title="Plano em que este cadastro está sendo feito">
+            <i class="ti ti-calendar-stats me-1"></i>${ppa.primeiroAno}–${ppa.ultimoAno}
+            <i class="ti ti-chevron-down ms-1"></i>
+        </button>
+        <ul class="dropdown-menu" style="min-width:16rem">
+            <li><h6 class="dropdown-header">Plano em que você está trabalhando</h6></li>
+            ${outros
+                .map(
+                    (p) => `
+            <li>
+                <button class="dropdown-item d-flex align-items-start gap-2 ${p.id === ppa.id ? "active" : ""}" data-ppa="${p.id}">
+                    <i class="ti ${p.id === ppa.id ? "ti-circle-check" : "ti-circle"} mt-1"></i>
+                    <span>
+                        <span class="d-block">${esc(p.nome)}</span>
+                        <span class="fs-12 ${p.id === ppa.id ? "" : "text-muted"}">${esc(situacaoPpa(p.situacao).rotulo)}</span>
+                    </span>
+                </button>
+            </li>`
+                )
+                .join("")}
+            <li><hr class="dropdown-divider" /></li>
+            <li><a class="dropdown-item fs-13" href="${url("central-ppa.html")}">Ver todos os planos</a></li>
+        </ul>
+    </div>`;
+}
+
+/**
+ * Trocar de plano muda o que as telas mostram e a que plano o próximo cadastro
+ * se vincula. Recarrega em vez de redesenhar: toda tela lê o estado na abertura,
+ * e meia tela atualizada seria pior que esperar um instante.
+ */
+function instalarTrocaDePlano() {
+    document.addEventListener("click", (e) => {
+        const escolha = e.target.closest("[data-ppa]");
+        if (!escolha) return;
+        selecionarPpa(escolha.dataset.ppa);
+        window.location.reload();
+    });
 }
 
 /** Nome e perfil de quem entrou, vindos do fluxo de acesso. */
@@ -168,12 +245,12 @@ function topbar(estado, visao) {
             <!-- O template só exibe esta marca quando a sidenav está em offcanvas -->
             <div class="logo-topbar">
                 <a href="${raiz}" class="logo-light">
-                    <span class="logo-lg"><img src="assets/img/logo-siplam.svg" alt="SIPLAM" /></span>
-                    <span class="logo-sm"><img src="assets/img/logo-siplam-sm.svg" alt="SIPLAM" /></span>
+                    <span class="logo-lg"><img src="${url("assets/img/logo-siplam.svg")}" alt="SIPLAM" /></span>
+                    <span class="logo-sm"><img src="${url("assets/img/logo-siplam-sm.svg")}" alt="SIPLAM" /></span>
                 </a>
                 <a href="${raiz}" class="logo-dark">
-                    <span class="logo-lg"><img src="assets/img/logo-siplam.svg" alt="SIPLAM" /></span>
-                    <span class="logo-sm"><img src="assets/img/logo-siplam-sm.svg" alt="SIPLAM" /></span>
+                    <span class="logo-lg"><img src="${url("assets/img/logo-siplam.svg")}" alt="SIPLAM" /></span>
+                    <span class="logo-sm"><img src="${url("assets/img/logo-siplam-sm.svg")}" alt="SIPLAM" /></span>
                 </a>
             </div>
 
@@ -193,6 +270,7 @@ function topbar(estado, visao) {
                 <span class="chip chip-info">${quem.papel}</span>
                 ${quem.orgao ? `<span class="fs-12 text-muted ms-2">${quem.orgao}</span>` : ""}
                 ${somenteLeitura() ? `<span class="chip chip-neutro ms-2" title="Este perfil acompanha o plano, sem operá-lo"><i class="ti ti-eye me-1"></i>Somente leitura</span>` : ""}
+                ${chipDoPlano(estado)}
             </div>
         </div>
 
@@ -237,7 +315,7 @@ function topbar(estado, visao) {
                             <span class="align-middle">Reiniciar protótipo</span>
                         </button>
                         <div class="dropdown-divider"></div>
-                        <a href="index.html" class="dropdown-item text-danger fw-semibold">
+                        <a href="${url("index.html")}" class="dropdown-item text-danger fw-semibold">
                             <i class="ti ti-logout me-1 fs-lg align-middle"></i>
                             <span class="align-middle">Sair</span>
                         </a>
@@ -260,7 +338,7 @@ function sidenav(visao) {
             const ativo = item.href === atual ? " active" : "";
             return `
             <li class="side-nav-item">
-                <a href="${item.href}" class="side-nav-link${ativo}">
+                <a href="${url(item.href)}" class="side-nav-link${ativo}">
                     <span class="menu-icon"><i class="ti ${item.icone}"></i></span>
                     <span class="menu-text">${item.rotulo}</span>
                 </a>
@@ -272,12 +350,12 @@ function sidenav(visao) {
 <div class="sidenav-menu">
     <a href="${raiz}" class="logo">
         <span class="logo logo-light">
-            <span class="logo-lg"><img src="assets/img/logo-siplam.svg" alt="SIPLAM" /></span>
-            <span class="logo-sm"><img src="assets/img/logo-siplam-sm.svg" alt="SIPLAM" /></span>
+            <span class="logo-lg"><img src="${url("assets/img/logo-siplam.svg")}" alt="SIPLAM" /></span>
+            <span class="logo-sm"><img src="${url("assets/img/logo-siplam-sm.svg")}" alt="SIPLAM" /></span>
         </span>
         <span class="logo logo-dark">
-            <span class="logo-lg"><img src="assets/img/logo-siplam.svg" alt="SIPLAM" /></span>
-            <span class="logo-sm"><img src="assets/img/logo-siplam-sm.svg" alt="SIPLAM" /></span>
+            <span class="logo-lg"><img src="${url("assets/img/logo-siplam.svg")}" alt="SIPLAM" /></span>
+            <span class="logo-sm"><img src="${url("assets/img/logo-siplam-sm.svg")}" alt="SIPLAM" /></span>
         </span>
     </a>
 
@@ -326,7 +404,7 @@ function rodape() {
 /** A tela em que um perfil entra. Sem tela própria, a home provisória. */
 function telaInicialDoPerfil(id) {
     const perfil = PERFIL[id];
-    if (!perfil || perfil.construcao) return "em-construcao.html";
+    if (!perfil || perfil.construcao) return url("em-construcao.html");
     return inicio(perfil.visao);
 }
 
@@ -414,7 +492,7 @@ function instalarReinicio() {
         } catch (e) {
             console.warn("SIPLAM: não foi possível limpar o armazenamento.", e);
         }
-        window.location.href = "index.html";
+        window.location.href = url("index.html");
     });
 }
 
@@ -435,6 +513,7 @@ export function montarShell() {
     if (ano) ano.textContent = new Date().getFullYear();
 
     instalarTrocaDePerfil();
+    instalarTrocaDePlano();
     instalarReinicio();
     instalarBusca(estado, visao);
     instalarNotificacoes(estado, visao);

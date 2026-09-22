@@ -23,12 +23,14 @@ import {
     moedaCurta,
     pct,
 } from "../dados/regras.js";
+import { ANOS } from "../dados/seed.js";
+import { ppaCorrente } from "../dados/store.js";
 import { linhasDoPrograma } from "../dados/financeiro.js";
 import { montarShell, cabecalhoPagina } from "../shell.js";
 import { chip, statusChip, esc, faixaIndicadores, secao, contexto, medidor, faisca } from "../ui.js";
 
 const { estado } = montarShell();
-const ANOS = ["2028", "2029", "2030", "2031"];
+
 
 const params = new URLSearchParams(location.search);
 let programaId = params.get("programa");
@@ -66,8 +68,10 @@ const previstoPorAno = (pid) => {
 
 function listaProgramas() {
     const termo = busca.trim().toLowerCase();
+    // Um PPA por vez: só os Programas do plano escolhido no cabeçalho.
+    const plano = ppaCorrente(estado);
     const programas = estado.programas.filter(
-        (p) => !termo || p.nome.toLowerCase().includes(termo) || p.codigo.includes(termo) || p.eixo.toLowerCase().includes(termo)
+        (p) => (!p.ppaId || !plano || p.ppaId === plano.id) && (!termo || p.nome.toLowerCase().includes(termo) || p.codigo.includes(termo) || p.eixo.toLowerCase().includes(termo))
     );
 
     return `

@@ -5,7 +5,7 @@
  * Corrige T6.1.7: a ordenação por prioridade aplicava uma regra implícita que a
  * interface nunca explicava.
  */
-import { obterEstado, marcarSemContribuicao, reconsiderarParticipacao, removeIniciativa, addIniciativa } from "../dados/store.js";
+import { obterEstado, marcarSemContribuicao, reconsiderarParticipacao, removeIniciativa, addIniciativa, noPlano } from "../dados/store.js";
 import {
     eixos,
     objetivos,
@@ -46,7 +46,8 @@ const TOM_PARTICIPACAO = {
 function linhas() {
     const q = busca.trim().toLowerCase();
 
-    let ls = estado.programas
+    const plano = noPlano(estado);
+    let ls = plano.programas
         .filter((p) => p.disponibilizacao === "disponivel" || iniciativasDoOrgao(estado, p.id, orgao).length > 0)
         .filter((p) => !q || p.nome.toLowerCase().includes(q) || p.codigo.includes(q))
         .filter((p) => eixo === "todos" || p.eixo === eixo)
@@ -109,11 +110,11 @@ function filtros() {
     </select>
     <select class="form-select form-select-sm" id="eixo">
         <option value="todos">Todos os Eixos</option>
-        ${eixos(estado.programas).map((e) => `<option value="${esc(e)}">${esc(e)}</option>`).join("")}
+        ${eixos(noPlano(estado).programas).map((e) => `<option value="${esc(e)}">${esc(e)}</option>`).join("")}
     </select>
     <select class="form-select form-select-sm" id="objetivo">
         <option value="todos">Todos os Objetivos</option>
-        ${objetivos(estado.programas, eixo).map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join("")}
+        ${objetivos(noPlano(estado).programas, eixo).map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join("")}
     </select>
     <select class="form-select form-select-sm" id="ordem" title="A ordenação por prioridade traz primeiro o que depende de você">
         <option value="prioridade">Ordenar por prioridade</option>
@@ -261,7 +262,7 @@ function modalNova() {
 
 function render() {
     const ls = linhas();
-    const inis = estado.iniciativas.filter((i) => i.orgao === orgao);
+    const inis = estado.iniciativas.filter((i) => i.orgao === orgao && noPlano(estado).iniciativa(i));
     const entregas = inis.reduce((s, i) => s + entregasDaIniciativa(estado, i.id).length, 0);
     const previsto = ls.reduce((s, l) => s + l.financeiro.previsto, 0);
     const executado = ls.reduce((s, l) => s + l.financeiro.executado, 0);

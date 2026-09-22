@@ -12,8 +12,21 @@
  *
  * Depois de aprovado, as ações são de acesso, não de cadastro: revogar e
  * reativar. Senha não passa por aqui — quem autentica é o Aplicações Expresso.
+ *
+ * Há um segundo caminho: o Administrador central pode cadastrar alguém sem
+ * esperar a pessoa se registrar. Nesse caso o CPF é consultado na base
+ * funcional, e os dados vêm de lá — ninguém digita o nome de outra pessoa.
  */
-import { obterEstado, updItem, SITUACOES_USUARIO, situacaoUsuario } from "../dados/store.js";
+import {
+    obterEstado,
+    updItem,
+    addItem,
+    SITUACOES_USUARIO,
+    situacaoUsuario,
+    buscarNaBaseFuncional,
+    cpfValido,
+    formatarCpf,
+} from "../dados/store.js";
 import { montarShell, cabecalhoPagina, somenteLeitura } from "../shell.js";
 import { chip, esc, faixaIndicadores } from "../ui.js";
 import { avisar } from "../toast.js";
@@ -72,6 +85,7 @@ function filtros() {
             <input type="search" class="form-control form-control-sm" id="busca" placeholder="Buscar por nome, e-mail, login ou órgão" value="${esc(busca)}" />
             <i class="app-search-icon ti ti-search"></i>
         </div>
+        ${leitura ? "" : `<button class="btn btn-sm btn-primary" id="novo"><i class="ti ti-plus me-1"></i>Novo usuário</button>`}
     </div>`;
 }
 
@@ -174,6 +188,12 @@ function render() {
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" id="modal-conteudo"></div>
         </div>
+    </div>
+
+    <div class="modal fade" id="modal-novo" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" id="modal-novo-conteudo"></div>
+        </div>
     </div>`;
 
     ligar();
@@ -264,7 +284,178 @@ function abrirAnalise() {
     });
 }
 
+/* ---------- cadastro pelo Administrador central ---------- */
+
+/** O que a consulta ao CPF trouxe. Fica fora do formulário: não se digita. */
+let encontrado = null;
+let documento = null;
+
+function corpoNovo(erro = "", cpfDigitado = "") {
+    const campo = (rotulo, valor) => `
+    <div class="col-6">
+        <div class="rotulo-secao mb-1">${rotulo}</div>
+        <p class="fs-13 mb-0">${valor ? esc(valor) : "—"}</p>
+    </div>`;
+
+    return `
+    <div class="modal-header">
+        <h5 class="modal-title">Novo usuário</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+    </div>
+    <div class="modal-body" id="form-novo">
+        <label class="form-label" for="n-cpf">CPF<span class="text-danger">*</span></label>
+        <div class="input-group">
+            <input type="text" class="form-control" id="n-cpf" inputmode="numeric" autocomplete="off"
+                   placeholder="000.000.000-00" maxlength="14" value="${esc(cpfDigitado)}"
+                   ${encontrado ? "disabled" : ""} />
+            <button class="btn btn-outline-primary" type="button" id="buscar-cpf" ${encontrado ? "disabled" : ""}>
+                Buscar
+            </button>
+        </div>
+        <div class="form-text fs-12">Os dados vêm da base funcional do Estado.</div>
+        <div class="invalid-feedback d-block" id="n-cpf-erro">${esc(erro)}</div>
+
+        ${
+            encontrado
+                ? `
+        <hr class="my-3" />
+        <div class="row g-3 mb-2">
+            ${campo("Nome", encontrado.nome)}
+            ${campo("E-mail", encontrado.email)}
+            ${campo("Login", encontrado.login)}
+            ${campo("Órgão", encontrado.orgao)}
+        </div>
+        <button type="button" class="btn btn-sm btn-link px-0 fs-12" id="trocar-cpf">Consultar outro CPF</button>
+
+        <hr class="my-3" />
+        <label class="form-label" for="n-documento">Documento <span class="fs-12 text-muted">(opcional)</span></label>
+        <input type="file" class="form-control" id="n-documento" />
+        <div class="form-text fs-12" id="ajuda-documento">Portaria, ofício ou o que autoriza o acesso.</div>
+
+        <label class="form-label mt-3" for="n-perfis">Perfil a conceder<span class="text-danger">*</span></label>
+        <div class="d-flex flex-column gap-1" id="n-perfis">
+            ${PERFIS.map(
+                (p) => `
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="${p.id}" id="n-${p.id}" data-perfil-novo />
+                <label class="form-check-label" for="n-${p.id}">
+                    ${p.nome}
+                    <span class="fs-12 text-muted">· visão ${p.visao}</span>
+                </label>
+            </div>`
+            ).join("")}
+        </div>
+        ${campoErro("n-perfis")}`
+                : ""
+        }
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="salvar-novo" ${encontrado ? "" : "disabled"}>
+            Cadastrar
+        </button>
+    </div>`;
+}
+
+function desenharNovo(erro = "", cpfDigitado = "") {
+    document.getElementById("modal-novo-conteudo").innerHTML = corpoNovo(erro, cpfDigitado);
+    ligarNovo();
+}
+
+const soDigitos = (valor) => String(valor ?? "").replace(/[^0-9]/g, "");
+
+function ligarNovo() {
+    const escopo = document.getElementById("form-novo");
+    const cpf = document.getElementById("n-cpf");
+
+    // Formata enquanto digita: o CPF é lido em blocos, não como 11 dígitos seguidos.
+    cpf?.addEventListener("input", () => {
+        cpf.value = formatarCpf(cpf.value);
+        document.getElementById("n-cpf-erro").textContent = "";
+    });
+    cpf?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") document.getElementById("buscar-cpf")?.click();
+    });
+
+    document.getElementById("buscar-cpf")?.addEventListener("click", () => {
+        const valor = cpf.value.trim();
+
+        if (!cpfValido(valor)) return desenharNovo("CPF inválido. Confira os números.", valor);
+
+        const jaTem = usuarios().find((u) => soDigitos(u.cpf) === soDigitos(valor));
+        if (jaTem) return desenharNovo(`${jaTem.nome} já está cadastrado.`, valor);
+
+        const pessoa = buscarNaBaseFuncional(valor);
+        if (!pessoa) return desenharNovo("Nenhum servidor encontrado com esse CPF na base funcional.", valor);
+
+        encontrado = pessoa;
+        documento = null;
+        desenharNovo("", valor);
+    });
+
+    document.getElementById("trocar-cpf")?.addEventListener("click", () => {
+        encontrado = null;
+        documento = null;
+        desenharNovo();
+    });
+
+    // Sem servidor, o arquivo não sobe: guardamos o nome para a tela mostrar o
+    // que foi anexado. O anexo de verdade fica para quando houver back-end.
+    document.getElementById("n-documento")?.addEventListener("change", (e) => {
+        documento = e.target.files?.[0]?.name ?? null;
+        const ajuda = document.getElementById("ajuda-documento");
+        if (!ajuda) return;
+        ajuda.innerHTML = documento
+            ? `Anexado: <strong>${esc(documento)}</strong>.`
+            : "Portaria, ofício ou o que autoriza o acesso.";
+    });
+
+    limparAoDigitar(escopo);
+
+    document.getElementById("salvar-novo")?.addEventListener("click", () => {
+        const perfis = [...escopo.querySelectorAll("[data-perfil-novo]:checked")].map((c) => c.value);
+        const ok = validar(escopo, [
+            { campo: "n-perfis", valido: perfis.length > 0, mensagem: "Escolha ao menos um perfil." },
+        ]);
+        if (!ok) return;
+
+        addItem("usuarios", {
+            nome: encontrado.nome,
+            cpf: encontrado.cpf,
+            email: encontrado.email,
+            login: encontrado.login,
+            orgao: encontrado.orgao,
+            documento,
+            perfis,
+            situacao: "aprovado",
+            decididoEm: new Date().toLocaleDateString("pt-BR"),
+            decididoPor: estado.analista,
+        });
+        avisar("Usuário cadastrado com acesso ativo.");
+        bootstrap.Modal.getInstance(document.getElementById("modal-novo")).hide();
+        render();
+    });
+}
+
+function abrirNovo() {
+    encontrado = null;
+    documento = null;
+    const el = document.getElementById("modal-novo");
+    desenharNovo();
+    new bootstrap.Modal(el).show();
+    el.addEventListener(
+        "hidden.bs.modal",
+        () => {
+            encontrado = null;
+            documento = null;
+        },
+        { once: true }
+    );
+}
+
 function ligar() {
+    document.getElementById("novo")?.addEventListener("click", abrirNovo);
+
     const campoBusca = document.getElementById("busca");
     campoBusca?.addEventListener("input", (e) => {
         busca = e.target.value;

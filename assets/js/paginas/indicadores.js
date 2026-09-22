@@ -7,7 +7,7 @@
  * visão. Aqui o indicador de Iniciativa é editável pelo órgão; o de Programa
  * continua no Cadastro de Programa, que é de quem o define.
  */
-import { obterEstado, updIniciativa } from "../dados/store.js";
+import { obterEstado, updIniciativa, noPlano } from "../dados/store.js";
 import { ANOS } from "../dados/seed.js";
 import { eixos, objetivos, podeEditar } from "../dados/regras.js";
 import { montarShell, cabecalhoPagina , somenteLeitura } from "../shell.js";
@@ -44,13 +44,13 @@ function linhas() {
     const q = busca.trim().toLowerCase();
     const out = [];
 
-    for (const p of estado.programas) {
+    for (const p of noPlano(estado).programas) {
         for (const ind of p.indicadores ?? []) {
             out.push({ nivel: "Programa", indicador: ind, origem: p.nome, programa: p, editavel: false });
         }
     }
 
-    for (const i of estado.iniciativas.filter((x) => x.orgao === orgao)) {
+    for (const i of estado.iniciativas.filter((x) => x.orgao === orgao && noPlano(estado).iniciativa(x))) {
         const p = estado.programas.find((x) => x.id === i.programaId);
         for (const ind of i.indicadores ?? []) {
             out.push({
@@ -160,7 +160,7 @@ function modal() {
 
 function render() {
     const ls = linhas();
-    const minhasIniciativas = estado.iniciativas.filter((i) => i.orgao === orgao);
+    const minhasIniciativas = estado.iniciativas.filter((i) => i.orgao === orgao && noPlano(estado).iniciativa(i));
     const semIndicador = minhasIniciativas.filter((i) => (i.indicadores ?? []).length === 0).length;
 
     document.getElementById("conteudo").innerHTML = `
@@ -179,11 +179,11 @@ function render() {
         </select>
         <select class="form-select form-select-sm" id="eixo">
             <option value="todos">Todos os Eixos</option>
-            ${eixos(estado.programas).map((e) => `<option value="${esc(e)}"${e === eixo ? " selected" : ""}>${esc(e)}</option>`).join("")}
+            ${eixos(noPlano(estado).programas).map((e) => `<option value="${esc(e)}"${e === eixo ? " selected" : ""}>${esc(e)}</option>`).join("")}
         </select>
         <select class="form-select form-select-sm" id="objetivo">
             <option value="todos">Todos os Objetivos</option>
-            ${objetivos(estado.programas, eixo).map((o) => `<option value="${esc(o)}"${o === objetivo ? " selected" : ""}>${esc(o)}</option>`).join("")}
+            ${objetivos(noPlano(estado).programas, eixo).map((o) => `<option value="${esc(o)}"${o === objetivo ? " selected" : ""}>${esc(o)}</option>`).join("")}
         </select>
         <div class="dropdown ${somenteLeitura() ? "d-none" : ""}">
             <button class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown"><i class="ti ti-plus me-1"></i>Novo indicador</button>

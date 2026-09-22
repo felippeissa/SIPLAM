@@ -8,7 +8,8 @@
  * Quem altera o estado deve fazê-lo pelas funções daqui — elas cuidam de
  * registrar evento, tocar a data de atualização e gravar.
  */
-import { estadoInicial } from "./seed.js";
+import { estadoInicial, ANOS, REGIOES, ACOES } from "./seed.js";
+import { anosDoPlano } from "./anos.js";
 
 /**
  * Situações do PPA. Não é uma fila reta: a submissão se bifurca.
@@ -42,16 +43,38 @@ export const situacaoPpa = (id) => SITUACOES_PPA.find((s) => s.id === id) ?? SIT
  */
 export const anoDeElaboracao = (ppa) => Number(ppa.primeiroAno) - 1;
 
+/** Onde fica o plano escolhido no cabeçalho. Vale por navegador, como a sessão. */
+const CHAVE_PPA = "siplam.ppaSelecionado";
+
+const lerEscolha = () => {
+    try {
+        return localStorage.getItem(CHAVE_PPA);
+    } catch (e) {
+        return null;
+    }
+};
+
+/** Troca o plano em que se está trabalhando. */
+export function selecionarPpa(id) {
+    try {
+        localStorage.setItem(CHAVE_PPA, id);
+    } catch (e) {
+        console.warn("SIPLAM: não foi possível guardar o plano escolhido.", e);
+    }
+}
+
 /**
  * O plano a que pertencem os cadastros feitos agora.
  *
- * A visão do sistema é de um PPA por vez: o que está em elaboração é o que
- * recebe cadastro. Não havendo nenhum, vale o vigente e, por último, o mais
- * recente — para nada ficar órfão.
+ * Vale o que foi escolhido no cabeçalho. Sem escolha — ou se o plano escolhido
+ * foi excluído —, o sistema decide: o que está em elaboração, depois o vigente,
+ * por último o mais recente. Nada fica órfão.
  */
 export function ppaCorrente(estado) {
     const ppas = estado?.ppas ?? [];
+    const escolhido = ppas.find((p) => p.id === lerEscolha());
     return (
+        escolhido ??
         ppas.find((p) => p.situacao === "elaboracao") ??
         ppas.find((p) => p.situacao === "vigente") ??
         [...ppas].sort((a, b) => Number(b.primeiroAno) - Number(a.primeiroAno))[0] ??
@@ -79,17 +102,28 @@ export function ppaQueColide(estado, candidato) {
  * sempre — se um governador sai e o vice assume, o plano pode cobrir menos.
  * Por ora são quatro campos; os demais entram depois de conversar com o usuário.
  */
-function ppaInicial() {
-    return {
-        id: "ppa-2028",
-        nome: "Plano Plurianual 2028–2031",
-        primeiroAno: "2028",
-        ultimoAno: "2031",
-        descricao: "",
-        situacao: "elaboracao",
-        // Número do processo no SEI. Vem de lá, não daqui.
-        processoSei: "202600006001287",
-    };
+function ppasIniciais() {
+    return [
+        {
+            id: "ppa-2024",
+            nome: "Plano Plurianual 2024–2027",
+            primeiroAno: "2024",
+            ultimoAno: "2027",
+            descricao: "Plano em execução; é dele que o ciclo seguinte parte.",
+            situacao: "vigente",
+            processoSei: "202200006000914",
+        },
+        {
+            id: "ppa-2028",
+            nome: "Plano Plurianual 2028–2031",
+            primeiroAno: "2028",
+            ultimoAno: "2031",
+            descricao: "",
+            situacao: "elaboracao",
+            // Número do processo no SEI. Vem de lá, não daqui.
+            processoSei: "202600006001287",
+        },
+    ];
 }
 
 /**
@@ -121,12 +155,12 @@ export const situacaoUsuario = (id) => SITUACOES_USUARIO.find((s) => s.id === id
  */
 function usuariosIniciais() {
     return [
-        { id: "us-1", nome: "Vagner Ribeiro", email: "vagner.ribeiro@exemplo.go", login: "vagner.ribeiro", orgao: "Secretaria de Desenvolvimento Social", perfis: ["setorial"], situacao: "aprovado", criadoEm: "02/03/2026", decididoEm: "04/03/2026", decididoPor: "Maria Fonseca" },
-        { id: "us-2", nome: "Maria Fonseca", email: "maria.fonseca@exemplo.go", login: "maria.fonseca", orgao: "", perfis: ["admin-central"], situacao: "aprovado", criadoEm: "02/03/2026", decididoEm: "02/03/2026", decididoPor: "Maria Fonseca" },
-        { id: "us-3", nome: "João Peixoto", email: "joao.peixoto@exemplo.go", login: "joao.peixoto", orgao: "", perfis: ["admin-central", "gestao-central"], situacao: "aprovado", criadoEm: "15/03/2026", decididoEm: "16/03/2026", decididoPor: "Maria Fonseca" },
-        { id: "us-4", nome: "Cláudia Bastos", email: "claudia.bastos@exemplo.go", login: "claudia.bastos", orgao: "Secretaria de Saúde", perfis: ["setorial", "gestao-setorial"], situacao: "aprovado", criadoEm: "20/04/2026", decididoEm: "22/04/2026", decididoPor: "Maria Fonseca" },
-        { id: "us-5", nome: "Tereza Nunes", email: "tereza.nunes@exemplo.go", login: "tereza.nunes", orgao: "", perfis: ["controle"], situacao: "aprovado", criadoEm: "11/05/2026", decididoEm: "12/05/2026", decididoPor: "João Peixoto" },
-        { id: "us-6", nome: "Helena Arantes", email: "helena.arantes@exemplo.go", login: "helena.arantes", orgao: "Secretaria de Educação", perfis: ["gestao-setorial"], situacao: "aprovado", criadoEm: "03/06/2026", decididoEm: "05/06/2026", decididoPor: "Maria Fonseca" },
+        { id: "us-1", nome: "Vagner Ribeiro", cpf: "071.709.743-98", email: "vagner.ribeiro@exemplo.go", login: "vagner.ribeiro", orgao: "Secretaria de Desenvolvimento Social", perfis: ["setorial"], situacao: "aprovado", criadoEm: "02/03/2026", decididoEm: "04/03/2026", decididoPor: "Maria Fonseca" },
+        { id: "us-2", nome: "Maria Fonseca", cpf: "620.256.002-91", email: "maria.fonseca@exemplo.go", login: "maria.fonseca", orgao: "", perfis: ["admin-central"], situacao: "aprovado", criadoEm: "02/03/2026", decididoEm: "02/03/2026", decididoPor: "Maria Fonseca" },
+        { id: "us-3", nome: "João Peixoto", cpf: "783.262.215-62", email: "joao.peixoto@exemplo.go", login: "joao.peixoto", orgao: "", perfis: ["admin-central", "gestao-central"], situacao: "aprovado", criadoEm: "15/03/2026", decididoEm: "16/03/2026", decididoPor: "Maria Fonseca" },
+        { id: "us-4", nome: "Cláudia Bastos", cpf: "286.946.420-77", email: "claudia.bastos@exemplo.go", login: "claudia.bastos", orgao: "Secretaria de Saúde", perfis: ["setorial", "gestao-setorial"], situacao: "aprovado", criadoEm: "20/04/2026", decididoEm: "22/04/2026", decididoPor: "Maria Fonseca" },
+        { id: "us-5", nome: "Tereza Nunes", cpf: "230.925.185-27", email: "tereza.nunes@exemplo.go", login: "tereza.nunes", orgao: "", perfis: ["controle"], situacao: "aprovado", criadoEm: "11/05/2026", decididoEm: "12/05/2026", decididoPor: "João Peixoto" },
+        { id: "us-6", nome: "Helena Arantes", cpf: "477.984.131-38", email: "helena.arantes@exemplo.go", login: "helena.arantes", orgao: "Secretaria de Educação", perfis: ["gestao-setorial"], situacao: "aprovado", criadoEm: "03/06/2026", decididoEm: "05/06/2026", decididoPor: "Maria Fonseca" },
         { id: "us-7", nome: "Marcos Tavares", email: "marcos.tavares@exemplo.go", login: "marcos.tavares", orgao: "Secretaria de Meio Ambiente", perfis: ["setorial"], situacao: "aprovado", criadoEm: "19/06/2026", decididoEm: "19/06/2026", decididoPor: "João Peixoto" },
 
         { id: "us-8", nome: "Renato Camargo", email: "renato.camargo@exemplo.go", login: "renato.camargo", orgao: "Secretaria de Agricultura", perfis: [], situacao: "aguardando", criadoEm: "14/09/2026" },
@@ -139,6 +173,57 @@ function usuariosIniciais() {
         { id: "us-13", nome: "Sérgio Vilela", email: "sergio.vilela@exemplo.go", login: "sergio.vilela", orgao: "Secretaria de Agricultura", perfis: [], situacao: "reprovado", criadoEm: "28/08/2026", decididoEm: "30/08/2026", decididoPor: "Maria Fonseca" },
         { id: "us-14", nome: "Daniel Prado", email: "daniel.prado@exemplo.go", login: "daniel.prado", orgao: "Secretaria de Saúde", perfis: [], situacao: "reprovado", criadoEm: "09/09/2026", decididoEm: "10/09/2026", decididoPor: "João Peixoto" },
     ];
+}
+
+/**
+ * Base funcional consultada pelo CPF.
+ *
+ * No sistema real quem responde é o cadastro corporativo do Estado — o mesmo que
+ * o Aplicações Expresso usa. Aqui é uma lista fixa, só para a tela ter o que
+ * encontrar: a busca não inventa ninguém, devolve o que existe ou nada.
+ */
+const BASE_FUNCIONAL = [
+    // Fácil de digitar, para testar a busca sem consultar a lista.
+    { cpf: "12345678909", nome: "Marcela Andrade Reis", email: "marcela.reis@exemplo.go", login: "marcela.reis", orgao: "Secretaria de Saúde" },
+    { cpf: "30310265355", nome: "Ana Lima Prado", email: "ana.prado@exemplo.go", login: "ana.prado", orgao: "Secretaria de Saúde" },
+    { cpf: "55154169379", nome: "Carlos Bento Nunes", email: "carlos.nunes@exemplo.go", login: "carlos.nunes", orgao: "Secretaria de Educação" },
+    { cpf: "08836478930", nome: "Fernanda Rocha Dias", email: "fernanda.dias@exemplo.go", login: "fernanda.dias", orgao: "Secretaria de Desenvolvimento Social" },
+    { cpf: "82096043921", nome: "Gustavo Pinheiro", email: "gustavo.pinheiro@exemplo.go", login: "gustavo.pinheiro", orgao: "Secretaria de Infraestrutura" },
+    { cpf: "68997329200", nome: "Juliana Peixoto Sá", email: "juliana.sa@exemplo.go", login: "juliana.sa", orgao: "Secretaria de Meio Ambiente" },
+    { cpf: "02856603300", nome: "Rodrigo Teixeira", email: "rodrigo.teixeira@exemplo.go", login: "rodrigo.teixeira", orgao: "Secretaria de Segurança Pública" },
+    // Este já está na Gestão de usuários: serve para a tela avisar em vez de duplicar.
+    { cpf: "07170974398", nome: "Vagner Ribeiro", email: "vagner.ribeiro@exemplo.go", login: "vagner.ribeiro", orgao: "Secretaria de Desenvolvimento Social" },
+];
+
+const digitos = (valor) => String(valor ?? "").replace(/\D/g, "");
+
+/** Formata para 000.000.000-00. */
+export const formatarCpf = (valor) => {
+    const n = digitos(valor).slice(0, 11);
+    return n.replace(/^(\d{3})(\d{0,3})(\d{0,3})(\d{0,2}).*/, (_, a, b, c, d) =>
+        [a, b && "." + b, c && "." + c, d && "-" + d].join("")
+    );
+};
+
+/** Dígitos verificadores do CPF. Evita que um erro de digitação vire consulta. */
+export function cpfValido(valor) {
+    const n = digitos(valor);
+    // 111.111.111-11 e afins passam na conta dos dígitos, mas não são CPF.
+    if (n.length !== 11 || /^(\d)\1{10}$/.test(n)) return false;
+    const verificador = (base) => {
+        const peso = base.length + 1;
+        const soma = [...base].reduce((s, d, i) => s + Number(d) * (peso - i), 0);
+        const resto = (soma * 10) % 11;
+        return resto === 10 ? 0 : resto;
+    };
+    return Number(n[9]) === verificador(n.slice(0, 9)) && Number(n[10]) === verificador(n.slice(0, 10));
+}
+
+/** Quem a base funcional conhece com esse CPF. */
+export function buscarNaBaseFuncional(cpf) {
+    const n = digitos(cpf);
+    const achado = BASE_FUNCIONAL.find((p) => p.cpf === n);
+    return achado ? { ...achado, cpf: formatarCpf(achado.cpf) } : null;
 }
 
 /**
@@ -219,7 +304,7 @@ function diagnosticoDosProgramas(programas, iniciativas = [], ppaId = "") {
  * identidade, não por texto igual. Os campos de texto continuam onde estavam:
  * as telas que filtram por eles seguem funcionando.
  */
-function estruturaDosProgramas(programas, ppaId = "") {
+function estruturaDosProgramas(programas, ppaId = "", prefixo = "") {
     const eixos = [];
     const objetivos = [];
     const porEixo = new Map();
@@ -227,14 +312,14 @@ function estruturaDosProgramas(programas, ppaId = "") {
 
     for (const p of programas) {
         if (p.eixo && !porEixo.has(p.eixo)) {
-            const eixo = { id: `ex-${porEixo.size + 1}`, ppaId, nome: p.eixo, descricao: "" };
+            const eixo = { id: `ex${prefixo}-${porEixo.size + 1}`, ppaId, nome: p.eixo, descricao: "" };
             porEixo.set(p.eixo, eixo);
             eixos.push(eixo);
         }
         const chave = p.objetivoEstrategico;
         if (chave && !porObjetivo.has(chave)) {
             const objetivo = {
-                id: `ob-${porObjetivo.size + 1}`,
+                id: `ob${prefixo}-${porObjetivo.size + 1}`,
                 ppaId,
                 eixoId: porEixo.get(p.eixo)?.id ?? "",
                 nome: chave,
@@ -251,6 +336,178 @@ function estruturaDosProgramas(programas, ppaId = "") {
     eixos.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
     objetivos.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
     return { eixos, objetivos };
+}
+
+/**
+ * Conteúdo do plano vigente, a partir do ciclo em elaboração.
+ *
+ * O plano de 2024–2027 está em execução: foi elaborado, aprovado e fechado, e é
+ * dele que o ciclo seguinte parte. O conteúdo é o mesmo em substância — os
+ * Programas do Estado não mudam de um plano para o outro — mas em registros
+ * próprios, com identificadores próprios e os anos do seu ciclo.
+ *
+ * E, por estar fechado, **não tem pendência**: toda meta preenchida, todo
+ * comportamento validado, todo território informado, toda Entrega com Ação
+ * Orçamentária. Um plano completo ao lado do plano em construção é o que dá
+ * medida às telas de pendência.
+ */
+function planoConcluido(base, ppa) {
+    const anos = anosDoPlano(ppa);
+    const sufixo = `-${ppa.primeiroAno}`;
+    const rid = (id) => `${id}${sufixo}`;
+
+    /** As metas deste ciclo, sem buraco: o que veio do outro plano, e o resto preenchido. */
+    function metasCheias(entrega, anteriores) {
+        const comportamento = entrega.comportamento ?? entrega.comportamentoSugerido ?? "fluxo";
+        const valores = anteriores.filter((v) => v !== null && v !== undefined).map(Number);
+        // Sem nenhum valor de referência, um número plausível para o tipo de
+        // meta: percentual sobe até perto do teto, quantidade cresce por ano.
+        const inicial = valores[0] ?? (comportamento === "percentual" ? 60 : 12);
+        const passo = comportamento === "percentual" ? 8 : Math.max(1, Math.round(inicial * 0.2));
+
+        return Object.fromEntries(
+            anos.map((ano, i) => {
+                const herdado = anteriores[i];
+                if (herdado !== null && herdado !== undefined) return [ano, herdado];
+                if (comportamento === "marco") return [ano, i === anos.length - 1 ? 1 : 0];
+                if (comportamento === "percentual") return [ano, Math.min(98, inicial + passo * i)];
+                if (comportamento === "acumulativa") return [ano, inicial + passo * i];
+                return [ano, inicial + passo * Math.min(i, 2)];
+            })
+        );
+    }
+
+    const programas = base.programas
+        .filter((p) => p.ppaId !== ppa.id)
+        .map((p) => ({
+            ...structuredClone(p),
+            id: rid(p.id),
+            ppaId: ppa.id,
+            aptidao: "apto",
+            disponibilizacao: "disponivel",
+        }));
+
+    const iniciativas = base.iniciativas.map((i) => ({
+        ...structuredClone(i),
+        id: rid(i.id),
+        programaId: rid(i.programaId),
+        ppaId: ppa.id,
+        // Plano fechado: nenhuma contribuição ficou pelo caminho.
+        status: "validada",
+        atualizadoEm: `31/12/${ppa.primeiroAno}`,
+    }));
+
+    // Programa sem Iniciativa é Programa que nenhum órgão atendeu. Num plano
+    // concluído isso não acontece: o coordenador responde pelo que restou, com
+    // uma contribuição tirada do objetivo e das causas do próprio Programa.
+    const orfaos = programas.filter((p) => !iniciativas.some((i) => i.programaId === p.id));
+    const iniciativasProprias = orfaos.map((p) => ({
+        id: `ini${sufixo}-${p.id}`,
+        programaId: p.id,
+        ppaId: ppa.id,
+        orgao: p.orgaoCoordenador,
+        nome: p.resultadoEsperado ?? `Contribuição ao ${p.nome}`,
+        descricao: p.objetivo ?? "",
+        publicoAlvo: p.populacaoAfetada ?? "",
+        causas: (p.causas ?? []).map((c) => c.id),
+        status: "validada",
+        atualizadoEm: `31/12/${ppa.primeiroAno}`,
+        versao: 1,
+        unidadeResponsavel: p.orgaoCoordenador,
+        resultadoEsperado: p.resultadoEsperado ?? "",
+        indicadores: (p.indicadores ?? []).map((ind, n) => ({
+            id: `iin${sufixo}-${p.id}-${n + 1}`,
+            nome: ind.nome,
+            descricao: "",
+            unidade: ind.unidade ?? "Unidade",
+            formula: "",
+            fonte: "Sistema de informação do órgão coordenador",
+            periodicidade: "Anual",
+            linhaBase: ind.linhaBase ?? "",
+            meta: ind.meta ?? "",
+        })),
+    }));
+    iniciativas.push(...iniciativasProprias);
+
+    const entregas = [];
+    for (const i of [...base.iniciativas, ...iniciativasProprias]) {
+        const suas = base.entregas.filter((e) => e.iniciativaId === i.id);
+        // Iniciativa sem Entrega é pendência impeditiva, e num plano concluído
+        // não existe: a que faltou nasce do resultado esperado da Iniciativa.
+        const fonte = suas.length
+            ? suas
+            : [
+                  {
+                      id: `ent-${i.id}`,
+                      iniciativaId: i.id,
+                      nome: i.resultadoEsperado?.split(",")[0] ?? `Resultado da ${i.nome}`,
+                      descricao: i.resultadoEsperado ?? "",
+                      unidadeMedida: "Unidade",
+                      metodoComprovacao: "",
+                      comportamentoSugerido: "acumulativa",
+                      metas: {},
+                      territorio: { tipo: null, regioes: [] },
+                      gomap: "nao",
+                  },
+              ];
+
+        // As Iniciativas próprias já nascem com o id deste plano; as herdadas
+        // do outro ciclo ainda precisam do sufixo.
+        const iniciativaId = i.ppaId === ppa.id ? i.id : rid(i.id);
+
+        for (const e of fonte) {
+            const anteriores = ANOS.map((a) => e.metas?.[a] ?? null);
+            const territorializavel = (e.territorio?.tipo ?? "territorializavel") === "territorializavel";
+            entregas.push({
+                ...structuredClone(e),
+                id: rid(e.id),
+                iniciativaId,
+                ppaId: ppa.id,
+                comportamento: e.comportamento ?? e.comportamentoSugerido ?? "fluxo",
+                comportamentoValidado: true,
+                metas: metasCheias(e, anteriores),
+                metodoComprovacao:
+                    e.metodoComprovacao?.trim() ||
+                    "Relatório anual de execução, com os registros do sistema do órgão.",
+                territorio: territorializavel
+                    ? {
+                          tipo: "territorializavel",
+                          regioes: e.territorio?.regioes?.length ? [...e.territorio.regioes] : [...REGIOES],
+                      }
+                    : { ...e.territorio },
+            });
+        }
+    }
+
+    const vinculos = base.vinculos
+        .filter((v) => entregas.some((e) => e.id === rid(v.entregaId)))
+        .map((v) => ({ ...v, id: rid(v.id), entregaId: rid(v.entregaId) }));
+
+    // Toda Entrega de um plano concluído tem Ação Orçamentária: é dela que vem o
+    // valor financeiro do PPA, que nunca é digitado.
+    const vinculosAcao = [];
+    for (const e of entregas) {
+        const originais = base.vinculosAcao.filter((v) => rid(v.entregaId) === e.id);
+        if (originais.length) {
+            vinculosAcao.push(...originais.map((v) => ({ ...v, id: rid(v.id), entregaId: e.id })));
+            continue;
+        }
+        const orgao = iniciativas.find((i) => i.id === e.iniciativaId)?.orgao;
+        const acao = ACOES.find((a) => a.orgao === orgao) ?? ACOES[0];
+        vinculosAcao.push({ id: `va${sufixo}-${e.id}`, entregaId: e.id, acaoId: acao.id });
+    }
+
+    const estrutura = estruturaDosProgramas(programas, ppa.id, sufixo);
+    const diagnostico = diagnosticoDosProgramas(programas, iniciativas, ppa.id);
+
+    return { programas, iniciativas, entregas, vinculos, vinculosAcao, ...estrutura, ...diagnostico };
+}
+
+/** Junta o conteúdo de um plano ao estado, sem tocar no que já estava lá. */
+function acrescentarPlano(base, conteudo) {
+    for (const [colecao, itens] of Object.entries(conteudo)) {
+        base[colecao] = [...(base[colecao] ?? []), ...itens];
+    }
 }
 
 const CHAVE = "siplam.estado.v1";
@@ -275,7 +532,13 @@ function carregar() {
     if (!base) base = estadoInicial();
     // Estado gravado antes de o PPA existir como entidade.
     // Estado gravado antes de o PPA existir, ou quando ele ainda era único.
-    if (!base.ppas) base.ppas = base.ppa ? [base.ppa] : [ppaInicial()];
+    if (!base.ppas) base.ppas = base.ppa ? [base.ppa] : ppasIniciais();
+    // Estado gravado quando o seed tinha só o plano em elaboração: o plano
+    // vigente entra junto, para que haja um ciclo em execução a que o próximo
+    // suceda. Só no estado intocado — plano apagado de propósito não volta.
+    if (base.ppas.length === 1 && base.ppas[0].id === "ppa-2028") {
+        base.ppas.unshift(ppasIniciais()[0]);
+    }
     delete base.ppa;
 
     // Estrutura do plano: eixos e objetivos, derivados dos Programas.
@@ -297,6 +560,13 @@ function carregar() {
     const forma = base.causas.some((c) => c.problemaId !== undefined || c.diagnosticoId !== undefined);
     if (forma || (!base.diagnosticos.length && !base.problemas.length && !base.causas.length)) {
         Object.assign(base, diagnosticoDosProgramas(base.programas ?? [], base.iniciativas ?? [], ppaCorrente(base)?.id ?? ""));
+    }
+
+    // O plano vigente nasce completo, com o conteúdo do ciclo seguinte. Só é
+    // preenchido se ainda não tiver nada: quem apagou seus Programas apagou.
+    const vigente = base.ppas.find((p) => p.situacao === "vigente");
+    if (vigente && !base.programas.some((p) => p.ppaId === vigente.id)) {
+        acrescentarPlano(base, planoConcluido(base, vigente));
     }
 
     // Estado gravado antes de existir o cadastro de usuários.
@@ -329,7 +599,13 @@ function gravar() {
 
 /** Estado atual. Carrega do armazenamento na primeira chamada. */
 export function obterEstado() {
-    if (!estado) estado = carregar();
+    if (!estado) {
+        estado = carregar();
+        // O que a carga completou — planos, estrutura, diagnóstico — fica
+        // gravado. Fora daqui há quem leia o estado direto do armazenamento,
+        // como `anos.js`, e leria uma versão anterior à migração.
+        gravar();
+    }
     return estado;
 }
 
@@ -339,12 +615,37 @@ export function aoMudar(fn) {
     return () => ouvintes.delete(fn);
 }
 
+/**
+ * O recorte do plano corrente.
+ *
+ * Um PPA por vez: nenhuma lista mistura ciclos. O vínculo do registro com o
+ * plano é o Programa — Iniciativa e Entrega pertencem ao plano do Programa de
+ * onde descendem. Registro sem `ppaId` é anterior ao vínculo e fica visível,
+ * senão sumiria sem que ninguém pudesse alcançá-lo.
+ */
+export function noPlano(estado) {
+    const plano = ppaCorrente(estado);
+    const programas = (estado.programas ?? []).filter((p) => !p.ppaId || !plano || p.ppaId === plano.id);
+    const idsPrograma = new Set(programas.map((p) => p.id));
+    const idsIniciativa = new Set(
+        (estado.iniciativas ?? []).filter((i) => idsPrograma.has(i.programaId)).map((i) => i.id)
+    );
+    return {
+        programas,
+        programa: (p) => idsPrograma.has(p.id),
+        iniciativa: (i) => idsPrograma.has(i.programaId),
+        entrega: (e) => idsIniciativa.has(e.iniciativaId),
+    };
+}
+
 /** Volta aos dados de demonstração. */
 export function reiniciar() {
     estado = estadoInicial();
-    estado.ppas = [ppaInicial()];
+    estado.ppas = ppasIniciais();
     Object.assign(estado, estruturaDosProgramas(estado.programas, ppaCorrente(estado)?.id ?? ""));
     Object.assign(estado, diagnosticoDosProgramas(estado.programas, estado.iniciativas, ppaCorrente(estado)?.id ?? ""));
+    const vigente = estado.ppas.find((p) => p.situacao === "vigente");
+    if (vigente) acrescentarPlano(estado, planoConcluido(estado, vigente));
     estado.usuarios = usuariosIniciais();
     gravar();
 }

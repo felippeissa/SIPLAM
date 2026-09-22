@@ -5,7 +5,7 @@
  * Acréscimo: filtros estruturados por órgão, programa e situação, que o
  * protótipo não tinha — lá tudo dependia de acertar o termo na busca (T5.2.3).
  */
-import { obterEstado } from "../dados/store.js";
+import { obterEstado, noPlano } from "../dados/store.js";
 import { moedaCurta, situacaoEntrega, recursosDaEntrega, STATUS_CURTO } from "../dados/regras.js";
 import { ANOS } from "../dados/seed.js";
 import { acoesDaEntrega } from "../dados/financeiro.js";
@@ -26,7 +26,8 @@ function metaTotal(e) {
 function linhas() {
     const q = busca.trim().toLowerCase();
 
-    return estado.entregas
+    const plano = noPlano(estado);
+    return estado.entregas.filter(plano.entrega)
         .map((e) => {
             const ini = estado.iniciativas.find((i) => i.id === e.iniciativaId);
             const prog = ini ? estado.programas.find((p) => p.id === ini.programaId) : null;
@@ -50,7 +51,7 @@ function linhas() {
 }
 
 function filtros() {
-    const orgaos = [...new Set(estado.iniciativas.map((i) => i.orgao))].sort((a, b) => a.localeCompare(b));
+    const orgaos = [...new Set(estado.iniciativas.filter(noPlano(estado).iniciativa).map((i) => i.orgao))].sort((a, b) => a.localeCompare(b));
     return `
     <div class="app-search">
         <input type="search" id="busca" class="form-control form-control-sm" placeholder="Entrega, órgão, Programa, Iniciativa ou região" value="${esc(busca)}" style="min-width:20rem" />
@@ -62,7 +63,7 @@ function filtros() {
     </select>
     <select class="form-select form-select-sm w-auto" id="programa">
         <option value="todos">Todos os Programas</option>
-        ${estado.programas.map((p) => `<option value="${p.id}">${esc(p.codigo)} — ${esc(p.nome)}</option>`).join("")}
+        ${noPlano(estado).programas.map((p) => `<option value="${p.id}">${esc(p.codigo)} — ${esc(p.nome)}</option>`).join("")}
     </select>
     <select class="form-select form-select-sm w-auto" id="situacao">
         <option value="todas">Todas as situações</option>

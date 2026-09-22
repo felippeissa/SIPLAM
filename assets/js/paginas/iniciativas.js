@@ -2,7 +2,7 @@
  * Iniciativas do órgão — listagem.
  * Porta `iniciativas.tsx`.
  */
-import { obterEstado } from "../dados/store.js";
+import { obterEstado, noPlano } from "../dados/store.js";
 import {
     eixos,
     objetivos,
@@ -28,7 +28,8 @@ let status = "todos";
 function linhas() {
     const q = busca.trim().toLowerCase();
 
-    return estado.iniciativas
+    const plano = noPlano(estado);
+    return estado.iniciativas.filter(plano.iniciativa)
         .filter((i) => i.orgao === orgao)
         .map((i) => {
             const p = estado.programas.find((x) => x.id === i.programaId);
@@ -64,11 +65,11 @@ function render() {
         </div>
         <select class="form-select form-select-sm" id="eixo">
             <option value="todos">Todos os Eixos</option>
-            ${eixos(estado.programas).map((e) => `<option value="${esc(e)}"${e === eixo ? " selected" : ""}>${esc(e)}</option>`).join("")}
+            ${eixos(noPlano(estado).programas).map((e) => `<option value="${esc(e)}"${e === eixo ? " selected" : ""}>${esc(e)}</option>`).join("")}
         </select>
         <select class="form-select form-select-sm" id="objetivo">
             <option value="todos">Todos os Objetivos</option>
-            ${objetivos(estado.programas, eixo).map((o) => `<option value="${esc(o)}"${o === objetivo ? " selected" : ""}>${esc(o)}</option>`).join("")}
+            ${objetivos(noPlano(estado).programas, eixo).map((o) => `<option value="${esc(o)}"${o === objetivo ? " selected" : ""}>${esc(o)}</option>`).join("")}
         </select>
         <select class="form-select form-select-sm" id="status">
             <option value="todos">Todos os status</option>

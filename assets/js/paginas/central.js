@@ -8,7 +8,7 @@
  *    colunas fecharem com o total (T5.1.11);
  *  - "Ver órgãos participantes" também recolhe a linha já aberta (T5.1.12).
  */
-import { obterEstado } from "../dados/store.js";
+import { obterEstado, noPlano } from "../dados/store.js";
 import { entregasDaIniciativa, STATUS_CURTO } from "../dados/regras.js";
 import { montarShell, cabecalhoPagina } from "../shell.js";
 import { chip, statusChip, esc, faixaIndicadores } from "../ui.js";
@@ -17,7 +17,7 @@ const { estado } = montarShell();
 
 let busca = "";
 let filtro = "todos";
-const programasAbertos = new Set([estado.programas[0]?.id]);
+const programasAbertos = new Set([noPlano(estado).programas[0]?.id]);
 const orgaosAbertos = new Set();
 
 /* ---------- dados da tela ---------- */
@@ -25,7 +25,7 @@ const orgaosAbertos = new Set();
 function linhas() {
     const q = busca.trim().toLowerCase();
 
-    return estado.programas
+    return noPlano(estado).programas
         .filter((p) => !q || p.nome.toLowerCase().includes(q) || p.codigo.includes(q))
         .map((p) => {
             const inis = estado.iniciativas.filter((i) => i.programaId === p.id);
