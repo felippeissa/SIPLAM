@@ -10,6 +10,8 @@
  */
 import { estadoInicial, ANOS, REGIOES, ACOES } from "./seed.js";
 import { anosDoPlano } from "./anos.js";
+import { PPAS, DESCRICOES_EIXO, DESCRICOES_OBJETIVO, SUBCAUSAS, CAUSAS, INDICADORES } from "./exemplos.js";
+import { ESTRUTURA_REAL, PROGRAMAS_PPA } from "./programas-ppa.js";
 
 /**
  * Situações do PPA. Não é uma fila reta: a submissão se bifurca.
@@ -103,27 +105,7 @@ export function ppaQueColide(estado, candidato) {
  * Por ora são quatro campos; os demais entram depois de conversar com o usuário.
  */
 function ppasIniciais() {
-    return [
-        {
-            id: "ppa-2024",
-            nome: "Plano Plurianual 2024–2027",
-            primeiroAno: "2024",
-            ultimoAno: "2027",
-            descricao: "Plano em execução; é dele que o ciclo seguinte parte.",
-            situacao: "vigente",
-            processoSei: "202200006000914",
-        },
-        {
-            id: "ppa-2028",
-            nome: "Plano Plurianual 2028–2031",
-            primeiroAno: "2028",
-            ultimoAno: "2031",
-            descricao: "",
-            situacao: "elaboracao",
-            // Número do processo no SEI. Vem de lá, não daqui.
-            processoSei: "202600006001287",
-        },
-    ];
+    return PPAS.map((p) => ({ ...p }));
 }
 
 /**
@@ -268,11 +250,16 @@ function diagnosticoDosProgramas(programas, iniciativas = [], ppaId = "") {
 
         for (const c of p.causas ?? []) {
             const causaId = `ca-${p.id}-${c.id}`;
+            const exemplo = CAUSAS[c.texto] ?? {};
             causas.push({
                 id: causaId,
                 ppaId,
                 nome: c.texto,
-                descricao: "",
+                justificativa: exemplo.justificativa ?? "",
+                evidencia: exemplo.evidencia ?? "",
+                // Resolvido para identificadores depois, quando o catálogo de
+                // subcausas já existir no estado.
+                subcausaNomes: exemplo.subcausas ?? [],
                 iniciativaIds: doPrograma.filter((i) => (i.causas ?? []).includes(c.id)).map((i) => i.id),
             });
             vinculadas.push(causaId);
@@ -283,7 +270,17 @@ function diagnosticoDosProgramas(programas, iniciativas = [], ppaId = "") {
             id: `pb-${p.id}`,
             ppaId,
             nome: p.problema,
-            descricao: (p.consequencias ?? []).join(" · "),
+            // As evidências do Programa caracterizam o problema; as consequências
+            // são o que acontece se ele não for enfrentado. Antes as duas coisas
+            // iam para o mesmo campo, e a distinção se perdia.
+            descricao: (p.evidencias ?? []).join(" "),
+            consequencias: (p.consequencias ?? []).join(" · "),
+            // Resolvido para identificadores depois, quando o catálogo de
+            // grupos populacionais já existir no estado.
+            populacaoNomes: p.populacaoAfetada ? [p.populacaoAfetada] : [],
+            // Liga ao Cadastro de Indicadores pelo nome: os indicadores de
+            // resultado do Programa e os do cadastro são os mesmos do plano.
+            indicadorNomes: (p.indicadores ?? []).map((i) => i.nome),
             causaIds: vinculadas,
         });
     }
@@ -312,7 +309,7 @@ function estruturaDosProgramas(programas, ppaId = "", prefixo = "") {
 
     for (const p of programas) {
         if (p.eixo && !porEixo.has(p.eixo)) {
-            const eixo = { id: `ex${prefixo}-${porEixo.size + 1}`, ppaId, nome: p.eixo, descricao: "" };
+            const eixo = { id: `ex${prefixo}-${porEixo.size + 1}`, ppaId, nome: p.eixo, descricao: DESCRICOES_EIXO[p.eixo] ?? "" };
             porEixo.set(p.eixo, eixo);
             eixos.push(eixo);
         }
@@ -323,7 +320,7 @@ function estruturaDosProgramas(programas, ppaId = "", prefixo = "") {
                 ppaId,
                 eixoId: porEixo.get(p.eixo)?.id ?? "",
                 nome: chave,
-                descricao: "",
+                descricao: DESCRICOES_OBJETIVO[chave] ?? "",
             };
             porObjetivo.set(chave, objetivo);
             objetivos.push(objetivo);
@@ -541,6 +538,8 @@ function carregar() {
     }
     delete base.ppa;
 
+    aplicarPlanoReal(base);
+
     // Estrutura do plano: eixos e objetivos, derivados dos Programas.
     for (const colecao of ["eixos", "objetivos"]) {
         if (!base[colecao]) base[colecao] = [];
@@ -549,17 +548,21 @@ function carregar() {
         Object.assign(base, estruturaDosProgramas(base.programas ?? [], ppaCorrente(base)?.id ?? ""));
     }
 
-    // Coleções de cadastro do diagnóstico.
-    for (const colecao of ["diagnosticos", "problemas", "causas"]) {
+    // Coleções de cadastro do diagnóstico, mais o cadastro de indicadores.
+    // `indicadores` nasce vazio: os indicadores que já existem hoje vivem dentro
+    // do Programa e da Iniciativa, e continuam lá.
+    for (const colecao of ["diagnosticos", "problemas", "causas", "indicadores", "subcausas", "populacoes"]) {
         if (!base[colecao]) base[colecao] = [];
     }
-    // O nível abaixo da causa deixou de existir, e a causa deixou de pendurar no
-    // problema. Estado gravado em qualquer dessas formas é refeito do seed.
+    // A causa deixou de pendurar no problema; estado gravado nessa forma é
+    // refeito do seed. O subproblema, esse não voltou.
     delete base.subproblemas;
-    delete base.subcausas;
     const forma = base.causas.some((c) => c.problemaId !== undefined || c.diagnosticoId !== undefined);
     if (forma || (!base.diagnosticos.length && !base.problemas.length && !base.causas.length)) {
-        Object.assign(base, diagnosticoDosProgramas(base.programas ?? [], base.iniciativas ?? [], ppaCorrente(base)?.id ?? ""));
+        const derivado = diagnosticoDosProgramas(base.programas ?? [], base.iniciativas ?? [], ppaCorrente(base)?.id ?? "");
+        // As causas são refeitas, mas o catálogo de subcausas é cadastro à parte
+        // e não se desfaz com elas.
+        Object.assign(base, derivado);
     }
 
     // O plano vigente nasce completo, com o conteúdo do ciclo seguinte. Só é
@@ -567,6 +570,25 @@ function carregar() {
     const vigente = base.ppas.find((p) => p.situacao === "vigente");
     if (vigente && !base.programas.some((p) => p.ppaId === vigente.id)) {
         acrescentarPlano(base, planoConcluido(base, vigente));
+    }
+
+    completarCadastros(base);
+
+    // A subcausa saiu de dentro da causa e virou cadastro do sistema. Estado
+    // gravado com elas aninhadas é convertido: o texto vai para a coleção e a
+    // causa fica com os identificadores.
+    for (const c of base.causas) {
+        if (!Array.isArray(c.subcausas)) continue;
+        c.subcausaIds = c.subcausas.map((s) => {
+            const igual = base.subcausas.find(
+                (x) => x.nome.toLocaleLowerCase("pt-BR") === (s.nome ?? "").toLocaleLowerCase("pt-BR")
+            );
+            if (igual) return igual.id;
+            const novo = { ...s, id: s.id || `sc-${uid()}`, ppaId: c.ppaId ?? "" };
+            base.subcausas.push(novo);
+            return novo.id;
+        });
+        delete c.subcausas;
     }
 
     // Estado gravado antes de existir o cadastro de usuários.
@@ -586,6 +608,126 @@ function carregar() {
         if (ppa.processoSei === undefined) ppa.processoSei = "";
     }
     return base;
+}
+
+/**
+ * Põe o conteúdo do PPA 2024–2027 de Goiás no lugar do conteúdo genérico.
+ *
+ * Os dez Programas que o protótipo já tinha carregam Iniciativas e Entregas, e
+ * por isso não são substituídos: ganham o código e o eixo que têm no plano de
+ * verdade. Os demais Programas do plano entram ao lado deles, ainda sem
+ * contribuição de órgão — que é a situação real de um ciclo em elaboração.
+ *
+ * Roda antes de derivar eixos, objetivos e diagnóstico, porque é dos Programas
+ * que os três saem.
+ */
+function aplicarPlanoReal(base) {
+    for (const p of base.programas ?? []) {
+        const real = ESTRUTURA_REAL[p.id];
+        if (!real) continue;
+        p.codigo = real.codigo;
+        p.eixo = real.eixo;
+        p.objetivoEstrategico = real.objetivo;
+    }
+
+    for (const novo of PROGRAMAS_PPA) {
+        if (base.programas.some((p) => p.id === novo.id)) continue;
+        base.programas.push({ ...structuredClone(novo), aptidao: "apto", disponibilizacao: "disponivel" });
+    }
+}
+
+/**
+ * O que os cadastros novos precisam para não nascerem vazios.
+ *
+ * Roda na carga e no reinício: tela vazia não se avalia, e quem abre o
+ * protótipo pela primeira vez precisa ver o cadastro cheio para dizer se o
+ * campo está no lugar certo. Só preenche o que estiver vazio — quem apagou,
+ * apagou.
+ */
+function completarCadastros(base) {
+    const ppaId = ppaCorrente(base)?.id ?? "";
+
+    if (!base.subcausas?.length) {
+        base.subcausas = SUBCAUSAS.map(([nome, justificativa, evidencia], n) => ({
+            id: `sc-${n + 1}`,
+            ppaId,
+            nome,
+            justificativa,
+            evidencia,
+            criadoEm: hoje(),
+        }));
+    }
+
+    if (!base.indicadores?.length) {
+        // A ordem dos campos espelha a do formulário, para conferir lado a lado.
+        base.indicadores = INDICADORES.map(
+            (
+                [nome, descricao, formula, polaridade, periodicidade, unidade, fonte, site, abrangencia, linhaBase, dataLinhaBase, orgaos, situacao],
+                n
+            ) => ({
+                id: `in-${String(n + 1).padStart(3, "0")}`,
+                ppaId,
+                nome,
+                descricao,
+                formula,
+                polaridade,
+                periodicidade,
+                unidade,
+                fonte,
+                site,
+                abrangencia,
+                linhaBase,
+                dataLinhaBase,
+                orgaos,
+                situacao,
+                responsavelTecnico: "Armando Melo e Santos",
+                criadoEm: hoje(),
+            })
+        );
+    }
+
+    // As causas guardam nomes de subcausa até aqui; agora viram vínculo por
+    // identidade, que é o que o cadastro usa.
+    for (const c of base.causas ?? []) {
+        if (!Array.isArray(c.subcausaNomes)) continue;
+        c.subcausaIds = c.subcausaNomes.map((nome) => base.subcausas.find((s) => s.nome === nome)?.id).filter(Boolean);
+        delete c.subcausaNomes;
+    }
+
+    // O mesmo para os indicadores do problema.
+    for (const pb of base.problemas ?? []) {
+        if (!Array.isArray(pb.indicadorNomes)) continue;
+        pb.indicadorIds = pb.indicadorNomes
+            .map((nome) => base.indicadores.find((i) => i.nome === nome)?.id)
+            .filter(Boolean);
+        delete pb.indicadorNomes;
+    }
+
+    /**
+     * Grupos populacionais: catálogo do sistema, como as subcausas.
+     *
+     * O mesmo grupo é atingido por mais de um problema — "famílias em
+     * insegurança alimentar grave" aparece na alimentação e na renda. Guardado
+     * dentro de cada problema, seria redigitado a cada vez, com outra grafia.
+     */
+    const grupo = (nome) => {
+        const achado = base.populacoes.find((g) => g.nome.toLocaleLowerCase("pt-BR") === nome.toLocaleLowerCase("pt-BR"));
+        if (achado) return achado.id;
+        const novo = { id: `pop-${base.populacoes.length + 1}`, ppaId, nome, estimativa: "", criadoEm: hoje() };
+        base.populacoes.push(novo);
+        return novo.id;
+    };
+
+    for (const pb of base.problemas ?? []) {
+        // Estado gravado quando a população afetada era lista dentro do problema.
+        if (Array.isArray(pb.populacaoAfetada) && pb.populacaoAfetada.length && !Array.isArray(pb.populacaoNomes)) {
+            pb.populacaoNomes = pb.populacaoAfetada.map((g) => g.grupo).filter(Boolean);
+        }
+        if (!Array.isArray(pb.populacaoNomes)) continue;
+        pb.populacaoIds = pb.populacaoNomes.filter(Boolean).map(grupo);
+        delete pb.populacaoNomes;
+        delete pb.populacaoAfetada;
+    }
 }
 
 function gravar() {
@@ -642,11 +784,16 @@ export function noPlano(estado) {
 export function reiniciar() {
     estado = estadoInicial();
     estado.ppas = ppasIniciais();
+    aplicarPlanoReal(estado);
     Object.assign(estado, estruturaDosProgramas(estado.programas, ppaCorrente(estado)?.id ?? ""));
     Object.assign(estado, diagnosticoDosProgramas(estado.programas, estado.iniciativas, ppaCorrente(estado)?.id ?? ""));
     const vigente = estado.ppas.find((p) => p.situacao === "vigente");
     if (vigente) acrescentarPlano(estado, planoConcluido(estado, vigente));
     estado.usuarios = usuariosIniciais();
+    estado.subcausas = [];
+    estado.indicadores = [];
+    estado.populacoes = [];
+    completarCadastros(estado);
     gravar();
 }
 

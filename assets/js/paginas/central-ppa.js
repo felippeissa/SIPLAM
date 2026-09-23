@@ -15,7 +15,7 @@ const { estado } = montarShell();
  * enxergam o plano — precisam dele para se situar — mas não o criam nem o
  * alteram: abrir o ciclo é ato da administração do plano.
  */
-const leitura = somenteLeitura() || perfilAtual() !== "admin-central";
+const leitura = somenteLeitura() || (!!perfilAtual() && perfilAtual() !== "admin-central");
 
 let busca = "";
 
@@ -78,12 +78,23 @@ function render() {
                         <td class="codigo">${esc(p.primeiroAno)}–${esc(p.ultimoAno)}</td>
                         <td class="codigo fs-13">${p.processoSei ? esc(p.processoSei) : '<span class="text-muted">—</span>'}</td>
                         <td>${chip(situacaoPpa(p.situacao).rotulo, situacaoPpa(p.situacao).tom)}</td>
-                        <td class="fs-13 text-muted">${esc(p.descricao || "—")}</td>
+                        <td class="fs-13 text-muted">
+                            <!-- A descrição do plano é um texto longo; na tabela
+                                 mostra-se o começo, e o resto fica na tela do plano. -->
+                            <span class="d-block" style="max-height:3.6em; overflow:hidden">${esc(p.descricao || "—")}</span>
+                        </td>
                         <td>
+                            ${(() => {
+                                // Só um plano em elaboração se edita; nos demais o
+                                // botão diz "Ver", para não prometer o que a tela
+                                // não faz.
+                                const podeEditar = !leitura && situacaoPpa(p.situacao).editavel;
+                                return `
                             <a href="${url(`central-ppa/editar.html?id=${encodeURIComponent(p.id)}`)}"
-                               class="btn btn-sm ${leitura ? "btn-light" : "btn-outline-primary"}">
-                                ${leitura ? "Ver" : "Editar"}
-                            </a>
+                               class="btn btn-sm ${podeEditar ? "btn-outline-primary" : "btn-light"}">
+                                ${podeEditar ? "Editar" : "Ver"}
+                            </a>`;
+                            })()}
                         </td>
                     </tr>`
                               )

@@ -11,12 +11,50 @@
 import { obterEstado, addPrograma, updPrograma } from "../dados/store.js";
 import { DISPONIBILIZACAO_LABEL } from "../dados/regras.js";
 import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
+import { catalogo } from "../catalogo.js";
 import { esc } from "../ui.js";
 import { confirmarExclusao } from "../confirmar.js";
 import { avisar } from "../toast.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
 
 const uid = () => Math.random().toString(36).slice(2, 9);
+
+/**
+ * Eixo e objetivo estratégico por catálogo, e não por lista suspensa.
+ *
+ * Quem cadastra um Programa costuma estar montando o plano, e o eixo ou o
+ * objetivo de que ele precisa às vezes ainda não existe. Com a lista suspensa,
+ * era preciso abandonar o formulário, ir ao outro cadastro e voltar — perdendo
+ * o que já estava digitado aqui.
+ *
+ * Os dois são vínculo de um só: um Programa pertence a um eixo e a um objetivo.
+ */
+const catalogoEixo = catalogo({
+    colecao: "eixos",
+    singular: "Eixo",
+    plural: "Eixo",
+    artigo: "o",
+    prefixo: "peix",
+    unico: true,
+    campos: [{ id: "descricao", rotulo: "Descrição", ajuda: "O que este eixo reúne" }],
+    usos: (id, estado) => (estado.objetivos ?? []).filter((o) => o.eixoId === id).length,
+});
+
+const catalogoObjetivo = catalogo({
+    colecao: "objetivos",
+    singular: "Objetivo estratégico",
+    plural: "Objetivo estratégico",
+    artigo: "o",
+    prefixo: "pobj",
+    unico: true,
+    ajuda: "O objetivo carrega o eixo dele: escolher aqui define os dois.",
+    campos: [{ id: "descricao", rotulo: "Descrição", ajuda: "O que este objetivo persegue" }],
+    detalhe: (o, estado) => {
+        const eixo = (estado.eixos ?? []).find((e) => e.id === o.eixoId);
+        return eixo ? `Eixo: ${eixo.nome}` : "Sem eixo";
+    },
+    usos: (id, estado) => (estado.programas ?? []).filter((pr) => pr.objetivoId === id).length,
+});
 
 export function montarFormularioPrograma({ novo }) {
     const { estado } = montarShell();
@@ -71,10 +109,6 @@ export function montarFormularioPrograma({ novo }) {
         return falta;
     }
 
-    /** Os objetivos de um eixo. Sem eixo escolhido, todos ficam disponíveis. */
-    const objetivosDoEixo = (eixoId) =>
-        eixoId ? (estado.objetivos ?? []).filter((o) => o.eixoId === eixoId) : (estado.objetivos ?? []);
-
     /**
      * O vínculo estratégico, gravado de duas formas. Os ids são o vínculo de
      * verdade; o texto continua porque as telas de análise filtram por nome.
@@ -102,18 +136,6 @@ export function montarFormularioPrograma({ novo }) {
             <label class="form-label" for="${campo}">${rotulo}${obrigatorio ? ' <span class="text-danger">*</span>' : ""}</label>
             ${entrada}
             ${campoErro(campo)}
-            ${ajuda ? `<div class="form-text fs-12">${ajuda}</div>` : ""}
-        </div>`;
-    }
-
-    function campoSelecao(campo, rotulo, escolhido, opcoes, { vazio = "Não definido", ajuda = "" } = {}) {
-        return `
-        <div class="mb-3">
-            <label class="form-label" for="${campo}">${rotulo}</label>
-            <select class="form-select" id="${campo}" ${leitura ? "disabled" : ""}>
-                <option value="">${esc(vazio)}</option>
-                ${opcoes.map((o) => `<option value="${o.id}"${o.id === escolhido ? " selected" : ""}>${esc(o.nome)}</option>`).join("")}
-            </select>
             ${ajuda ? `<div class="form-text fs-12">${ajuda}</div>` : ""}
         </div>`;
     }
@@ -216,7 +238,7 @@ export function montarFormularioPrograma({ novo }) {
         Object.assign(edicao, {
             codigo: v("f-codigo").trim(),
             nome: v("f-nome").trim(),
-            ...vinculoEstrategico(v("f-eixo"), v("f-objetivoEstrategico")),
+            ...vinculoEstrategico(catalogoEixo.ler()[0] ?? "", catalogoObjetivo.ler()[0] ?? ""),
             descricao: v("f-descricao").trim(),
             problema: v("f-problema").trim(),
             populacaoAfetada: v("f-populacaoAfetada").trim(),
@@ -249,11 +271,8 @@ export function montarFormularioPrograma({ novo }) {
             <div class="col-md-10">${campoTexto("f-nome", "Nome do Programa", edicao.nome, { obrigatorio: true })}</div>
         </div>
         <div class="row g-3">
-            <div class="col-md-6">${campoSelecao("f-eixo", "Eixo", edicao.eixoId, estado.eixos ?? [], { vazio: "Sem eixo" })}</div>
-            <div class="col-md-6">${campoSelecao("f-objetivoEstrategico", "Objetivo Estratégico", edicao.objetivoId, objetivosDoEixo(edicao.eixoId), {
-                vazio: "Sem objetivo",
-                ajuda: "Só os objetivos do eixo escolhido.",
-            })}</div>
+            <div class="col-md-6">${catalogoEixo.html(edicao.eixoId ? [edicao.eixoId] : [])}</div>
+            <div class="col-md-6">${catalogoObjetivo.html(edicao.objetivoId ? [edicao.objetivoId] : [])}</div>
         </div>
         ${campoTexto("f-descricao", "Descrição do Programa", edicao.descricao, { linhas: 2 })}
 
@@ -341,14 +360,24 @@ export function montarFormularioPrograma({ novo }) {
             }
         </div>`;
 
-        limparAoDigitar(document.getElementById("formulario"));
+        const escopo = document.getElementById("formulario");
+        limparAoDigitar(escopo);
+        // Religados a cada desenho: o campo de busca é recriado junto com o
+        // corpo do formulário, e os ouvintes dele vão embora com o antigo.
+        catalogoEixo.ligar(escopo);
+        catalogoObjetivo.ligar(escopo);
     }
 
     /** Redesenha só o formulário: acrescentar uma causa não é recarregar a tela. */
     function redesenhar() {
         document.getElementById("formulario").innerHTML = corpo();
         document.getElementById("lateral").innerHTML = lateral();
-        limparAoDigitar(document.getElementById("formulario"));
+        const escopo = document.getElementById("formulario");
+        limparAoDigitar(escopo);
+        // Religados a cada desenho: o campo de busca é recriado junto com o
+        // corpo do formulário, e os ouvintes dele vão embora com o antigo.
+        catalogoEixo.ligar(escopo);
+        catalogoObjetivo.ligar(escopo);
     }
 
     /* ---------- eventos ---------- */
@@ -422,19 +451,6 @@ export function montarFormularioPrograma({ novo }) {
         else addPrograma(edicao);
         avisar(`Programa ${novo ? "criado" : "editado"} com sucesso.`);
         window.location.href = voltar;
-    });
-
-    // Trocar o eixo troca os objetivos disponíveis; um objetivo de outro eixo
-    // deixa de valer, então a escolha anterior é descartada.
-    document.addEventListener("change", (e) => {
-        if (e.target.id !== "f-eixo") return;
-        const alvo = document.getElementById("f-objetivoEstrategico");
-        if (!alvo) return;
-        alvo.innerHTML =
-            '<option value="">Sem objetivo</option>' +
-            objetivosDoEixo(e.target.value)
-                .map((o) => `<option value="${o.id}">${esc(o.nome)}</option>`)
-                .join("");
     });
 
     render();
