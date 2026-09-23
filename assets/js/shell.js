@@ -34,10 +34,14 @@ const MENU_CENTRAL = [
     { href: "central-ppa.html", rotulo: "PPA", icone: "ti-calendar-stats" },
     { href: "central-eixo.html", rotulo: "Eixos", icone: "ti-layout-columns" },
     { href: "central-objetivo.html", rotulo: "Objetivos Estratégicos", icone: "ti-target-arrow" },
-    { href: "central-programas.html", rotulo: "Programa", icone: "ti-layout-grid" },
-    { href: "central-diagnostico.html", rotulo: "Diagnóstico", icone: "ti-stethoscope" },
-    { href: "central-problema.html", rotulo: "Problemas", icone: "ti-alert-triangle" },
     { href: "central-causa.html", rotulo: "Causas", icone: "ti-binary-tree" },
+    { href: "central-subcausa.html", rotulo: "Subcausas", icone: "ti-git-branch" },
+    { href: "central-indicador.html", rotulo: "Indicadores", icone: "ti-chart-dots" },
+    { href: "central-problema.html", rotulo: "Problemas", icone: "ti-alert-triangle" },
+    { href: "central-programas.html", rotulo: "Programa", icone: "ti-layout-grid" },
+    { grupo: "Cadastro Estratégico 2" },
+    { href: "central-cadastro.html", rotulo: "Cadastro", icone: "ti-sitemap" },
+    { href: "central-cadastro3.html", rotulo: "Cadastro 3", icone: "ti-list-numbers" },
     { grupo: "Relatórios" },
     { href: "central-relatorio-lei.html", rotulo: "Relatório final da lei do PPA", icone: "ti-file-text" },
     { href: "central-relatorio-finalisticas.html", rotulo: "Relatório consolidado de finalísticas", icone: "ti-report" },
@@ -166,40 +170,29 @@ function inicio(visao) {
  * Tudo que se cadastra nasce vinculado a um PPA, e o sistema atende um por vez.
  * Sem isso à vista, quem cadastra não tem como saber em qual ciclo está
  * mexendo — e quando houver dois planos, a pergunta fica sem resposta na tela.
+ *
+ * Tamanho normal, não "sm": a busca ao lado é um form-control de altura cheia, e
+ * um select mais baixo desalinharia a linha do cabeçalho.
  */
 function chipDoPlano(estado) {
     const ppa = ppaCorrente(estado);
     if (!ppa) return "";
 
-    const outros = [...(estado.ppas ?? [])].sort((a, b) => Number(b.primeiroAno) - Number(a.primeiroAno));
+    const planos = [...(estado.ppas ?? [])].sort((a, b) => Number(b.primeiroAno) - Number(a.primeiroAno));
 
     return `
-    <div class="dropdown ms-2 d-flex align-items-center">
-        <button class="chip chip-neutro border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false"
-                title="Plano em que este cadastro está sendo feito">
-            <i class="ti ti-calendar-stats me-1"></i>${ppa.primeiroAno}–${ppa.ultimoAno}
-            <i class="ti ti-chevron-down ms-1"></i>
-        </button>
-        <ul class="dropdown-menu" style="min-width:16rem">
-            <li><h6 class="dropdown-header">Plano em que você está trabalhando</h6></li>
-            ${outros
-                .map(
-                    (p) => `
-            <li>
-                <button class="dropdown-item d-flex align-items-start gap-2 ${p.id === ppa.id ? "active" : ""}" data-ppa="${p.id}">
-                    <i class="ti ${p.id === ppa.id ? "ti-circle-check" : "ti-circle"} mt-1"></i>
-                    <span>
-                        <span class="d-block">${esc(p.nome)}</span>
-                        <span class="fs-12 ${p.id === ppa.id ? "" : "text-muted"}">${esc(situacaoPpa(p.situacao).rotulo)}</span>
-                    </span>
-                </button>
-            </li>`
-                )
-                .join("")}
-            <li><hr class="dropdown-divider" /></li>
-            <li><a class="dropdown-item fs-13" href="${url("central-ppa.html")}">Ver todos os planos</a></li>
-        </ul>
-    </div>`;
+    <select class="form-select w-auto ms-2" id="seletor-ppa"
+            aria-label="Plano em que você está trabalhando"
+            title="Plano em que você está trabalhando">
+        ${planos
+            .map(
+                (p) => `
+        <option value="${p.id}"${p.id === ppa.id ? " selected" : ""}>
+            ${esc(p.primeiroAno)}–${esc(p.ultimoAno)} · ${esc(situacaoPpa(p.situacao).rotulo)}
+        </option>`
+            )
+            .join("")}
+    </select>`;
 }
 
 /**
@@ -208,10 +201,9 @@ function chipDoPlano(estado) {
  * e meia tela atualizada seria pior que esperar um instante.
  */
 function instalarTrocaDePlano() {
-    document.addEventListener("click", (e) => {
-        const escolha = e.target.closest("[data-ppa]");
-        if (!escolha) return;
-        selecionarPpa(escolha.dataset.ppa);
+    document.addEventListener("change", (e) => {
+        if (e.target.id !== "seletor-ppa") return;
+        selecionarPpa(e.target.value);
         window.location.reload();
     });
 }
@@ -265,11 +257,13 @@ function topbar(estado, visao) {
                 <kbd class="app-search-atalho d-none d-xl-block">Ctrl K</kbd>
             </div>
 
-            <!-- Não há comutador de visão: a visão é o perfil, escolhido no acesso. -->
+            <!--
+                Só o plano fica aqui. Perfil e órgão saíram: não se escolhem e não
+                mudam durante o uso, então repeti-los em toda tela gastava o lugar
+                mais visível do sistema com o que ninguém consulta. Continuam no
+                menu do usuário, que é onde se olha para conferir quem se é.
+            -->
             <div class="topbar-item d-none d-md-flex ms-1 align-items-center">
-                <span class="chip chip-info">${quem.papel}</span>
-                ${quem.orgao ? `<span class="fs-12 text-muted ms-2">${quem.orgao}</span>` : ""}
-                ${somenteLeitura() ? `<span class="chip chip-neutro ms-2" title="Este perfil acompanha o plano, sem operá-lo"><i class="ti ti-eye me-1"></i>Somente leitura</span>` : ""}
                 ${chipDoPlano(estado)}
             </div>
         </div>
@@ -296,7 +290,10 @@ function topbar(estado, visao) {
                             <i class="ti ti-user"></i>
                         </span>
                         <div class="d-lg-flex align-items-center gap-1 d-none">
-                            <h5 class="my-0 fs-13">${quem.nome}</h5>
+                            <span class="d-block text-start lh-sm">
+                                <h5 class="my-0 fs-13">${quem.nome}</h5>
+                                <span class="fs-11 text-muted">${quem.papel}</span>
+                            </span>
                             <i class="ti ti-chevron-down align-middle"></i>
                         </div>
                     </a>
@@ -530,6 +527,10 @@ export function montarShell() {
  * não lista — as consultas transversais e as fichas de um registro.
  */
 const TRILHAS = {
+    // Fora do menu por ora: o Diagnóstico sai da vez e a tela será refeita
+    // adiante. O endereço continua respondendo, com trilha, para quem tiver o
+    // link guardado.
+    "central-diagnostico.html": { rotulo: "Diagnóstico" },
     "central-entregas.html": { rotulo: "Entregas do PPA" },
     "central-financeira.html": { rotulo: "Análise Financeira" },
     "central-ipofs.html": { rotulo: "IPOFs" },

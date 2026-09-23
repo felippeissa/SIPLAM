@@ -46,9 +46,10 @@ Não leia `prototipo-lovable/` inteiro nem `inspinia/` inteiro. São referência
 - O diagnóstico não é uma árvore: cada nível **aponta** para o seguinte, de muitos para muitos.
   `Diagnóstico → Problemas → Causas → Iniciativas`. Assim uma mesma causa explica mais de um
   problema e é enfrentada por mais de uma Iniciativa.
-- A **Subcausa** é exceção, e a única: detalha **uma** causa, e é guardada dentro dela — nome,
-  justificativa e evidência. Solta na base não haveria de onde alcançá-la. Foi retirada do
-  protótipo em 18/09/2026 e repedida em 22/09/2026.
+- A **Subcausa** é cadastro do sistema, com nome, justificativa e evidência, e a Causa aponta
+  para ela — a mesma subcausa costuma explicar mais de uma causa. A Causa também tem
+  justificativa e evidência próprias. Retirada do protótipo em 18/09/2026, repedida em
+  22/09/2026, e promovida a cadastro em 23/09/2026.
 - **O ciclo não tem tamanho fixo.** Os anos vêm do PPA criado, e podem ser menos de quatro — se um
   governador sai e o vice assume, o plano pode cobrir dois. Toda tabela de meta precisa funcionar
   com um número variável de colunas.
@@ -153,6 +154,23 @@ O plano não é refeito quando entra um governo novo: a base permanece. O govern
 alterações no plano vigente** — mudanças pontuais, direcionadas. Elaborar e alterar são, portanto,
 dois fluxos distintos, e o segundo ainda não existe no modelo: mexer num PPA **já aprovado**.
 Enquanto não for desenhado, nenhuma tela deve sugerir que um plano fechado é editável.
+
+## Vincular a um cadastro: buscar o que existe, criar o que falta
+
+Decidido em 23/09/2026 e válido para **todo** vínculo com um cadastro do sistema, não só para as
+subcausas da Causa. O padrão é um campo de busca em cima de uma tabela:
+
+1. A pessoa digita e vê o que já está cadastrado, com os campos que identificam cada registro.
+2. Escolher acrescenta uma linha à tabela.
+3. O que ela digitou e não existe vira oferta — “Cadastrar *X*” na própria lista, e um botão ao
+   lado do campo. Os dois abrem uma janela **já com o texto digitado no nome**; ela completa o
+   resto, salva, e o registro entra na tabela sem que o formulário de trás se perca.
+
+Isso substitui as duas formas anteriores, que falhavam de lados opostos: o `select` do que já
+existe obrigava a abandonar o formulário para cadastrar o que faltava, e o campo livre criava uma
+duplicata a cada grafia diferente.
+
+Está em `assets/js/catalogo.js`, configurável por coleção e por campos. Não escreva outro.
 
 ## Convenções
 

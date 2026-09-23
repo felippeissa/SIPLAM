@@ -29,7 +29,9 @@ export function montarFormularioPpa({ novo }) {
 
     // O cadastro do PPA é exclusivo do Administrador central: abrir um ciclo é
     // ato da administração do plano, não de quem o preenche.
-    const leitura = somenteLeitura() || perfilAtual() !== "admin-central";
+    // Sem perfil na sessão — tela aberta direto pelo endereço, como no protótipo —
+    // não há a quem restringir: trancar tudo faria o sistema parecer quebrado.
+    const doPerfil = somenteLeitura() || (!!perfilAtual() && perfilAtual() !== "admin-central");
     const voltar = url("central-ppa.html");
 
     const id = new URLSearchParams(location.search).get("id");
@@ -47,6 +49,18 @@ export function montarFormularioPpa({ novo }) {
     }
 
     const p = novo ? ppaVazio() : structuredClone(original);
+
+    /**
+     * Um plano só se edita enquanto está em elaboração.
+     *
+     * Submetido, ele virou peça formal: mudar o nome de um plano que já foi
+     * encaminhado para aprovação é mudar o que foi encaminhado. Daí para a frente
+     * a tela mostra, e não edita — alterar plano aprovado é outro fluxo, que o
+     * sistema ainda não tem.
+     */
+    const situacao = situacaoPpa(p.situacao);
+    const fechado = !novo && !situacao.editavel;
+    const leitura = doPerfil || fechado;
 
     /** Os anos oferecidos. Só o ano importa: o plano vai de 1º/01 a 31/12. */
     function anosPossiveis() {
@@ -108,7 +122,7 @@ export function montarFormularioPpa({ novo }) {
                             </div>
                             <div class="col-12">
                                 <label class="form-label" for="f-descricao">Descrição</label>
-                                <textarea class="form-control" id="f-descricao" rows="4" ${leitura ? "disabled" : ""}>${esc(p.descricao ?? "")}</textarea>
+                                <textarea class="form-control" id="f-descricao" rows="12" ${leitura ? "disabled" : ""}>${esc(p.descricao ?? "")}</textarea>
                             </div>
                         </div>
                     </div>
@@ -130,6 +144,15 @@ export function montarFormularioPpa({ novo }) {
                             <div class="rotulo-secao mb-1">Ano de elaboração</div>
                             <p class="fs-13 mb-0">${anoDeElaboracao(p)}</p>
                         </div>
+                        ${
+                            fechado
+                                ? `<div class="alert alert-light border py-2 px-3 fs-12 mb-3">
+                            <i class="ti ti-lock me-1"></i>
+                            Só um plano <strong>em elaboração</strong> se edita. Este está
+                            ${esc(situacao.rotulo.toLowerCase())}, então a tela mostra e não altera.
+                        </div>`
+                                : ""
+                        }
                         ${
                             novo
                                 ? `<p class="fs-12 text-muted mb-0">

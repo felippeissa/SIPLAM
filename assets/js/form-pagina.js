@@ -63,6 +63,10 @@ export function montarFormulario(cfg) {
         );
 
     const usos = novo ? 0 : dependentes(edicao);
+    // O campo do nome chama-se como o cadastro — "Eixo", "Causa" — porque ali o
+    // nome *é* o registro. Onde o cadastro tem muitos campos, e o nome é só mais
+    // um deles, a configuração troca o rótulo por "Nome".
+    const rotuloNome = cfg.rotuloNome ?? cfg.singular;
     const fim = cfg.genero === "f" ? "a" : "o";
     const artigo = cfg.genero === "f" ? "a" : "o";
 
@@ -71,9 +75,10 @@ export function montarFormulario(cfg) {
     function camposPrincipais() {
         return `
         <div class="row">
+            ${cfg.antes ? `<div class="col-12">${cfg.antes(edicao, estado)}</div>` : ""}
             <div class="col-12">
                 <div class="mb-3">
-                    <label class="form-label" for="f-nome">${esc(cfg.singular)} <span class="text-danger">*</span></label>
+                    <label class="form-label" for="f-nome">${esc(rotuloNome)} <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="f-nome" value="${esc(edicao.nome ?? "")}"
                            placeholder="${esc(cfg.exemplo ?? "")}" ${leitura ? "disabled" : ""} />
                     ${campoErro("f-nome")}
@@ -102,10 +107,16 @@ export function montarFormulario(cfg) {
 
             ${cfg.extra ? `<div class="col-12"><div class="mb-3">${cfg.extra.html(edicao, estado)}</div></div>` : ""}
 
-            <div class="col-12">
+            ${
+                // Alguns cadastros põem a descrição no meio do formulário, e não no
+                // fim: quando ela explica o registro, vem logo após o nome.
+                cfg.semDescricao
+                    ? ""
+                    : `<div class="col-12">
                 <label class="form-label" for="f-descricao">Descrição</label>
                 <textarea class="form-control" id="f-descricao" rows="4" ${leitura ? "disabled" : ""}>${esc(edicao.descricao ?? "")}</textarea>
-            </div>
+            </div>`
+            }
         </div>`;
     }
 
@@ -114,6 +125,15 @@ export function montarFormulario(cfg) {
         const linhas = [];
 
         if (cfg.ajuda) linhas.push(`<p class="fs-13 mb-3">${cfg.ajuda}</p>`);
+
+        // O que o sistema preenche sozinho e a pessoa só confere.
+        for (const linha of cfg.apoio?.(edicao, estado) ?? []) {
+            linhas.push(`
+            <div class="mb-3">
+                <div class="rotulo-secao mb-1">${esc(linha.rotulo)}</div>
+                <p class="fs-13 mb-0">${esc(linha.valor || "\u2014")}</p>
+            </div>`);
+        }
 
         if (!novo) {
             if (cfg.codigo) {
@@ -132,12 +152,23 @@ export function montarFormulario(cfg) {
             }
             if (cfg.filhos?.length) {
                 const filho = cfg.filhos[0];
+                // Nomear quem depende, e não só contar: "1 registro depende deste"
+                // obriga a pessoa a sair da tela para descobrir qual é.
+                const quais = (estado[filho.colecao] ?? []).filter((f) => f[filho.campo] === edicao.id);
                 linhas.push(`
                 <div class="mb-0">
                     <div class="rotulo-secao mb-1">${esc(filho.rotulo)}</div>
-                    <p class="fs-13 mb-0">
-                        ${usos === 0 ? "Nenhum registro depende deste." : `${usos} ${esc(filho.rotulo.toLowerCase())} ${usos === 1 ? "depende" : "dependem"} deste.`}
-                    </p>
+                    ${
+                        quais.length === 0
+                            ? `<p class="fs-13 mb-0">Nenhum registro depende deste.</p>`
+                            : `<ul class="list-unstyled fs-13 mb-0">
+                        ${quais
+                            .slice(0, 8)
+                            .map((f) => `<li class="mb-1"><i class="ti ti-corner-down-right me-1 text-muted"></i>${esc(f.nome)}</li>`)
+                            .join("")}
+                        ${quais.length > 8 ? `<li class="text-muted">e mais ${quais.length - 8}.</li>` : ""}
+                    </ul>`
+                    }
                 </div>`);
             }
         }
@@ -217,7 +248,10 @@ export function montarFormulario(cfg) {
                 {
                     campo: "f-nome",
                     valido: !!dados.nome,
-                    mensagem: `Informe ${artigo} ${cfg.singular.toLowerCase()}.`,
+                    mensagem:
+                        rotuloNome === cfg.singular
+                            ? `Informe ${artigo} ${cfg.singular.toLowerCase()}.`
+                            : `Informe o ${rotuloNome.toLowerCase()} do ${cfg.singular.toLowerCase()}.`,
                 },
                 {
                     campo: "f-pai",
@@ -242,6 +276,8 @@ export function montarFormulario(cfg) {
                 confirmar: "Excluir",
             });
             if (!confirmou) return;
+            // O cadastro pode ter vínculos a desfazer antes de sumir.
+            cfg.aoExcluir?.(edicao, estado);
             removeItem(cfg.colecao, edicao.id);
             avisar(`${cfg.singular} excluíd${fim} com sucesso.`);
             window.location.href = voltar;
