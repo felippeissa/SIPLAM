@@ -104,7 +104,7 @@ function render() {
     ])}
 
     <div class="row g-3">
-        <div class="col-xl-8">
+        <div class="col-12">
             ${secao(
                 "Dados da Iniciativa",
                 `
@@ -193,7 +193,7 @@ function render() {
             ${secao("Previsão financeira da Iniciativa", quadroFinanceiro(linhasDaIniciativa(estado, ini.id), { dimensao: "fonte", detalhe: "ipof", curto: false }))}
         </div>
 
-        <div class="col-xl-4">
+        <div class="col-12">
             ${secao(
                 `Pendências <span class="ms-1">${chipsPendencias(resumo)}</span>`,
                 listaPendencias(pendencias)

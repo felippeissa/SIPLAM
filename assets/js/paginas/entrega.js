@@ -112,7 +112,7 @@ function render() {
     ])}
 
     <div class="row g-3">
-        <div class="col-xl-8">
+        <div class="col-12">
             ${secao(
                 "Informações da Entrega",
                 `
@@ -314,7 +314,7 @@ function render() {
             )}
         </div>
 
-        <div class="col-xl-4">
+        <div class="col-12">
             ${secao(
                 `Pendências desta Entrega <span class="ms-1">${chipsPendencias(resumo)}</span>`,
                 listaPendencias(pendencias, { linkEntrega: false })

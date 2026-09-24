@@ -395,172 +395,87 @@
     color: #9ba6b7;
 }
 
-/* ---------- Cadastro Estratégico 2: a montagem do plano em uma tela ---------- */
-/* Classes próprias desta tela. Nenhum seletor de outra tela é tocado aqui. */
+/* ---------- Barra de filtros das listagens ---------- */
+/* Componente do Inspinia: a barra é o cabeçalho do card, cada campo vem dentro
+   de um .app-search com ícone, e o campo de escolha múltipla é o select do
+   Choices. Aqui só o que o template não prevê: o campo ocupando a coluna
+   inteira e o ícone convivendo com o Choices. */
 
-.arvore {
-    max-height: calc(100vh - 20rem);
-    overflow: auto;
-}
-.arv-ramo { margin-bottom: 1px; }
-.arv-filhos {
-    margin-left: 0.85rem;
-    padding-left: 0.5rem;
-    border-left: 1px solid var(--siplam-aninhado-traco);
-}
-.arv-alavanca {
-    border: 0;
-    background: transparent;
-    color: var(--bs-secondary-color);
-    width: 1.4rem;
-    height: 1.4rem;
-    padding: 0;
-    flex: 0 0 auto;
-    line-height: 1;
-}
-.arv-item {
-    border: 0;
-    background: transparent;
-    text-align: left;
-    padding: 0.25rem 0.4rem;
-    border-radius: 4px;
-    font-size: 13px;
-    color: inherit;
-    width: 100%;
+.filtros {
     display: block;
-}
-.arv-item:hover { background: var(--siplam-aninhado-bg); }
-.arv-item.ativo {
-    background: var(--siplam-aninhado-bg-2);
-    font-weight: 600;
-}
-.arv-eixo { font-weight: 600; }
-.arv-objetivo { font-size: 12.5px; }
-.arv-programa {
-    font-size: 12.5px;
-    padding-left: 1.85rem;
-    color: var(--bs-secondary-color);
-}
-.arv-conta {
-    font-size: 11px;
-    color: var(--bs-secondary-color);
-    margin-left: 0.35rem;
-    font-weight: 400;
-}
-.arv-vazio {
-    font-size: 12px;
-    color: var(--bs-secondary-color);
-    margin: 0.15rem 0 0.35rem 1.85rem;
+    padding: 0.75rem 0.875rem;
 }
 
-/* A cadeia até onde se está: some quando há uma só; o valor está no caminho. */
-.cadeia {
+/* Tudo numa linha só: os campos dividem o que sobra, e os botões ficam no fim
+   dela. Em tela estreita a linha quebra, e os botões descem juntos. */
+.filtros .filtro-campo {
+    flex: 1 1 12rem;
+    min-width: 10rem;
+}
+
+.filtros .filtro-botoes {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.filtros .app-search,
+.filtros .choices {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+/* O .app-search desloca o campo para abrir espaço ao ícone, e o Choices troca o
+   select por uma caixa própria: o deslocamento precisa ir junto. O seletor
+   carrega o [data-type] porque é assim que o template escreve a regra de
+   padding do campo múltiplo — sem isso, ela ganha e o texto sobe no ícone. */
+.filtros .choices[data-type*="select-multiple"] .choices__inner {
+    padding-inline-start: 40px !important;
+    min-height: calc(1.5em + 0.9rem + 2px);
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: 0.15rem;
-    font-size: 12px;
-}
-.cadeia-elo {
-    border: 0;
-    background: transparent;
-    padding: 0.1rem 0.25rem;
-    color: var(--bs-secondary-color);
-    border-radius: 3px;
-}
-button.cadeia-elo:hover {
-    background: var(--siplam-aninhado-bg);
-    text-decoration: underline;
-}
-.cadeia-elo.atual { color: var(--bs-body-color); font-weight: 600; }
-.cadeia-sep { color: var(--bs-secondary-color); opacity: 0.5; font-size: 11px; }
-
-.bloco-causa {
-    border: 1px solid var(--siplam-aninhado-traco);
-    border-radius: 6px;
-    padding: 0.6rem;
-    margin-bottom: 0.5rem;
-}
-
-.btn-link-tabela {
-    border: 0;
-    background: transparent;
-    padding: 0;
-    text-align: left;
-    color: var(--bs-primary);
-    font-size: 13px;
-}
-.btn-link-tabela:hover { text-decoration: underline; }
-
-/* ---------- Cadastro 3: o plano montado como um checkout ---------- */
-/* Classes próprias desta tela. Nenhum seletor de outra tela é tocado aqui. */
-
-.passos {
-    display: flex;
     flex-wrap: wrap;
     gap: 0.25rem;
 }
-.passo {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    border: 0;
-    background: transparent;
-    padding: 0.25rem 0.5rem;
-    border-radius: 999px;
-    font-size: 12px;
-    color: var(--bs-secondary-color);
-}
-.passo:disabled { opacity: 0.45; }
-.passo:not(:disabled):hover { background: var(--siplam-aninhado-bg); }
-.passo.atual {
-    background: var(--siplam-aninhado-bg-2);
-    color: var(--bs-body-color);
-    font-weight: 600;
-}
-.passo-marca {
-    width: 1.35rem;
-    height: 1.35rem;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--siplam-aninhado-bg);
-    font-size: 12px;
-    flex: 0 0 auto;
-}
-.passo.pronto .passo-marca {
-    background: #e2f0e9;
-    color: #1f6b4d;
-}
-.passo.atual .passo-marca {
-    background: var(--bs-primary);
-    color: #fff;
+
+/* A etiqueta de cada escolha e o campo de digitar dividem a caixa sem empurrar
+   um ao outro para fora. */
+.filtros .choices__list--multiple,
+.filtros .choices__input--cloned {
+    margin: 0;
+    padding: 0;
 }
 
-/* O carrinho: o que já foi escolhido, clicável para voltar ao passo. */
-.resumo { list-style: none; margin: 0; padding: 0; }
-.resumo-item + .resumo-item { border-top: 1px solid var(--siplam-aninhado-traco); }
-.resumo-ir {
-    display: block;
+.filtros .choices__list--multiple {
+    display: contents;
+}
+
+.filtros .choices__list--multiple .choices__item {
+    font-size: 12px;
+}
+
+/* O Choices esconde o campo original; o ícone fica por cima da caixa dele. */
+.filtros .app-search .app-search-icon {
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Célula de uma linha só: o que não cabe vira reticência. A altura da linha
+   deixa de depender do tamanho do texto, que é o que mantém a tabela legível
+   quando uma descrição tem três parágrafos e a outra tem seis palavras. */
+.celula-truncada {
     width: 100%;
-    text-align: left;
-    border: 0;
-    background: transparent;
-    padding: 0.5rem;
-    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-.resumo-ir:hover { background: var(--siplam-aninhado-bg); }
-.resumo-rotulo {
-    display: block;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 600;
-    color: var(--bs-secondary-color);
-}
-.resumo-valor { display: block; font-size: 13px; }
-.resumo-item.vazio .resumo-valor {
-    color: var(--bs-secondary-color);
-    font-style: italic;
+
+/* Com a largura fixa, as colunas ficam com o que o cabeçalho pede e a coluna
+   truncada fica com o resto — em largura automática ela espremia as outras. */
+.tabela-fixa {
+    table-layout: fixed;
+    width: 100%;
+    /* Abaixo disso as colunas fixas já ocupam tudo e a truncada sumiria: em
+       tela estreita a tabela rola dentro do card, que é o que o
+       .table-responsive existe para fazer. */
+    min-width: 64rem;
 }

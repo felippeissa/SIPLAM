@@ -5,9 +5,10 @@
  * `central-programas/criar.html` e `central-programas/editar.html`.
  */
 import { obterEstado, ppaCorrente } from "../dados/store.js";
-import { APTIDAO_LABEL, DISPONIBILIZACAO_LABEL, eixos, objetivos } from "../dados/regras.js";
-import { montarShell, cabecalhoPagina, somenteLeitura, url } from "../shell.js";
+import { APTIDAO_LABEL, DISPONIBILIZACAO_LABEL } from "../dados/regras.js";
+import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { chip, esc, faixaIndicadores } from "../ui.js";
+import { criarFiltros, opcoesDe } from "../filtros.js";
 
 const { estado } = montarShell();
 const leitura = somenteLeitura();
@@ -18,9 +19,6 @@ const plano = ppaCorrente(estado);
 const doPlano = (p) => !p.ppaId || !plano || p.ppaId === plano.id;
 const programasDoPlano = () => estado.programas.filter(doPlano);
 
-let busca = "";
-let eixo = "todos";
-let objetivo = "todos";
 
 /** O que falta para o Programa poder ser oferecido aos órgãos. */
 function faltaParaDisponibilizar(p) {
@@ -36,52 +34,115 @@ function contribuicoes(programaId) {
     return estado.iniciativas.filter((i) => i.programaId === programaId).length;
 }
 
-function linhas() {
-    const q = busca.trim().toLowerCase();
-    return programasDoPlano().filter((p) => {
-        if (q && !p.nome.toLowerCase().includes(q) && !p.codigo.includes(q)) return false;
-        if (eixo !== "todos" && p.eixo !== eixo) return false;
-        if (objetivo !== "todos" && p.objetivoEstrategico !== objetivo) return false;
-        return true;
-    });
+/**
+ * O filtro espelha a tabela: código e nome no campo livre, e um multisselect
+ * para cada coluna que classifica o Programa.
+ */
+const filtros = criarFiltros({
+    livre: { rotulo: "Programa", texto: (p) => `${p.codigo} ${p.nome} ${p.eixo ?? ""} ${p.objetivoEstrategico ?? ""}` },
+    campos: [
+        {
+            id: "eixo",
+            rotulo: "Eixo",
+            opcoes: () => opcoesDe(programasDoPlano(), (p) => p.eixo),
+            valorDe: (p) => (p.eixo ? [p.eixo] : []),
+        },
+        {
+            id: "objetivo",
+            rotulo: "Objetivo estratégico",
+            opcoes: () => opcoesDe(programasDoPlano(), (p) => p.objetivoEstrategico),
+            valorDe: (p) => (p.objetivoEstrategico ? [p.objetivoEstrategico] : []),
+        },
+        {
+            id: "aptidao",
+            rotulo: "Aptidão",
+            opcoes: () =>
+                opcoesDe(programasDoPlano(), (p) => p.aptidao ?? "incompleto").map((o) => ({
+                    valor: o.valor,
+                    rotulo: APTIDAO_LABEL[o.valor] ?? o.rotulo,
+                })),
+            valorDe: (p) => [p.aptidao ?? "incompleto"],
+        },
+        {
+            id: "disponibilizacao",
+            rotulo: "Disponibilização",
+            opcoes: () =>
+                opcoesDe(programasDoPlano(), (p) => p.disponibilizacao ?? "em_estruturacao").map((o) => ({
+                    valor: o.valor,
+                    rotulo: DISPONIBILIZACAO_LABEL[o.valor] ?? o.rotulo,
+                })),
+            valorDe: (p) => [p.disponibilizacao ?? "em_estruturacao"],
+        },
+    ],
+    exportar: "programas",
+    acao: () =>
+        leitura
+            ? ""
+            : `<a href="${url("central-programas/criar.html")}" class="btn btn-primary">
+                <i class="ti ti-plus me-1"></i>Novo Programa
+            </a>`,
+});
+
+const linhas = () => programasDoPlano().filter((p) => filtros.passa(p));
+
+/** A faixa de números conta o que a tabela mostra, e por isso segue o filtro. */
+function faixa() {
+    const ls = linhas();
+    return faixaIndicadores(
+        [
+            { valor: ls.length, rotulo: "Programas" },
+            { valor: ls.filter((p) => p.aptidao === "apto").length, rotulo: "Aptos" },
+            { valor: ls.filter((p) => p.disponibilizacao === "disponivel").length, rotulo: "Disponíveis aos órgãos" },
+            { valor: ls.filter((p) => faltaParaDisponibilizar(p).length > 0).length, rotulo: "Com diagnóstico incompleto" },
+            {
+                valor: estado.iniciativas.filter((i) => programasDoPlano().some((p) => p.id === i.programaId)).length,
+                rotulo: "Iniciativas recebidas",
+            },
+        ],
+        "Um Programa sem causas cadastradas impede o órgão de concluir qualquer Iniciativa nele."
+    );
+}
+
+/** Corpo da tabela — ele e a faixa são o que se refaz quando um filtro muda. */
+function corpo() {
+    const ls = linhas();
+    if (ls.length === 0) {
+        return '<tr><td colspan="7" class="text-center text-muted py-4 fs-12">Nenhum Programa corresponde ao filtro.</td></tr>';
+    }
+    return ls
+        .map((p) => {
+            const falta = faltaParaDisponibilizar(p);
+            return `
+        <tr>
+            <td class="codigo text-muted">${esc(p.codigo)}</td>
+            <td>
+                <a href="${url(`programa.html?id=${p.id}`)}" class="fw-medium">${esc(p.nome)}</a>
+                <div class="fs-12 text-muted">${esc(p.eixo)}</div>
+                ${falta.length ? `<div class="fs-12 text-warning mt-1">Falta: ${esc(falta.join(", "))}</div>` : ""}
+            </td>
+            <td class="num">${(p.causas ?? []).length || chip("0", "alerta")}</td>
+            <td class="num">${contribuicoes(p.id) || "—"}</td>
+            <td>${chip(APTIDAO_LABEL[p.aptidao ?? "incompleto"], p.aptidao === "apto" ? "ok" : "alerta")}</td>
+            <td>${chip(
+                DISPONIBILIZACAO_LABEL[p.disponibilizacao ?? "em_estruturacao"],
+                p.disponibilizacao === "disponivel" ? "ok" : "neutro"
+            )}</td>
+            <td class="text-end coluna-acoes">${
+                leitura
+                    ? `<a href="${url(`programa.html?id=${p.id}`)}" class="btn btn-sm btn-light">Ver</a>`
+                    : `<a href="${url(`central-programas/editar.html?id=${p.id}`)}" class="btn btn-sm btn-outline-primary">Editar</a>`
+            }</td>
+        </tr>`;
+        })
+        .join("");
 }
 
 function render() {
-    const ls = linhas();
-    const aptos = ls.filter((p) => p.aptidao === "apto").length;
-    const disponiveis = ls.filter((p) => p.disponibilizacao === "disponivel").length;
-    const incompletos = ls.filter((p) => faltaParaDisponibilizar(p).length > 0).length;
-
     document.getElementById("conteudo").innerHTML = `
-    ${cabecalhoPagina(
-        "Cadastro de Programa",
-        "Diagnóstico, aptidão e disponibilização dos Programas aos órgãos.",
-        `
-        <div class="app-search">
-            <input type="search" id="busca" class="form-control form-control-sm" placeholder="Buscar Programa" value="${esc(busca)}" />
-            <i class="ti ti-search app-search-icon text-muted"></i>
-        </div>
-        <select class="form-select form-select-sm" id="eixo">
-            <option value="todos">Todos os Eixos</option>
-            ${eixos(programasDoPlano()).map((e) => `<option value="${esc(e)}"${e === eixo ? " selected" : ""}>${esc(e)}</option>`).join("")}
-        </select>
-        <select class="form-select form-select-sm" id="objetivo">
-            <option value="todos">Todos os Objetivos</option>
-            ${objetivos(programasDoPlano(), eixo).map((o) => `<option value="${esc(o)}"${o === objetivo ? " selected" : ""}>${esc(o)}</option>`).join("")}
-        </select>
-        ${leitura ? "" : `<a href="${url("central-programas/criar.html")}" class="btn btn-sm btn-primary"><i class="ti ti-plus me-1"></i>Novo Programa</a>`}`
-    )}
-    ${faixaIndicadores(
-        [
-            { valor: ls.length, rotulo: "Programas" },
-            { valor: aptos, rotulo: "Aptos" },
-            { valor: disponiveis, rotulo: "Disponíveis aos órgãos" },
-            { valor: incompletos, rotulo: "Com diagnóstico incompleto" },
-            { valor: estado.iniciativas.filter((i) => programasDoPlano().some((p) => p.id === i.programaId)).length, rotulo: "Iniciativas recebidas" },
-        ],
-        "Um Programa sem causas cadastradas impede o órgão de concluir qualquer Iniciativa nele."
-    )}
+    ${barraTitulo("Cadastro de Programa")}
+    <div id="faixa">${faixa()}</div>
     <div class="card">
+        ${filtros.html()}
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
@@ -92,66 +153,18 @@ function render() {
                         <th class="num" style="width:7rem">Iniciativas</th>
                         <th style="width:11rem">Aptidão</th>
                         <th style="width:14rem">Disponibilização</th>
-                        <th style="width:7rem">Ações</th>
+                        <th class="text-end coluna-acoes" style="width:7rem">Ações</th>
                     </tr>
                 </thead>
-                <tbody>
-                ${
-                    ls.length === 0
-                        ? '<tr><td colspan="7" class="text-center text-muted py-4 fs-12">Nenhum Programa corresponde ao filtro.</td></tr>'
-                        : ls
-                              .map((p) => {
-                                  const falta = faltaParaDisponibilizar(p);
-                                  return `
-                    <tr>
-                        <td class="codigo text-muted">${esc(p.codigo)}</td>
-                        <td>
-                            <a href="${url(`programa.html?id=${p.id}`)}" class="fw-medium">${esc(p.nome)}</a>
-                            <div class="fs-12 text-muted">${esc(p.eixo)}</div>
-                            ${falta.length ? `<div class="fs-12 text-warning mt-1">Falta: ${esc(falta.join(", "))}</div>` : ""}
-                        </td>
-                        <td class="num">${(p.causas ?? []).length || chip("0", "alerta")}</td>
-                        <td class="num">${contribuicoes(p.id) || "—"}</td>
-                        <td>${chip(APTIDAO_LABEL[p.aptidao ?? "incompleto"], p.aptidao === "apto" ? "ok" : "alerta")}</td>
-                        <td>${chip(DISPONIBILIZACAO_LABEL[p.disponibilizacao ?? "em_estruturacao"], p.disponibilizacao === "disponivel" ? "ok" : "neutro")}</td>
-                        <td>${
-                            leitura
-                                ? `<a href="${url(`programa.html?id=${p.id}`)}" class="btn btn-sm btn-light">Ver</a>`
-                                : `<a href="${url(`central-programas/editar.html?id=${p.id}`)}" class="btn btn-sm btn-outline-primary">Editar</a>`
-                        }</td>
-                    </tr>`;
-                              })
-                              .join("")
-                }
-                </tbody>
+                <tbody id="corpo-lista">${corpo()}</tbody>
             </table>
         </div>
     </div>`;
 
-    document.getElementById("busca").value = busca;
+    filtros.ligar(() => {
+        document.getElementById("corpo-lista").innerHTML = corpo();
+        document.getElementById("faixa").innerHTML = faixa();
+    });
 }
 
-document.addEventListener("input", (e) => {
-    if (e.target.id !== "busca") return;
-    busca = e.target.value;
-    render();
-    // O campo é recriado a cada tecla: sem devolver o cursor ao fim, o texto
-    // digitado sai embaralhado.
-    const campo = document.getElementById("busca");
-    campo.focus();
-    campo.setSelectionRange(campo.value.length, campo.value.length);
-});
-
-document.addEventListener("change", (e) => {
-    if (e.target.id === "eixo") {
-        eixo = e.target.value;
-        objetivo = "todos";
-        render();
-    } else if (e.target.id === "objetivo") {
-        objetivo = e.target.value;
-        render();
-    }
-});
-
 render();
-

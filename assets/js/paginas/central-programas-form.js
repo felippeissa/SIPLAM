@@ -339,7 +339,7 @@ export function montarFormularioPrograma({ novo }) {
         ${barraTitulo(novo ? "Novo Programa" : `Editar Programa ${esc(edicao.codigo)}`, [novo ? "Novo" : "Editar"])}
 
         <div class="row">
-            <div class="col-xxl-8">
+            <div class="col-12">
                 <div class="card">
                     <div class="card-header d-block p-3">
                         <h4 class="card-title mb-1">Programa</h4>
@@ -348,7 +348,7 @@ export function montarFormularioPrograma({ novo }) {
                     <div class="card-body" id="formulario">${corpo()}</div>
                 </div>
             </div>
-            <div class="col-xxl-4" id="lateral">${lateral()}</div>
+            <div class="col-12" id="lateral">${lateral()}</div>
         </div>
 
         <div class="mt-1 mb-4 d-flex gap-2 align-items-center">
