@@ -25,7 +25,6 @@ const subcausas = catalogo({
     plural: "Subcausas",
     artigo: "a",
     prefixo: "sub",
-    ajuda: "Busque entre as subcausas já cadastradas. Se a que você precisa não existir, cadastre-a sem sair desta tela.",
     campos: [
         { id: "justificativa", rotulo: "Justificativa", ajuda: "Por que ela origina a causa" },
         { id: "evidencia", rotulo: "Evidência", ajuda: "O número, a série ou o estudo que a sustenta" },
@@ -54,12 +53,15 @@ export const causa = {
     rotuloNome: "Nome",
     genero: "f",
     exemplo: "Déficit de vagas em creche",
-    ajuda: "A causa explica por que um problema acontece, e as subcausas detalham a origem dela.",
     podeExcluir: true,
 
     // Justificativa e evidência ficam no corpo, logo abaixo do nome; a descrição
     // genérica não se aplica aqui.
     semDescricao: true,
+
+    filtros: [
+        { tipo: "vinculo", id: "subcausas", rotulo: "Subcausas", colecao: "subcausas", campo: "subcausaIds" },
+    ],
 
     extra: {
         colunas: [

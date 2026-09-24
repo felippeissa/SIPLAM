@@ -20,7 +20,6 @@ export const diagnostico = {
     novoRotulo: "Novo diagnóstico",
     singular: "Diagnóstico",
     exemplo: "Diagnóstico 011",
-    ajuda: "A descrição é onde entram as evidências que sustentam o diagnóstico — números, séries, estudos.",
     podeExcluir: true,
 
     extra: {

@@ -38,9 +38,12 @@ export const subcausa = {
     rotuloNome: "Nome",
     genero: "f",
     exemplo: "Falta de vagas no turno integral",
-    ajuda: "A subcausa detalha por que uma causa existe. A mesma subcausa pode explicar mais de uma causa.",
     podeExcluir: true,
     semDescricao: true,
+
+    filtros: [
+        { tipo: "inverso", id: "causas", rotulo: "Causas", colecao: "causas", campo: "subcausaIds" },
+    ],
 
     extra: {
         colunas: [

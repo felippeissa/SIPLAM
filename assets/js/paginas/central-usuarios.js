@@ -27,7 +27,8 @@ import {
     cpfValido,
     formatarCpf,
 } from "../dados/store.js";
-import { montarShell, cabecalhoPagina, somenteLeitura } from "../shell.js";
+import { montarShell, barraTitulo, somenteLeitura } from "../shell.js";
+import { criarFiltros, opcoesDe } from "../filtros.js";
 import { chip, esc, faixaIndicadores } from "../ui.js";
 import { avisar } from "../toast.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
@@ -47,8 +48,6 @@ const PERFIS = [
 const nomeDoPerfil = (id) => PERFIS.find((p) => p.id === id)?.nome ?? id;
 
 let analisando = null;
-let busca = "";
-let filtro = "todos";
 
 const usuarios = () => estado.usuarios ?? [];
 
@@ -60,13 +59,8 @@ const usuarios = () => estado.usuarios ?? [];
 const URGENCIA = { aguardando: 0, aprovado: 1, revogado: 2, reprovado: 3 };
 
 function visiveis() {
-    const termo = busca.trim().toLocaleLowerCase("pt-BR");
     return usuarios()
-        .filter((u) => {
-            if (filtro !== "todos" && u.situacao !== filtro) return false;
-            if (!termo) return true;
-            return [u.nome, u.email, u.login, u.orgao].join(" ").toLocaleLowerCase("pt-BR").includes(termo);
-        })
+        .filter((u) => filtros.passa(u))
         .sort(
             (a, b) =>
                 (URGENCIA[a.situacao] ?? 9) - (URGENCIA[b.situacao] ?? 9) ||
@@ -74,20 +68,46 @@ function visiveis() {
         );
 }
 
-function filtros() {
-    return `
-    <div class="d-flex flex-wrap gap-2 align-items-center">
-        <select class="form-select form-select-sm w-auto" id="filtro">
-            <option value="todos">Todas as situações</option>
-            ${SITUACOES_USUARIO.map((s) => `<option value="${s.id}" ${filtro === s.id ? "selected" : ""}>${s.rotulo}</option>`).join("")}
-        </select>
-        <div class="app-search">
-            <input type="search" class="form-control form-control-sm" id="busca" placeholder="Buscar por nome, e-mail, login ou órgão" value="${esc(busca)}" />
-            <i class="app-search-icon ti ti-search"></i>
-        </div>
-        ${leitura ? "" : `<button class="btn btn-sm btn-primary" id="novo"><i class="ti ti-plus me-1"></i>Novo usuário</button>`}
-    </div>`;
-}
+/**
+ * O filtro espelha a tabela: Usuário no campo livre — que alcança e-mail e
+ * login — e Órgão, Perfil e Situação em escolha múltipla.
+ */
+const filtros = criarFiltros({
+    livre: { rotulo: "Usuário", texto: (u) => `${u.nome} ${u.email} ${u.login} ${u.orgao ?? ""}` },
+    campos: [
+        {
+            id: "orgao",
+            rotulo: "Órgão",
+            icone: "ti-building",
+            opcoes: () => opcoesDe(usuarios(), (u) => u.orgao),
+            valorDe: (u) => (u.orgao ? [u.orgao] : []),
+        },
+        {
+            id: "perfil",
+            rotulo: "Perfil",
+            icone: "ti-user-shield",
+            opcoes: () =>
+                PERFIS.filter((p) => usuarios().some((u) => (u.perfis ?? []).includes(p.id))).map((p) => ({
+                    valor: p.id,
+                    rotulo: p.nome,
+                })),
+            valorDe: (u) => u.perfis ?? [],
+        },
+        {
+            id: "situacao",
+            rotulo: "Situação",
+            icone: "ti-progress",
+            opcoes: () =>
+                SITUACOES_USUARIO.filter((s) => usuarios().some((u) => u.situacao === s.id)).map((s) => ({
+                    valor: s.id,
+                    rotulo: s.rotulo,
+                })),
+            valorDe: (u) => [u.situacao],
+        },
+    ],
+    exportar: "usuarios",
+    acao: () => (leitura ? "" : `<button class="btn btn-primary" id="novo"><i class="ti ti-plus me-1"></i>Novo usuário</button>`),
+});
 
 function indicadores() {
     const lista = usuarios();
@@ -159,17 +179,18 @@ function linha(u) {
             }
         </td>
         <td>${chip(s.rotulo, s.tom)}</td>
-        <td class="text-end">${acoes(u)}</td>
+        <td class="text-end coluna-acoes">${acoes(u)}</td>
     </tr>`;
 }
 
 function render() {
     const lista = visiveis();
     document.getElementById("conteudo").innerHTML = `
-    ${cabecalhoPagina("Gestão de usuários", "Solicitações de acesso e perfis concedidos.", filtros())}
+    ${barraTitulo("Gestão de usuários")}
     ${indicadores()}
 
     <div class="card">
+        ${filtros.html()}
         <div class="table-responsive">
             <table class="table table-sm table-densa align-middle mb-0">
                 <thead>
@@ -179,18 +200,10 @@ function render() {
                         <th style="width:16rem">Órgão</th>
                         <th style="width:14rem">Perfil</th>
                         <th style="width:11rem">Situação</th>
-                        <th class="text-end" style="width:7rem">Ações</th>
+                        <th class="text-end coluna-acoes" style="width:7rem">Ações</th>
                     </tr>
                 </thead>
-                <tbody>
-                    ${
-                        lista.length
-                            ? lista.map(linha).join("")
-                            : `<tr><td colspan="6" class="text-center text-muted py-4 fs-12">
-                                   ${busca || filtro !== "todos" ? "Nenhum usuário com esse recorte." : "Nenhuma solicitação de acesso."}
-                               </td></tr>`
-                    }
-                </tbody>
+                <tbody id="corpo-lista">${lista.length ? lista.map(linha).join("") : vazio()}</tbody>
             </table>
         </div>
     </div>
@@ -585,23 +598,23 @@ function abrirNovo() {
 function ligar() {
     document.getElementById("novo")?.addEventListener("click", abrirNovo);
 
-    const campoBusca = document.getElementById("busca");
-    campoBusca?.addEventListener("input", (e) => {
-        busca = e.target.value;
-        const foco = document.activeElement === campoBusca;
-        render();
-        if (foco) {
-            const novo = document.getElementById("busca");
-            novo.focus();
-            novo.setSelectionRange(novo.value.length, novo.value.length);
-        }
+    // Só o corpo da tabela se refaz a cada filtro; a barra fica de pé, com o
+    // que foi escolhido, e as ações das linhas novas precisam ser religadas.
+    filtros.ligar(() => {
+        document.getElementById("corpo-lista").innerHTML = visiveis().map(linha).join("") || vazio();
+        ligarAcoes();
     });
 
-    document.getElementById("filtro")?.addEventListener("change", (e) => {
-        filtro = e.target.value;
-        render();
-    });
+    ligarAcoes();
+}
 
+function vazio() {
+    return `<tr><td colspan="6" class="text-center text-muted py-4 fs-12">
+        ${usuarios().length ? "Nenhum usuário com esse recorte." : "Nenhuma solicitação de acesso."}
+    </td></tr>`;
+}
+
+function ligarAcoes() {
     const aoClicar = (atributo, abrir) =>
         document.querySelectorAll(`[data-${atributo}]`).forEach((b) =>
             b.addEventListener("click", () => {

@@ -100,7 +100,6 @@ export const indicador = {
     // Aqui o nome é um campo entre muitos, não o registro inteiro.
     rotuloNome: "Nome",
     exemplo: "Cobertura de esgotamento sanitário",
-    ajuda: "O indicador diz se o plano está dando certo. A definição fica aqui; a meta por ano fica na Entrega.",
     podeExcluir: true,
 
     // O código é do sistema, não de quem cadastra: sequencial dentro do plano.
@@ -128,6 +127,12 @@ export const indicador = {
     apoio: (item) => [
         { rotulo: "Responsável técnico", valor: item.responsavelTecnico || responsavelAtual() },
         { rotulo: "Data de criação", valor: item.criadoEm || new Date().toLocaleDateString("pt-BR") },
+    ],
+
+    filtros: [
+        { tipo: "texto", id: "unidade", rotulo: "Unidade", campo: "unidade" },
+        { tipo: "texto", id: "periodicidade", rotulo: "Periodicidade", campo: "periodicidade" },
+        { tipo: "texto", id: "situacao", rotulo: "Situação", campo: "situacao" },
     ],
 
     extra: {

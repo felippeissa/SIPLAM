@@ -82,8 +82,18 @@ export function montarFormularioPpa({ novo }) {
         document.getElementById("conteudo").innerHTML = `
         ${barraTitulo(novo ? "Novo PPA" : `Editar ${esc(p.nome)}`, [novo ? "Novo" : "Editar"])}
 
+        ${
+            fechado
+                ? `<div class="alert alert-light border py-2 px-3 fs-13">
+            <i class="ti ti-lock me-1"></i>
+            Só um plano <strong>em elaboração</strong> se edita. Este está
+            ${esc(situacao.rotulo.toLowerCase())}, então a tela mostra e não altera.
+        </div>`
+                : ""
+        }
+
         <div class="row">
-            <div class="col-xxl-8">
+            <div class="col-12">
                 <div class="card">
                     <div class="card-header d-block p-3">
                         <h4 class="card-title mb-1">Plano Plurianual</h4>
@@ -120,6 +130,35 @@ export function montarFormularioPpa({ novo }) {
                                            value="${esc(p.processoSei ?? "")}" disabled />
                                 </div>
                             </div>
+                            <!-- Situação, ano de elaboração e diagnósticos vinculados
+                                 não se escolhem: são reflexo do plano. Ficam aqui,
+                                 desabilitados, e não num cartão ao lado. -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label" for="f-situacao">Situação</label>
+                                    <input type="text" class="form-control" id="f-situacao"
+                                           value="${esc(situacaoPpa(p.situacao).rotulo)}" disabled />
+                                    <div class="form-text fs-12">${esc(situacaoPpa(p.situacao).ajuda)}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label" for="f-anoElaboracao">Ano de elaboração</label>
+                                    <input type="text" class="form-control" id="f-anoElaboracao"
+                                           value="${esc(anoDeElaboracao(p))}" disabled />
+                                </div>
+                            </div>
+                            ${
+                                novo
+                                    ? ""
+                                    : `<div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label" for="f-diagnosticos">Diagnósticos vinculados</label>
+                                    <input type="text" class="form-control" id="f-diagnosticos"
+                                           value="${diagnosticos === 0 ? "Nenhum" : `${diagnosticos} ${diagnosticos === 1 ? "diagnóstico" : "diagnósticos"}`}" disabled />
+                                </div>
+                            </div>`
+                            }
                             <div class="col-12">
                                 <label class="form-label" for="f-descricao">Descrição</label>
                                 <textarea class="form-control" id="f-descricao" rows="12" ${leitura ? "disabled" : ""}>${esc(p.descricao ?? "")}</textarea>
@@ -129,45 +168,7 @@ export function montarFormularioPpa({ novo }) {
                 </div>
             </div>
 
-            <div class="col-xxl-4">
-                <div class="card">
-                    <div class="card-header d-block p-3">
-                        <h4 class="card-title mb-1">Sobre este plano</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <div class="rotulo-secao mb-1">Situação</div>
-                            <p class="mb-1">${chip(situacaoPpa(p.situacao).rotulo, situacaoPpa(p.situacao).tom)}</p>
-                            <p class="fs-12 text-muted mb-0">${esc(situacaoPpa(p.situacao).ajuda)}</p>
-                        </div>
-                        <div class="mb-3">
-                            <div class="rotulo-secao mb-1">Ano de elaboração</div>
-                            <p class="fs-13 mb-0">${anoDeElaboracao(p)}</p>
-                        </div>
-                        ${
-                            fechado
-                                ? `<div class="alert alert-light border py-2 px-3 fs-12 mb-3">
-                            <i class="ti ti-lock me-1"></i>
-                            Só um plano <strong>em elaboração</strong> se edita. Este está
-                            ${esc(situacao.rotulo.toLowerCase())}, então a tela mostra e não altera.
-                        </div>`
-                                : ""
-                        }
-                        ${
-                            novo
-                                ? `<p class="fs-12 text-muted mb-0">
-                            A situação e o Processo SEI não se escolhem: a primeira é reflexo do fluxo,
-                            o segundo vem do SEI quando o processo é aberto lá.
-                        </p>`
-                                : `<div class="mb-0">
-                            <div class="rotulo-secao mb-1">Diagnósticos vinculados</div>
-                            <p class="fs-13 mb-0">${diagnosticos === 0 ? "Nenhum." : `${diagnosticos} ${diagnosticos === 1 ? "diagnóstico" : "diagnósticos"}.`}</p>
-                        </div>`
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
+</div>
 
         <div class="mt-1 mb-4 d-flex gap-2 align-items-center">
             ${

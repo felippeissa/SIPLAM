@@ -7,8 +7,12 @@
  * fechar por engano perde o que foi digitado.
  *
  * Agora cada cadastro tem `criar.html` e `editar.html` na sua pasta, no layout
- * de formulário do Inspinia: título com trilha, cartão principal à esquerda,
- * cartão de apoio à direita e as ações embaixo.
+ * de formulário do Inspinia: título com trilha, um cartão único de largura
+ * inteira e as ações embaixo.
+ *
+ * O que o sistema preenche sozinho — número, data de cadastro, quem depende
+ * deste registro — fica no mesmo formulário, em campos desabilitados. Ficava num
+ * cartão ao lado, e a segunda coluna saiu a pedido da área: uma coluna só.
  *
  * A configuração é a mesma que a listagem usa, para os dois lados nunca
  * discordarem sobre o que o cadastro tem.
@@ -117,73 +121,39 @@ export function montarFormulario(cfg) {
                 <textarea class="form-control" id="f-descricao" rows="4" ${leitura ? "disabled" : ""}>${esc(edicao.descricao ?? "")}</textarea>
             </div>`
             }
+
+            ${camposDoSistema()}
         </div>`;
     }
 
-    /** O cartão lateral: o que a pessoa precisa saber, não mais campos. */
-    function apoio() {
-        const linhas = [];
+    /**
+     * O que o sistema preenche e a pessoa só confere.
+     *
+     * São campos do formulário, desabilitados — e não um cartão ao lado. Quem
+     * está editando lê na mesma coluna em que escreve, e o que não se altera
+     * mostra-se desabilitado em vez de sumir.
+     */
+    function camposDoSistema() {
+        const campos = [];
 
-        if (cfg.ajuda) linhas.push(`<p class="fs-13 mb-3">${cfg.ajuda}</p>`);
-
-        // O que o sistema preenche sozinho e a pessoa só confere.
-        for (const linha of cfg.apoio?.(edicao, estado) ?? []) {
-            linhas.push(`
+        const campo = (rotulo, valor, largura = "col-md-6") => `
+        <div class="${largura}">
             <div class="mb-3">
-                <div class="rotulo-secao mb-1">${esc(linha.rotulo)}</div>
-                <p class="fs-13 mb-0">${esc(linha.valor || "\u2014")}</p>
-            </div>`);
+                <label class="form-label">${esc(rotulo)}</label>
+                <input type="text" class="form-control" value="${esc(valor)}" disabled />
+            </div>
+        </div>`;
+
+        for (const linha of cfg.apoio?.(edicao, estado) ?? []) {
+            campos.push(campo(linha.rotulo, linha.valor || "—", "col-12"));
         }
 
         if (!novo) {
-            if (cfg.codigo) {
-                linhas.push(`
-                <div class="mb-3">
-                    <div class="rotulo-secao mb-1">Número</div>
-                    <div class="codigo fs-15">${esc(cfg.codigo(edicao, estado))}</div>
-                </div>`);
-            }
-            if (edicao.criadoEm) {
-                linhas.push(`
-                <div class="mb-3">
-                    <div class="rotulo-secao mb-1">Cadastrado em</div>
-                    <p class="fs-13 mb-0">${esc(edicao.criadoEm)}</p>
-                </div>`);
-            }
-            if (cfg.filhos?.length) {
-                const filho = cfg.filhos[0];
-                // Nomear quem depende, e não só contar: "1 registro depende deste"
-                // obriga a pessoa a sair da tela para descobrir qual é.
-                const quais = (estado[filho.colecao] ?? []).filter((f) => f[filho.campo] === edicao.id);
-                linhas.push(`
-                <div class="mb-0">
-                    <div class="rotulo-secao mb-1">${esc(filho.rotulo)}</div>
-                    ${
-                        quais.length === 0
-                            ? `<p class="fs-13 mb-0">Nenhum registro depende deste.</p>`
-                            : `<ul class="list-unstyled fs-13 mb-0">
-                        ${quais
-                            .slice(0, 8)
-                            .map((f) => `<li class="mb-1"><i class="ti ti-corner-down-right me-1 text-muted"></i>${esc(f.nome)}</li>`)
-                            .join("")}
-                        ${quais.length > 8 ? `<li class="text-muted">e mais ${quais.length - 8}.</li>` : ""}
-                    </ul>`
-                    }
-                </div>`);
-            }
+            if (cfg.codigo) campos.push(campo("Número", cfg.codigo(edicao, estado)));
+            if (edicao.criadoEm) campos.push(campo("Cadastrado em", edicao.criadoEm));
         }
 
-        if (!linhas.length) return "";
-
-        return `
-        <div class="col-xxl-4">
-            <div class="card">
-                <div class="card-header d-block p-3">
-                    <h4 class="card-title mb-1">Sobre este registro</h4>
-                </div>
-                <div class="card-body">${linhas.join("")}</div>
-            </div>
-        </div>`;
+        return campos.join("");
     }
 
     function acoes() {
@@ -204,12 +174,11 @@ export function montarFormulario(cfg) {
     }
 
     function render() {
-        const lateral = apoio();
         document.getElementById("conteudo").innerHTML = `
         ${barraTitulo(novo ? esc(cfg.novoRotulo) : `Editar ${esc(cfg.singular.toLowerCase())}`, [novo ? "Novo" : "Editar"])}
 
         <div class="row">
-            <div class="${lateral ? "col-xxl-8" : "col-xxl-12"}">
+            <div class="col-12">
                 <div class="card">
                     <div class="card-header d-block p-3">
                         <h4 class="card-title mb-1">${esc(cfg.titulo)}</h4>
@@ -218,7 +187,6 @@ export function montarFormulario(cfg) {
                     <div class="card-body" id="formulario">${camposPrincipais()}</div>
                 </div>
             </div>
-            ${lateral}
         </div>
 
         <div class="mt-1 mb-4 d-flex gap-2 align-items-center">${acoes()}</div>`;

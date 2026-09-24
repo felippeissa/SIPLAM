@@ -30,7 +30,6 @@ const indicadores = catalogo({
     plural: "Indicadores",
     artigo: "o",
     prefixo: "ind",
-    ajuda: "Ao menos um. É o indicador que diz se o problema está diminuindo — sem ele, o problema não se acompanha.",
     campos: [{ id: "unidade", rotulo: "Unidade", tipo: "texto", ajuda: "Percentual, Unidade, Pessoa atendida…" }],
     colunasExtra: [
         { rotulo: "Periodicidade", valor: (i) => esc(i.periodicidade || "—") },
@@ -45,7 +44,6 @@ const populacoes = catalogo({
     plural: "População afetada",
     artigo: "o",
     prefixo: "pop",
-    ajuda: "Quem é atingido pelo problema. O mesmo grupo costuma aparecer em mais de um problema — busque antes de cadastrar.",
     campos: [
         {
             id: "estimativa",
@@ -63,7 +61,6 @@ const causas = catalogo({
     plural: "Causas e subcausas",
     artigo: "a",
     prefixo: "cau",
-    ajuda: "Busque entre as causas já cadastradas. As subcausas de cada uma aparecem na grade, e se cadastram na tela de Causas.",
     campos: [
         { id: "justificativa", rotulo: "Justificativa", ajuda: "Por que ela origina o problema" },
         { id: "evidencia", rotulo: "Evidência", ajuda: "O número, a série ou o estudo que a sustenta" },
@@ -94,11 +91,16 @@ export const problema = {
     singular: "Problema",
     rotuloNome: "Nome",
     exemplo: "Acesso desigual ao cuidado integral na primeira infância",
-    ajuda: "O problema é o que o Programa existe para enfrentar. As causas escolhidas aqui são o que o explica.",
     podeExcluir: true,
 
     // A descrição vem logo abaixo do nome, e não no fim do formulário.
     semDescricao: true,
+
+    filtros: [
+        { tipo: "vinculo", id: "causas", rotulo: "Causas", colecao: "causas", campo: "causaIds" },
+        { tipo: "vinculo", id: "indicadores", rotulo: "Indicadores", colecao: "indicadores", campo: "indicadorIds" },
+        { tipo: "vinculo", id: "populacoes", rotulo: "População afetada", colecao: "populacoes", campo: "populacaoIds" },
+    ],
 
     extra: {
         colunas: [

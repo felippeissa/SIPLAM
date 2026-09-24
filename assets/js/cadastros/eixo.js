@@ -20,7 +20,6 @@ const objetivos = catalogo({
     plural: "Objetivos estratégicos",
     artigo: "o",
     prefixo: "obj",
-    ajuda: "Busque entre os objetivos já cadastrados. Um objetivo pertence a um eixo só — trazer para cá um que está em outro eixo o move.",
     campos: [{ id: "descricao", rotulo: "Descrição", ajuda: "O que este objetivo persegue" }],
 
     // Na lista de busca, o que importa saber antes de escolher é de onde o
@@ -41,12 +40,15 @@ export const eixo = {
     singular: "Eixo",
     rotuloNome: "Nome",
     exemplo: "Goiás que cuida",
-    ajuda: "O eixo é o nível mais alto do plano: reúne os objetivos estratégicos e, por eles, os Programas.",
     podeExcluir: true,
 
     // A descrição é desenhada aqui dentro, para a tabela de objetivos vir
     // depois dela e não entre o nome e a descrição.
     semDescricao: true,
+
+    filtros: [
+        { tipo: "inverso", id: "objetivos", rotulo: "Objetivos estratégicos", colecao: "objetivos", campo: "eixoId" },
+    ],
 
     extra: {
         coluna: {

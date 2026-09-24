@@ -172,7 +172,6 @@ export function catalogo(cfg) {
                      style="z-index:5; max-height:16rem; overflow:auto"></div>
             </div>
 
-            ${cfg.ajuda ? `<div class="form-text fs-12 mb-2">${esc(cfg.ajuda)}</div>` : ""}
 
             <div class="table-responsive border rounded">
                 <table class="table table-sm mb-0">

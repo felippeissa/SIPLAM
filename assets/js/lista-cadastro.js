@@ -9,14 +9,13 @@
  * o que o cadastro tem é o tipo de erro que só aparece em produção.
  */
 import { obterEstado, ppaCorrente } from "./dados/store.js";
-import { montarShell, cabecalhoPagina, somenteLeitura, url } from "./shell.js";
+import { montarShell, barraTitulo, somenteLeitura, url } from "./shell.js";
 import { esc } from "./ui.js";
+import { criarFiltros, opcoesDe } from "./filtros.js";
 
 export function montarLista(cfg) {
     const { estado } = montarShell();
     const leitura = somenteLeitura() || cfg.somenteAdminCentral === true;
-    let busca = "";
-
     // Um PPA por vez: a listagem mostra só o que pertence ao plano escolhido no
     // cabeçalho. Registro sem `ppaId` é anterior ao vínculo — aparece sempre,
     // senão sumiria sem que ninguém pudesse alcançá-lo.
@@ -31,59 +30,125 @@ export function montarLista(cfg) {
         return opcoesPai().find((p) => p.id === item[cfg.pai.campo])?.nome ?? "—";
     };
 
-    const dependentes = (item) =>
-        (cfg.filhos ?? []).reduce(
-            (total, filho) => total + (estado[filho.colecao] ?? []).filter((f) => f[filho.campo] === item.id).length,
-            0
-        );
-
     // Um cadastro pode mostrar mais de um vínculo na tabela. `coluna` no
     // singular continua valendo para quem tem só um.
     const extras = cfg.extra?.colunas ?? (cfg.extra?.coluna ? [cfg.extra.coluna] : []);
 
+    /**
+     * Os filtros espelham as colunas da tabela. Cada cadastro declara de onde
+     * vem o valor de cada uma; o tipo diz quem guarda o vínculo:
+     *
+     *   vinculo — o próprio registro aponta (`item[campo]`, um id ou vários);
+     *   inverso — quem aponta é o outro lado (o objetivo é que guarda o eixo);
+     *   texto   — o valor está no próprio registro, como unidade ou situação.
+     */
+    function campoDeFiltro(f) {
+        const registros = () => (estado[f.colecao] ?? []).filter(doPlano);
+
+        if (f.tipo === "texto") {
+            return {
+                id: f.id,
+                rotulo: f.rotulo,
+                opcoes: () => opcoesDe(itens(), (i) => i[f.campo]),
+                valorDe: (i) => (i[f.campo] ? [String(i[f.campo])] : []),
+            };
+        }
+
+        const opcoes = () =>
+            registros()
+                .map((r) => ({ valor: r.id, rotulo: r.nome }))
+                .sort((a, b) => a.rotulo.localeCompare(b.rotulo, "pt-BR"));
+
+        if (f.tipo === "inverso") {
+            // Quem guarda o vínculo é o outro lado, e ele pode guardá-lo num
+            // campo só ou numa lista.
+            const aponta = (r, id) => {
+                const v = r[f.campo];
+                return Array.isArray(v) ? v.includes(id) : v === id;
+            };
+            return {
+                id: f.id,
+                rotulo: f.rotulo,
+                opcoes,
+                valorDe: (i) => registros().filter((r) => aponta(r, i.id)).map((r) => r.id),
+            };
+        }
+
+        return {
+            id: f.id,
+            rotulo: f.rotulo,
+            opcoes,
+            valorDe: (i) => [i[f.campo]].flat().filter(Boolean),
+        };
+    }
+
+    const filtros = criarFiltros({
+        livre: {
+            rotulo: cfg.singular,
+            // O campo livre varre todo texto do registro: procurar pela
+            // evidência e não achar a subcausa seria procurar às cegas.
+            texto: (i) =>
+                Object.entries(i)
+                    .filter(([chave, v]) => typeof v === "string" && chave !== "id" && chave !== "ppaId")
+                    .map(([, v]) => v)
+                    .join(" ") + (cfg.codigo ? ` ${cfg.codigo(i, estado)}` : ""),
+        },
+        campos: (cfg.filtros ?? []).map(campoDeFiltro),
+        exportar: cfg.colecao,
+        // A ação da tela vive no cabeçalho do card, como no Inspinia. Sem o
+        // nível acima não há o que vincular: o botão fica visível e desabilitado,
+        // porque esconder deixaria a pessoa procurando uma ação que existe.
+        acao: () =>
+            leitura
+                ? `<span class="fs-12 text-muted">${esc(cfg.avisoLeitura ?? "Perfil sem edição neste cadastro.")}</span>`
+                : `<a href="${criar}" class="btn btn-primary ${semPai() ? "disabled" : ""}">
+                    <i class="ti ti-plus me-1"></i>${esc(cfg.novoRotulo)}
+                </a>`,
+    });
+
+    // Sem o nível acima não há o que vincular.
+    const semPai = () => cfg.pai && !cfg.pai.opcional && opcoesPai().length === 0;
+
     const criar = url(`${cfg.pasta}/criar.html`);
     const editar = (id) => url(`${cfg.pasta}/editar.html?id=${encodeURIComponent(id)}`);
 
+    /** Corpo da tabela — é só ele que se refaz quando um filtro muda. */
+    function linhas() {
+        const lista = itens().filter((i) => filtros.passa(i));
+
+        const colunas = 2 + (cfg.semDescricao ? 0 : 1) + (cfg.pai ? 1 : 0) + extras.length + (cfg.codigo ? 1 : 0);
+
+        if (lista.length === 0) {
+            return `<tr><td colspan="${colunas}" class="text-center text-muted py-4 fs-12">
+                ${itens().length === 0 ? `Nenhum registro. Comece por “${esc(cfg.novoRotulo)}”.` : "Nenhum registro corresponde ao filtro."}
+            </td></tr>`;
+        }
+
+        return lista
+            .map(
+                (i) => `
+            <tr>
+                ${cfg.codigo ? `<td class="codigo text-muted">${esc(cfg.codigo(i, estado))}</td>` : ""}
+                <td class="fw-medium">${esc(i.nome)}</td>
+                ${cfg.pai ? `<td class="fs-13 text-muted">${esc(nomeDoPai(i))}</td>` : ""}
+                ${extras.map((c) => `<td class="fs-13 text-muted">${c.valor(i, estado)}</td>`).join("")}
+                ${cfg.semDescricao ? "" : `<td class="fs-13 text-muted">${esc(i.descricao || "—")}</td>`}
+                <td class="text-end coluna-acoes">
+                    <a href="${editar(i.id)}" class="btn btn-sm ${leitura ? "btn-light" : "btn-outline-primary"}">
+                        ${leitura ? "Ver" : "Editar"}
+                    </a>
+                </td>
+            </tr>`
+            )
+            .join("");
+    }
+
     function render() {
-        const termo = busca.trim().toLocaleLowerCase("pt-BR");
-        // A busca varre todo texto do registro, não só nome e descrição:
-        // procurar pela evidência e não achar a subcausa seria procurar às cegas.
-        const textoDe = (i) =>
-            Object.entries(i)
-                .filter(([chave, v]) => typeof v === "string" && chave !== "id" && chave !== "ppaId")
-                .map(([, v]) => v)
-                .join(" ")
-                .toLocaleLowerCase("pt-BR");
-
-        const lista = itens().filter((i) => !termo || textoDe(i).includes(termo));
-
-        // Sem o nível acima não há o que vincular: o botão fica visível e
-        // desabilitado, com o motivo ao lado — esconder deixaria a pessoa
-        // procurando uma ação que existe.
-        const semPai = cfg.pai && !cfg.pai.opcional && opcoesPai().length === 0;
-
-        const colunas = 2 + (cfg.semDescricao ? 0 : 1) + (cfg.pai ? 1 : 0) + extras.length + (cfg.filhos?.length ? 1 : 0) + (cfg.codigo ? 1 : 0);
-
         document.getElementById("conteudo").innerHTML = `
-        ${cabecalhoPagina(
-            esc(cfg.titulo),
-            esc(cfg.subtitulo),
-            `
-            <div class="app-search">
-                <input type="search" id="busca" class="form-control form-control-sm" placeholder="Buscar" value="${esc(busca)}" />
-                <i class="ti ti-search app-search-icon text-muted"></i>
-            </div>
-            ${
-                leitura
-                    ? `<span class="fs-12 text-muted">${esc(cfg.avisoLeitura ?? "Perfil sem edição neste cadastro.")}</span>`
-                    : `<a href="${criar}" class="btn btn-sm btn-primary ${semPai ? "disabled" : ""}">
-                    <i class="ti ti-plus me-1"></i>${esc(cfg.novoRotulo)}
-                </a>`
-            }`
-        )}
+        ${barraTitulo(esc(cfg.titulo))}
 
         ${
-            semPai
+            semPai()
                 ? `<div class="alert alert-warning py-2 px-3 fs-13">
                 Cadastre ao menos ${esc(cfg.pai.artigo)}
                 <a href="${url(cfg.pai.href)}" class="fw-semibold">${esc(cfg.pai.rotulo)}</a>
@@ -93,6 +158,7 @@ export function montarLista(cfg) {
         }
 
         <div class="card">
+            ${filtros.html()}
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
                     <thead>
@@ -102,51 +168,18 @@ export function montarLista(cfg) {
                             ${cfg.pai ? `<th style="width:18rem">${esc(cfg.pai.rotulo)}</th>` : ""}
                             ${extras.map((c) => `<th style="width:12rem">${esc(c.rotulo)}</th>`).join("")}
                             ${cfg.semDescricao ? "" : "<th>Descrição</th>"}
-                            ${cfg.filhos?.length ? `<th class="num" style="width:9rem">${esc(cfg.filhos[0].rotulo)}</th>` : ""}
-                            <th style="width:7rem">Ações</th>
+                            <th class="text-end coluna-acoes" style="width:7rem">Ações</th>
                         </tr>
                     </thead>
-                    <tbody>
-                    ${
-                        lista.length === 0
-                            ? `<tr><td colspan="${colunas}" class="text-center text-muted py-4 fs-12">
-                            ${itens().length === 0 ? `Nenhum registro. Comece por “${esc(cfg.novoRotulo)}”.` : "Nenhum registro corresponde à busca."}
-                        </td></tr>`
-                            : lista
-                                  .map(
-                                      (i) => `
-                        <tr>
-                            ${cfg.codigo ? `<td class="codigo text-muted">${esc(cfg.codigo(i, estado))}</td>` : ""}
-                            <td class="fw-medium">${esc(i.nome)}</td>
-                            ${cfg.pai ? `<td class="fs-13 text-muted">${esc(nomeDoPai(i))}</td>` : ""}
-                            ${extras.map((c) => `<td class="fs-13 text-muted">${c.valor(i, estado)}</td>`).join("")}
-                            ${cfg.semDescricao ? "" : `<td class="fs-13 text-muted">${esc(i.descricao || "—")}</td>`}
-                            ${cfg.filhos?.length ? `<td class="num">${dependentes(i) || "—"}</td>` : ""}
-                            <td>
-                                <a href="${editar(i.id)}" class="btn btn-sm ${leitura ? "btn-light" : "btn-outline-primary"}">
-                                    ${leitura ? "Ver" : "Editar"}
-                                </a>
-                            </td>
-                        </tr>`
-                                  )
-                                  .join("")
-                    }
-                    </tbody>
+                    <tbody id="corpo-lista">${linhas()}</tbody>
                 </table>
             </div>
         </div>`;
-    }
 
-    document.addEventListener("input", (e) => {
-        if (e.target.id !== "busca") return;
-        busca = e.target.value;
-        render();
-        // O campo é recriado a cada tecla: sem devolver o cursor ao fim, o texto
-        // digitado sai embaralhado.
-        const campo = document.getElementById("busca");
-        campo.focus();
-        campo.setSelectionRange(campo.value.length, campo.value.length);
-    });
+        filtros.ligar(() => {
+            document.getElementById("corpo-lista").innerHTML = linhas();
+        });
+    }
 
     render();
 }

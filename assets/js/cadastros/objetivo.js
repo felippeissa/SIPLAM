@@ -20,7 +20,6 @@ const eixos = catalogo({
     artigo: "o",
     prefixo: "eix",
     unico: true,
-    ajuda: "Um objetivo pertence a um eixo só. Se o eixo ainda não existir, cadastre-o aqui mesmo.",
     campos: [{ id: "descricao", rotulo: "Descrição", ajuda: "O que este eixo reúne" }],
     usos: (id, estado) => (estado.objetivos ?? []).filter((o) => o.eixoId === id).length,
 });
@@ -35,12 +34,13 @@ export const objetivo = {
     singular: "Objetivo estratégico",
     rotuloNome: "Nome",
     exemplo: "Ampliar a rede de cuidado à pessoa idosa.",
-    ajuda: "É ao objetivo que os Programas se vinculam. O eixo é opcional: um objetivo pode ser cadastrado antes de os eixos existirem.",
     podeExcluir: true,
 
     // A descrição vem antes do eixo, porque explica o registro que está sendo
     // cadastrado — e não o nível acima dele.
     semDescricao: true,
+
+    filtros: [{ tipo: "vinculo", id: "eixo", rotulo: "Eixo", colecao: "eixos", campo: "eixoId" }],
 
     extra: {
         coluna: {
@@ -64,6 +64,9 @@ export const objetivo = {
         ler: () => ({ eixoId: eixos.ler()[0] ?? "" }),
     },
 
+    // `filhos` não aparece mais na tela: nem coluna na listagem, nem campo no
+    // formulário. Fica porque é ele que impede excluir um objetivo do qual
+    // Programas dependem — apagar aqui deixaria Programas apontando para o nada.
     filhos: [
         {
             colecao: "programas",
