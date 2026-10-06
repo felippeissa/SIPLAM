@@ -544,3 +544,8 @@
     background-color: var(--bs-primary);
     color: #fff;
 }
+
+/* Linha de tabela que leva a outra tela ao ser clicada. */
+tr.linha-clicavel {
+    cursor: pointer;
+}

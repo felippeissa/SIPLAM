@@ -27,30 +27,15 @@ import {
     cpfValido,
     formatarCpf,
 } from "../dados/store.js";
-import { montarShell, barraTitulo, somenteLeitura } from "../shell.js";
+import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { criarFiltros, opcoesDe } from "../filtros.js";
 import { chip, esc, faixaIndicadores } from "../ui.js";
 import { avisar } from "../toast.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
+import { PERFIS, nomeDoPerfil } from "../usuarios-decisao.js";
 
 const { estado } = montarShell();
 const leitura = somenteLeitura();
-
-/** Espelha `assets/js/acesso.js`. Setorial exige órgão; central, não. */
-const PERFIS = [
-    { id: "setorial", nome: "Planejamento setorial", visao: "setorial" },
-    { id: "gestao-setorial", nome: "Alta gestão setorial", visao: "setorial" },
-    { id: "admin-central", nome: "Administrador central", visao: "central" },
-    { id: "gestao-central", nome: "Alta gestão central", visao: "central" },
-    { id: "controle", nome: "Consulta", visao: "central" },
-];
-
-const nomeDoPerfil = (id) => PERFIS.find((p) => p.id === id)?.nome ?? id;
-
-const tamanhoLegivel = (bytes) =>
-    bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
-
-let analisando = null;
 
 const usuarios = () => estado.usuarios ?? [];
 
@@ -124,46 +109,16 @@ function indicadores() {
     );
 }
 
-/**
- * As ações de uma linha, sempre no mesmo lugar: o menu de três pontos ao fim
- * dela. Botões diferentes em colunas diferentes fariam o olho procurar a ação a
- * cada linha.
- *
- * São duas, as do RF3: **aprovar** e **reprovar**. O que aparece depende da
- * situação — oferecer "aprovar" a quem já está aprovado não faria nada. Decidir
- * não é irreversível: de aprovado se reprova, de reprovado se aprova, e aí o
- * perfil a conceder é escolhido de novo.
- */
-function acoes(u) {
-    if (leitura) return "";
-
-    const aprovar = { rotulo: "Aprovar", atributo: `data-aprovar="${u.id}"`, tom: "" };
-    const reprovar = { rotulo: "Reprovar", atributo: `data-reprovar="${u.id}"`, tom: "text-danger" };
-
-    const itens = {
-        aguardando: [aprovar, reprovar],
-        aprovado: [reprovar],
-        reprovado: [aprovar],
-    }[u.situacao];
-
-    if (!itens?.length) return "";
-
-    return `
-    <div class="dropdown">
-        <button class="btn btn-sm btn-light" data-bs-toggle="dropdown" aria-label="Ações de ${esc(u.nome)}"><i class="ti ti-dots-vertical"></i></button>
-        <ul class="dropdown-menu dropdown-menu-end">
-            ${itens.map((i) => `<li><button class="dropdown-item ${i.tom}" ${i.atributo}>${i.rotulo}</button></li>`).join("")}
-        </ul>
-    </div>`;
-}
-
 function linha(u) {
     const s = situacaoUsuario(u.situacao);
     const semAcesso = u.situacao === "reprovado";
+    // Clicar no usuário abre a tela dele, e é lá que se aprova ou reprova. A linha
+    // toda é clicável; o nome é um link de verdade, para quem navega pelo teclado.
+    const destino = url(`central-usuarios/ver.html?id=${encodeURIComponent(u.id)}`);
     return `
-    <tr class="${semAcesso ? "text-muted" : ""}">
+    <tr class="linha-clicavel ${semAcesso ? "text-muted" : ""}" data-href="${destino}">
         <td>
-            <span class="fw-medium">${esc(u.nome)}</span>
+            <a href="${destino}" class="fw-medium text-reset">${esc(u.nome)}</a>
             <span class="fs-12 text-muted d-block">${esc(u.email)}</span>
         </td>
         <td class="codigo">${esc(u.login)}</td>
@@ -176,7 +131,6 @@ function linha(u) {
             }
         </td>
         <td>${chip(s.rotulo, s.tom)}</td>
-        <td class="text-end coluna-acoes">${acoes(u)}</td>
     </tr>`;
 }
 
@@ -197,17 +151,10 @@ function render() {
                         <th style="width:16rem">Órgão</th>
                         <th style="width:14rem">Perfil</th>
                         <th style="width:11rem">Situação</th>
-                        <th class="text-end coluna-acoes" style="width:7rem">Ações</th>
                     </tr>
                 </thead>
                 <tbody id="corpo-lista">${lista.length ? lista.map(linha).join("") : vazio()}</tbody>
             </table>
-        </div>
-    </div>
-
-    <div class="modal fade" id="modal-analise" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" id="modal-conteudo"></div>
         </div>
     </div>
 
@@ -218,185 +165,6 @@ function render() {
     </div>`;
 
     ligar();
-}
-
-/** Os dados declarados por quem se registrou. Leitura, nunca edição. */
-function ficha(u) {
-    const campo = (rotulo, valor) => `
-    <div class="col-6">
-        <div class="rotulo-secao mb-1">${rotulo}</div>
-        <p class="fs-13 mb-0">${valor ? esc(valor) : "—"}</p>
-    </div>`;
-    return `
-    <div class="row g-3 mb-3">
-        ${campo("Nome", u.nome)}
-        ${campo("CPF", u.cpf)}
-        ${campo("E-mail", u.email)}
-        ${campo("Login", u.login)}
-        ${campo("Órgão", u.orgao)}
-        ${campo("Perfil pedido", u.perfilSolicitado ? nomeDoPerfil(u.perfilSolicitado) : "")}
-    </div>
-    ${
-        u.observacao
-            ? `
-    <div class="mb-3">
-        <div class="rotulo-secao mb-1">Observação de quem se registrou</div>
-        <p class="fs-13 mb-0">${esc(u.observacao)}</p>
-    </div>`
-            : ""
-    }
-    ${
-        (u.anexos ?? []).length
-            ? `
-    <div class="mb-3">
-        <div class="rotulo-secao mb-1">Documentos anexados</div>
-        <ul class="list-group">
-            ${u.anexos
-                .map(
-                    (a) => `
-            <li class="list-group-item d-flex align-items-center gap-2 py-2">
-                <i class="ti ti-paperclip text-muted"></i>
-                <span class="fs-13 text-truncate">${esc(a.nome)}</span>
-                <span class="fs-12 text-muted ms-auto">${esc(tamanhoLegivel(a.tamanho))}</span>
-            </li>`
-                )
-                .join("")}
-        </ul>
-        <div class="form-text fs-12">
-            No protótipo o arquivo não é enviado: guarda-se a ficha dele.
-        </div>
-    </div>`
-            : ""
-    }
-    ${
-        u.foraDaBase
-            ? `<div class="alert alert-warning py-2 px-3 fs-12">
-        <i class="ti ti-alert-triangle me-1"></i>
-        Este CPF não estava no vínculo funcional: nome, e-mail e login foram digitados pela
-        própria pessoa e não foram conferidos por ninguém.
-    </div>`
-            : ""
-    }`;
-}
-
-/** As caixas de perfil, marcadas conforme o que a pessoa ja tem ou pediu. */
-function escolhaDePerfis(u, prefixo) {
-    return `
-    <label class="form-label" for="${prefixo}-perfis">Perfil a conceder<span class="text-danger">*</span></label>
-    <div class="d-flex flex-column gap-1" id="${prefixo}-perfis">
-        ${PERFIS.map(
-            (p) => `
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="${p.id}" id="${prefixo}-${p.id}" data-perfil
-                   ${u.perfis.includes(p.id) || (!u.perfis.length && u.perfilSolicitado === p.id) ? "checked" : ""} />
-            <label class="form-check-label" for="${prefixo}-${p.id}">
-                ${p.nome}
-                <span class="fs-12 text-muted">· visão ${p.visao}</span>
-            </label>
-        </div>`
-        ).join("")}
-    </div>
-    ${campoErro(`${prefixo}-perfis`)}`;
-}
-
-/** Grava a decisão e volta para a lista. */
-function decidir(u, situacao, perfis, modal) {
-    updItem("usuarios", u.id, {
-        situacao,
-        perfis,
-        decididoEm: new Date().toLocaleDateString("pt-BR"),
-        decididoPor: estado.analista,
-    });
-    avisar(
-        {
-            aprovado: "Acesso concedido com sucesso.",
-            reprovado: "Solicitação reprovada.",
-        }[situacao] ?? "Decisão registrada."
-    );
-    bootstrap.Modal.getInstance(modal).hide();
-    render();
-}
-
-/**
- * Aprovar: só o perfil.
- *
- * Quem chega aqui já leu a solicitação na linha da tabela. Repetir a ficha
- * dentro da janela empurraria para baixo a única coisa que precisa ser
- * decidida.
- */
-function abrirAprovacao() {
-    const u = analisando;
-    const el = document.getElementById("modal-analise");
-    document.getElementById("modal-conteudo").innerHTML = `
-    <div class="modal-header">
-        <h5 class="modal-title">Aprovar acesso</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-    </div>
-    <div class="modal-body" id="form-analise">
-        <p class="fs-13 mb-3">
-            <span class="fw-medium">${esc(u.nome)}</span>
-            <span class="text-muted">· ${esc(u.orgao || "sem órgão")}</span>
-        </p>
-        ${escolhaDePerfis(u, "a")}
-        <div class="form-text fs-12">
-            ${u.perfilSolicitado ? "O perfil pedido já vem marcado — confirme ou troque." : "Escolha ao menos um."}
-        </div>
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-primary" id="conceder">Conceder</button>
-    </div>`;
-
-    const modal = new bootstrap.Modal(el);
-    modal.show();
-
-    const escopo = document.getElementById("form-analise");
-    limparAoDigitar(escopo);
-
-    document.getElementById("conceder").addEventListener("click", () => {
-        const perfis = [...escopo.querySelectorAll("[data-perfil]:checked")].map((c) => c.value);
-        const ok = validar(escopo, [
-            { campo: "a-perfis", valido: perfis.length > 0, mensagem: "Escolha ao menos um perfil para conceder." },
-        ]);
-        if (!ok) return;
-        decidir(u, "aprovado", perfis, el);
-    });
-
-    el.addEventListener("hidden.bs.modal", () => {
-        analisando = null;
-    });
-}
-
-/** Reprovar: nenhuma escolha, só a confirmação de quem está sendo reprovado. */
-function abrirReprovacao() {
-    const u = analisando;
-    const el = document.getElementById("modal-analise");
-    document.getElementById("modal-conteudo").innerHTML = `
-    <div class="modal-header">
-        <h5 class="modal-title">Reprovar solicitação</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-    </div>
-    <div class="modal-body">
-        <p class="mb-2">Confirma que está reprovando <span class="fw-semibold">${esc(u.nome)}</span>?</p>
-        <p class="text-muted fs-13 mb-0">
-            A pessoa fica sem acesso ao SIPLAM e nenhum perfil é concedido.
-            A decisão pode ser revista depois, em “Rever decisão”.
-        </p>
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-danger" id="confirmar-reprovacao">Reprovar</button>
-    </div>`;
-
-    const modal = new bootstrap.Modal(el);
-    modal.show();
-
-    // Reprovar nao concede papel nenhum.
-    document.getElementById("confirmar-reprovacao").addEventListener("click", () => decidir(u, "reprovado", [], el));
-
-    el.addEventListener("hidden.bs.modal", () => {
-        analisando = null;
-    });
 }
 
 /* ---------- cadastro pelo Administrador central ---------- */
@@ -579,29 +347,20 @@ function ligar() {
 
     filtros.ligar(() => {
         document.getElementById("corpo-lista").innerHTML = visiveis().map(linha).join("") || vazio();
-        ligarAcoes();
     });
 
-    ligarAcoes();
+    // O corpo da tabela é refeito a cada filtro, mas o elemento fica: um ouvinte
+    // nele serve a todas as linhas, as de agora e as que vierem.
+    document.getElementById("corpo-lista").addEventListener("click", (e) => {
+        const linhaClicada = e.target.closest("tr[data-href]");
+        if (linhaClicada && !e.target.closest("a")) window.location.href = linhaClicada.dataset.href;
+    });
 }
 
 function vazio() {
-    return `<tr><td colspan="6" class="text-center text-muted py-4 fs-12">
+    return `<tr><td colspan="5" class="text-center text-muted py-4 fs-12">
         ${usuarios().length ? "Nenhum usuário com esse recorte." : "Nenhuma solicitação de acesso."}
     </td></tr>`;
-}
-
-function ligarAcoes() {
-    const aoClicar = (atributo, abrir) =>
-        document.querySelectorAll(`[data-${atributo}]`).forEach((b) =>
-            b.addEventListener("click", () => {
-                analisando = usuarios().find((u) => u.id === b.dataset[atributo]);
-                if (analisando) abrir();
-            })
-        );
-
-    aoClicar("aprovar", abrirAprovacao);
-    aoClicar("reprovar", abrirReprovacao);
 }
 
 render();

@@ -150,7 +150,7 @@ function paginaAtual() {
     const arquivo = partes.at(-1) || "programas.html";
     // Numa subpasta, o menu deve marcar a listagem: `central-ppa/criar.html`
     // pertence ao item `central-ppa.html`.
-    if (arquivo === "criar.html" || arquivo === "editar.html") {
+    if (arquivo === "criar.html" || arquivo === "editar.html" || arquivo === "ver.html") {
         return partes.at(-2) + ".html";
     }
     return arquivo;
