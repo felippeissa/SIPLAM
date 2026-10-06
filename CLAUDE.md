@@ -14,6 +14,11 @@ Ordem de leitura ao iniciar uma entrega:
 3. `docs/perguntas.md` — o que os stakeholders já decidiram e o que ainda está em aberto.
 4. Só os arquivos que a entrega da vez toca.
 
+**Os campos de cada tela vêm da matriz de mapeamento** (`matriz_siplam.xlsx`, guardada fora do
+repositório porque é documento do cliente): quais campos, se são obrigatórios, se editam, qual
+componente e quem usa. O documento de requisitos traz só as **regras** — quando os dois divergem
+num campo, vale a matriz. Decidido em 06/10/2026.
+
 Não leia `prototipo-lovable/` inteiro nem `inspinia/` inteiro. São referências para consulta pontual:
 
 | Preciso de… | Leia só |
@@ -46,10 +51,11 @@ Não leia `prototipo-lovable/` inteiro nem `inspinia/` inteiro. São referência
 - O diagnóstico não é uma árvore: cada nível **aponta** para o seguinte, de muitos para muitos.
   `Diagnóstico → Problemas → Causas → Iniciativas`. Assim uma mesma causa explica mais de um
   problema e é enfrentada por mais de uma Iniciativa.
-- A **Subcausa** é cadastro do sistema, com nome, justificativa e evidência, e a Causa aponta
-  para ela — a mesma subcausa costuma explicar mais de uma causa. A Causa também tem
-  justificativa e evidência próprias. Retirada do protótipo em 18/09/2026, repedida em
-  22/09/2026, e promovida a cadastro em 23/09/2026.
+- A **Subcausa** é cadastro do sistema, com nome, justificativa e descrição, e a Causa aponta
+  para ela — a mesma subcausa costuma explicar mais de uma causa. Ela é cadastrada **na tela
+  de Causa**, e não tem item próprio no menu: a matriz diz que toda subcausa tem causa atrelada.
+  A Causa tem nome, justificativa e descrição. Retirada do protótipo em 18/09/2026, repedida em
+  22/09/2026, promovida a cadastro em 23/09/2026 e levada para dentro da Causa em 06/10/2026.
 - **O ciclo não tem tamanho fixo.** Os anos vêm do PPA criado, e podem ser menos de quatro — se um
   governador sai e o vice assume, o plano pode cobrir dois. Toda tabela de meta precisa funcionar
   com um número variável de colunas.
@@ -139,10 +145,10 @@ devolve o plano à edição.
 
 **Só um plano pode estar vigente por vez** — dois seriam duas leis valendo para os mesmos anos.
 
-**A situação não é escolhida, é reflexo.** O Cadastro de PPA a exibe e não a edita: submeter um
-plano o trava para todos os órgãos, então é um ato do fluxo, não um campo de
-formulário. O ato em si ainda não existe — e, enquanto não existir, todo plano fica **Em
-elaboração**, que é o que o sistema inteiro pressupõe.
+**A situação é campo editável do Cadastro de PPA**, como a matriz a marca: é por ela que o plano
+anda de elaboração até encerrado. Duas travas a acompanham — só um plano **em elaboração** e só um
+**vigente** por vez. Os demais campos do plano travam quando ele sai da elaboração; a situação não,
+porque é ela que o leva adiante. O fluxo de submissão como ato próprio ainda não existe.
 
 **O valor previsto também não é digitado.** É a soma das Ações Orçamentárias vinculadas às
 Entregas do plano, dentro dos anos dele. Plano recém-criado vale zero, e cresce conforme as

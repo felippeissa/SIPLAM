@@ -19,6 +19,7 @@ const eixos = catalogo({
     plural: "Eixo",
     artigo: "o",
     prefixo: "eix",
+    obrigatorio: true,
     unico: true,
     campos: [{ id: "descricao", rotulo: "Descrição", ajuda: "O que este eixo reúne" }],
     usos: (id, estado) => (estado.objetivos ?? []).filter((o) => o.eixoId === id).length,
@@ -32,7 +33,7 @@ export const objetivo = {
     subtitulo: "O que cada eixo se propõe a alcançar.",
     novoRotulo: "Novo objetivo estratégico",
     singular: "Objetivo estratégico",
-    rotuloNome: "Nome",
+    rotuloNome: "Nome do objetivo estratégico",
     exemplo: "Ampliar a rede de cuidado à pessoa idosa.",
     podeExcluir: true,
 
@@ -62,6 +63,12 @@ export const objetivo = {
         ligar: (escopo) => eixos.ligar(escopo),
 
         ler: () => ({ eixoId: eixos.ler()[0] ?? "" }),
+
+        // RF6: o eixo é obrigatório. Um objetivo sem eixo não entra na estrutura
+        // do plano — ficaria num nível que a lei não tem.
+        regras: (dados) => [
+            { campo: "eix-busca", valido: !!dados.eixoId, mensagem: "Escolha o eixo a que este objetivo pertence." },
+        ],
     },
 
     // `filhos` não aparece mais na tela: nem coluna na listagem, nem campo no

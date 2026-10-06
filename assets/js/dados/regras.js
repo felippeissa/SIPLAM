@@ -16,14 +16,16 @@ const STATUS_LABEL = {
   enviada: "Enviada",
   em_analise: "Em an\xE1lise pela \xC1rea Central",
   devolvida: "Devolvida para ajuste",
-  validada: "Validada"
+  validada: "Validada",
+  divergencia: "Divergência reportada"
 };
 const STATUS_CURTO = {
   em_preenchimento: "Em preenchimento",
   enviada: "Enviada",
   em_analise: "Em an\xE1lise",
   devolvida: "Devolvida",
-  validada: "Validada"
+  validada: "Validada",
+  divergencia: "Divergência"
 };
 const COMPORTAMENTOS = [
   { id: "acumulativa", nome: "Acumulativa", ajuda: "Os valores anuais se somam ao longo do plano." },
@@ -38,7 +40,7 @@ const TERRITORIO_LABEL = {
   nao_territorializavel: "N\xE3o territorializ\xE1vel"
 };
 function podeEditar(status) {
-  return status === "em_preenchimento" || status === "devolvida";
+  return status === "em_preenchimento" || status === "devolvida" || status === "divergencia";
 }
 function moeda(v) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -175,7 +177,8 @@ const DISPONIBILIZACAO_LABEL = {
   em_estruturacao: "Em estrutura\xE7\xE3o",
   pronto: "Pronto para disponibiliza\xE7\xE3o",
   disponivel: "Dispon\xEDvel para contribui\xE7\xF5es",
-  encerrado: "Encerrado para novas contribui\xE7\xF5es"
+  encerrado: "Encerrado para novas contribui\xE7\xF5es",
+  vigente: "Vigente"
 };
 const APTIDAO_LABEL = {
   incompleto: "Diagn\xF3stico incompleto",

@@ -110,6 +110,34 @@ const visiveis = () => linhasDoAnexo().filter((l) => filtros.passa(l));
 
 /* ---------- desenho ---------- */
 
+/**
+ * RF18/RF19: o relatório tem duas visões.
+ *
+ * **Sintético** é o retrato: números e gráficos, para ler de uma vez.
+ * **Analítico** é a listagem linha a linha, que é o que se confere e se exporta.
+ * Uma só tela com as duas empilhadas obrigava a rolar por cima do que não se
+ * queria.
+ */
+let visao = "sintetico";
+
+const seletorDeVisao = () => `
+    <div class="btn-group" role="group" aria-label="Visão do relatório">
+        <button type="button" class="btn btn-sm ${visao === "sintetico" ? "btn-primary" : "btn-light"}" data-visao="sintetico">
+            <i class="ti ti-chart-donut me-1"></i>Sintético
+        </button>
+        <button type="button" class="btn btn-sm ${visao === "analitico" ? "btn-primary" : "btn-light"}" data-visao="analitico">
+            <i class="ti ti-table me-1"></i>Analítico
+        </button>
+    </div>`;
+
+document.addEventListener("click", (e) => {
+    const botao = e.target.closest("[data-visao]");
+    if (!botao || botao.dataset.visao === visao) return;
+    visao = botao.dataset.visao;
+    render();
+});
+
+
 function numeros(linhas) {
     const completos = linhas.filter((l) => !l.falta.length).length;
     return faixaIndicadores(
@@ -202,18 +230,25 @@ function desenharGraficos(linhas) {
 
 function render() {
     const linhas = visiveis();
+    const sintetico = visao === "sintetico";
 
     document.getElementById("conteudo").innerHTML = `
     ${barraTitulo("Relatório final da lei do PPA")}
+
+    <div class="d-flex justify-content-end mb-3">${seletorDeVisao()}</div>
+
     <div id="faixa">${numeros(linhas)}</div>
 
+    ${
+        sintetico
+            ? `
     <div class="row g-3 mb-3">
         <div class="col-xl-6">${cartaoGrafico("g-programas-eixo", "Programas por eixo", "Onde o plano concentra a sua estrutura.")}</div>
         <div class="col-xl-6">${cartaoGrafico("g-valor-ano", "Previsto por ano do ciclo", "Somado das Ações Orçamentárias vinculadas às Entregas.")}</div>
         <div class="col-xl-8">${cartaoGrafico("g-valor-eixo", "Distribuição do valor por eixo", "O peso financeiro de cada eixo dentro do plano.")}</div>
         <div class="col-xl-4">${cartaoGrafico("g-prontidao", "Prontidão para a lei", "Programas com problema, objetivo, causas e indicadores.")}</div>
-    </div>
-
+    </div>`
+            : `
     <div class="card">
         ${filtros.html()}
         <div class="table-responsive">
@@ -232,15 +267,18 @@ function render() {
                 <tbody id="corpo-lista">${corpo(linhas)}</tbody>
             </table>
         </div>
-    </div>`;
+    </div>`
+    }`;
 
-    desenharGraficos(linhas);
+    if (sintetico) {
+        desenharGraficos(linhas);
+        return;
+    }
 
     filtros.ligar(() => {
         const atuais = visiveis();
         document.getElementById("corpo-lista").innerHTML = corpo(atuais);
         document.getElementById("faixa").innerHTML = numeros(atuais);
-        desenharGraficos(atuais);
     });
 }
 

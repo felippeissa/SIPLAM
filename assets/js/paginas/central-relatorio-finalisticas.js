@@ -147,6 +147,34 @@ const visiveis = () => TODOS.filter((o) => filtros.passa(o));
 
 /* ---------- desenho ---------- */
 
+/**
+ * RF18/RF19: o relatório tem duas visões.
+ *
+ * **Sintético** é o retrato: números e gráficos, para ler de uma vez.
+ * **Analítico** é a listagem linha a linha, que é o que se confere e se exporta.
+ * Uma só tela com as duas empilhadas obrigava a rolar por cima do que não se
+ * queria.
+ */
+let visao = "sintetico";
+
+const seletorDeVisao = () => `
+    <div class="btn-group" role="group" aria-label="Visão do relatório">
+        <button type="button" class="btn btn-sm ${visao === "sintetico" ? "btn-primary" : "btn-light"}" data-visao="sintetico">
+            <i class="ti ti-chart-donut me-1"></i>Sintético
+        </button>
+        <button type="button" class="btn btn-sm ${visao === "analitico" ? "btn-primary" : "btn-light"}" data-visao="analitico">
+            <i class="ti ti-table me-1"></i>Analítico
+        </button>
+    </div>`;
+
+document.addEventListener("click", (e) => {
+    const botao = e.target.closest("[data-visao]");
+    if (!botao || botao.dataset.visao === visao) return;
+    visao = botao.dataset.visao;
+    render();
+});
+
+
 function numeros(lista) {
     const inis = lista.reduce((s, o) => s + o.iniciativas, 0);
     const validadas = lista.reduce((s, o) => s + (o.porStatus.validada ?? 0), 0);
@@ -260,18 +288,25 @@ function desenharGraficos(lista) {
 
 function render() {
     const lista = visiveis();
+    const sintetico = visao === "sintetico";
 
     document.getElementById("conteudo").innerHTML = `
     ${barraTitulo("Relatório consolidado de finalísticas")}
+
+    <div class="d-flex justify-content-end mb-3">${seletorDeVisao()}</div>
+
     <div id="faixa">${numeros(lista)}</div>
 
+    ${
+        sintetico
+            ? `
     <div class="row g-3 mb-3">
         <div class="col-xl-6">${cartaoGrafico("g-entregas-orgao", "Contribuição por órgão", "Os dez órgãos com mais Entregas no plano.")}</div>
         <div class="col-xl-6">${cartaoGrafico("g-status", "Estado das contribuições", "Onde estão as Iniciativas no fluxo de aprovação.")}</div>
         <div class="col-xl-8">${cartaoGrafico("g-previsto-ano", "Previsto por ano, pelos cinco maiores órgãos", "Empilhado: a coluna é o ano do ciclo.")}</div>
         <div class="col-xl-4">${cartaoGrafico("g-consolidacao", "Consolidação", "O quanto já está validado e livre de impeditivo.")}</div>
-    </div>
-
+    </div>`
+            : `
     <div class="card">
         ${filtros.html()}
         <div class="table-responsive">
@@ -291,15 +326,18 @@ function render() {
                 <tbody id="corpo-lista">${corpo(lista)}</tbody>
             </table>
         </div>
-    </div>`;
+    </div>`
+    }`;
 
-    desenharGraficos(lista);
+    if (sintetico) {
+        desenharGraficos(lista);
+        return;
+    }
 
     filtros.ligar(() => {
         const atuais = visiveis();
         document.getElementById("corpo-lista").innerHTML = corpo(atuais);
         document.getElementById("faixa").innerHTML = numeros(atuais);
-        desenharGraficos(atuais);
     });
 }
 

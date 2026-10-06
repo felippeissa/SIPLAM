@@ -109,7 +109,7 @@ export function montarFormulario(cfg) {
                     : ""
             }
 
-            ${cfg.extra ? `<div class="col-12"><div class="mb-3">${cfg.extra.html(edicao, estado)}</div></div>` : ""}
+            ${cfg.extra?.html ? `<div class="col-12"><div class="mb-3">${cfg.extra.html(edicao, estado)}</div></div>` : ""}
 
             ${
                 // Alguns cadastros põem a descrição no meio do formulário, e não no
@@ -146,11 +146,6 @@ export function montarFormulario(cfg) {
 
         for (const linha of cfg.apoio?.(edicao, estado) ?? []) {
             campos.push(campo(linha.rotulo, linha.valor || "—", "col-12"));
-        }
-
-        if (!novo) {
-            if (cfg.codigo) campos.push(campo("Número", cfg.codigo(edicao, estado)));
-            if (edicao.criadoEm) campos.push(campo("Cadastrado em", edicao.criadoEm));
         }
 
         return campos.join("");

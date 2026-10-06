@@ -1,19 +1,36 @@
 /**
  * Criar e editar o Programa, em tela própria.
  *
- * É o formulário mais longo do sistema: identidade, diagnóstico, objetivo e
- * governança. Num modal ele rolava dentro de uma caixa, sem endereço próprio e
- * perdendo tudo se fechasse por engano — motivo de mais para ter tela.
+ * Os campos são os da matriz de mapeamento, na ordem dela:
  *
- * O conteúdo fica no cartão principal; aptidão e disponibilização, no lateral,
- * porque dizem respeito ao estado do Programa, não ao que ele é.
+ *   Nome* · Status* · Descrição do programa* · Objetivo do programa ·
+ *   Resultado esperado · Eixo · Objetivo estratégico · Problema ·
+ *   População afetada · Causa e subcausa · Indicadores de resultado · Iniciativas
+ *
+ * Só três são obrigatórios. O resto é **vínculo**: o Programa aponta para
+ * cadastros que existem em outro lugar — eixo, objetivo, problema, indicadores —
+ * e por isso a tela escolhe, e não digita.
+ *
+ * **População afetada, Causa e subcausa e Iniciativas são listas editáveis**, como
+ * a matriz as marca. As duas primeiras começam pelas do Problema escolhido — a
+ * matriz as chama de "vínculo de problema" — e escolher outro Problema as refaz;
+ * dali em diante a pessoa acrescenta e tira o que quiser. As Iniciativas são do
+ * órgão e guardam o Programa delas: incluir uma aqui a traz para este Programa, e
+ * tirá-la a deixa sem Programa, que a matriz dá como opcional.
+ *
+ * **Status** diz onde o Programa está na oferta aos órgãos, e inclui "vigente",
+ * que a matriz acrescenta. Regra de negócio dela: o Programa só fica vigente
+ * quando tem problema e indicadores cadastrados.
+ *
+ * Saíram do formulário, em 06/10/2026, por não constarem da matriz: código,
+ * aptidão, órgão coordenador e governança. O código passa a ser do sistema; a
+ * aptidão, derivada do que o Programa tem; os outros dois ficam guardados.
  */
-import { obterEstado, addPrograma, updPrograma } from "../dados/store.js";
+import { addPrograma, updPrograma, updIniciativa, ppaCorrente } from "../dados/store.js";
 import { DISPONIBILIZACAO_LABEL } from "../dados/regras.js";
 import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { catalogo } from "../catalogo.js";
-import { esc } from "../ui.js";
-import { confirmarExclusao } from "../confirmar.js";
+import { esc, chip } from "../ui.js";
 import { avisar } from "../toast.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
 
@@ -23,11 +40,8 @@ const uid = () => Math.random().toString(36).slice(2, 9);
  * Eixo e objetivo estratégico por catálogo, e não por lista suspensa.
  *
  * Quem cadastra um Programa costuma estar montando o plano, e o eixo ou o
- * objetivo de que ele precisa às vezes ainda não existe. Com a lista suspensa,
- * era preciso abandonar o formulário, ir ao outro cadastro e voltar — perdendo
- * o que já estava digitado aqui.
- *
- * Os dois são vínculo de um só: um Programa pertence a um eixo e a um objetivo.
+ * objetivo de que ele precisa às vezes ainda não existe. Os dois são vínculo de
+ * um só: um Programa pertence a um eixo e a um objetivo.
  */
 const catalogoEixo = catalogo({
     colecao: "eixos",
@@ -47,7 +61,6 @@ const catalogoObjetivo = catalogo({
     artigo: "o",
     prefixo: "pobj",
     unico: true,
-    ajuda: "O objetivo carrega o eixo dele: escolher aqui define os dois.",
     campos: [{ id: "descricao", rotulo: "Descrição", ajuda: "O que este objetivo persegue" }],
     detalhe: (o, estado) => {
         const eixo = (estado.eixos ?? []).find((e) => e.id === o.eixoId);
@@ -55,6 +68,96 @@ const catalogoObjetivo = catalogo({
     },
     usos: (id, estado) => (estado.programas ?? []).filter((pr) => pr.objetivoId === id).length,
 });
+
+/**
+ * O problema e os indicadores são cadastros próprios, com muitos campos e regras
+ * que não cabem numa janela de três linhas: aqui só se escolhe o que já existe.
+ */
+const catalogoProblema = catalogo({
+    colecao: "problemas",
+    singular: "Problema",
+    plural: "Problema",
+    artigo: "o",
+    prefixo: "pprb",
+    unico: true,
+    semCriar: true,
+    campos: [],
+    colunasExtra: [{ rotulo: "Descrição", valor: (p) => (p.descricao ? esc(p.descricao) : '<span class="text-muted">—</span>') }],
+    detalhe: (p) => p.descricao ?? "",
+});
+
+const catalogoIndicadores = catalogo({
+    colecao: "indicadores",
+    singular: "Indicador",
+    plural: "Indicadores de resultado",
+    artigo: "o",
+    prefixo: "pind",
+    semCriar: true,
+    campos: [],
+    colunasExtra: [
+        { rotulo: "Tipo", valor: (i) => (i.tipo ? esc(i.tipo) : '<span class="text-muted">—</span>') },
+        { rotulo: "Unidade", valor: (i) => (i.unidade ? esc(i.unidade) : '<span class="text-muted">—</span>') },
+        { rotulo: "Linha de base", valor: (i) => (i.linhaBase ? esc(i.linhaBase) : '<span class="text-muted">—</span>') },
+    ],
+    detalhe: (i) => [i.tipo, i.unidade].filter(Boolean).join(" · "),
+});
+
+const catalogoPopulacao = catalogo({
+    colecao: "populacoes",
+    singular: "Grupo populacional",
+    plural: "População afetada",
+    artigo: "o",
+    prefixo: "ppop",
+    campos: [{ id: "estimativa", rotulo: "Estimativa de pessoas", tipo: "texto", ajuda: "Opcional" }],
+    usos: (id, estado) => (estado.problemas ?? []).filter((p) => (p.populacaoIds ?? []).includes(id)).length,
+});
+
+const catalogoCausas = catalogo({
+    colecao: "causas",
+    singular: "Causa",
+    plural: "Causa e subcausa",
+    artigo: "a",
+    prefixo: "pcau",
+    campos: [
+        { id: "justificativa", rotulo: "Justificativa", ajuda: "Por que ela origina o problema" },
+        { id: "descricao", rotulo: "Descrição", ajuda: "O que caracteriza esta causa" },
+    ],
+    colunasExtra: [
+        {
+            rotulo: "Subcausas",
+            valor: (c, estado) => {
+                const subs = (c.subcausaIds ?? []).map((id) => (estado.subcausas ?? []).find((s) => s.id === id)).filter(Boolean);
+                return subs.length ? subs.map((s) => chip(s.nome, "neutro")).join(" ") : '<span class="text-muted">—</span>';
+            },
+        },
+    ],
+    usos: (id, estado) => (estado.problemas ?? []).filter((p) => (p.causaIds ?? []).includes(id)).length,
+});
+
+// A Iniciativa é do órgão: aqui só se escolhe a que já existe.
+const catalogoIniciativas = catalogo({
+    colecao: "iniciativas",
+    singular: "Iniciativa",
+    plural: "Iniciativas",
+    artigo: "a",
+    prefixo: "pini",
+    semCriar: true,
+    campos: [],
+    colunasExtra: [{ rotulo: "Órgão", valor: (i) => (i.orgao ? esc(i.orgao) : '<span class="text-muted">—</span>') }],
+    detalhe: (i, estado) => {
+        const programa = (estado.programas ?? []).find((p) => p.id === i.programaId);
+        return [i.orgao, programa ? `hoje em ${programa.nome}` : "sem Programa"].filter(Boolean).join(" · ");
+    },
+});
+
+/** Os cinco status da matriz, na ordem dela. */
+const STATUS = [
+    ["em_estruturacao", "Em estruturação"],
+    ["pronto", "Pronto para disponibilização"],
+    ["disponivel", "Disponível para contribuições"],
+    ["encerrado", "Encerrado para novas contribuições"],
+    ["vigente", "Vigente"],
+];
 
 export function montarFormularioPrograma({ novo }) {
     const { estado } = montarShell();
@@ -75,11 +178,12 @@ export function montarFormularioPrograma({ novo }) {
         return;
     }
 
-    let edicao = novo ? vazio() : structuredClone(original);
+    const edicao = novo ? vazio() : structuredClone(original);
 
     function vazio() {
         return {
             id: `pg-${uid()}`,
+            ppaId: ppaCorrente(estado)?.id,
             codigo: "",
             nome: "",
             eixo: "",
@@ -96,18 +200,45 @@ export function montarFormularioPrograma({ novo }) {
             orgaoCoordenador: "",
             governanca: "",
             aptidao: "incompleto",
-            disponibilizacao: "nao_disponivel",
+            disponibilizacao: "em_estruturacao",
         };
     }
 
-    /** O que falta para o Programa poder ser oferecido aos órgãos. */
-    function faltaParaDisponibilizar(p) {
+    /** O próximo código do plano: o maior que existe, mais um. Quem cadastra não o escolhe. */
+    function proximoCodigo() {
+        const maior = estado.programas.reduce((m, p) => Math.max(m, Number(p.codigo) || 0), 0);
+        return String(maior + 1);
+    }
+
+    /**
+     * O que falta para o Programa operar: problema e indicadores. É a regra de
+     * negócio que a matriz põe no status "vigente", e serve também à aptidão.
+     */
+    function faltaParaOperar({ problemaId, indicadorIds }) {
         const falta = [];
-        if (!p.problema?.trim()) falta.push("problema central");
-        if (!(p.causas ?? []).filter((c) => c.texto?.trim()).length) falta.push("ao menos uma causa");
-        if (!p.objetivo?.trim()) falta.push("objetivo");
+        if (!problemaId) falta.push("problema");
+        if (!indicadorIds.length) falta.push("indicadores");
         return falta;
     }
+
+    /** O problema que o Programa já enfrenta: o vínculo gravado ou, nos anteriores a ele, o derivado do próprio Programa. */
+    const problemaInicial =
+        edicao.problemaId ?? (estado.problemas ?? []).find((pb) => pb.id === `pb-${edicao.id}`)?.id ?? "";
+
+    const problemaAtual = (estado.problemas ?? []).find((p) => p.id === problemaInicial);
+
+    /** Começam pelo que o Programa já guarda; nos anteriores a estes campos, pelo que o Problema traz. */
+    const populacaoInicial = edicao.populacaoIds ?? problemaAtual?.populacaoIds ?? [];
+    const causasIniciais = edicao.causaIds ?? problemaAtual?.causaIds ?? [];
+
+    /** As Iniciativas que hoje apontam para este Programa. */
+    const iniciativasIniciais = (estado.iniciativas ?? []).filter((i) => i.programaId === edicao.id).map((i) => i.id);
+
+    /** Os indicadores já ligados: por identificador ou, nos anteriores, pelo nome. */
+    const indicadoresIniciais = (
+        edicao.indicadorIds ??
+        (edicao.indicadores ?? []).map((i) => (estado.indicadores ?? []).find((x) => x.nome === i.nome)?.id)
+    ).filter(Boolean);
 
     /**
      * O vínculo estratégico, gravado de duas formas. Os ids são o vínculo de
@@ -126,7 +257,7 @@ export function montarFormularioPrograma({ novo }) {
 
     /* ---------- campos ---------- */
 
-    function campoTexto(campo, rotulo, valor, { linhas = 1, obrigatorio = false, ajuda = "" } = {}) {
+    function campoTexto(campo, rotulo, valor, { linhas = 1, obrigatorio = false } = {}) {
         const entrada =
             linhas > 1
                 ? `<textarea class="form-control" id="${campo}" rows="${linhas}" ${leitura ? "disabled" : ""}>${esc(valor ?? "")}</textarea>`
@@ -136,98 +267,6 @@ export function montarFormularioPrograma({ novo }) {
             <label class="form-label" for="${campo}">${rotulo}${obrigatorio ? ' <span class="text-danger">*</span>' : ""}</label>
             ${entrada}
             ${campoErro(campo)}
-            ${ajuda ? `<div class="form-text fs-12">${ajuda}</div>` : ""}
-        </div>`;
-    }
-
-    /** Lista de textos com acrescentar e remover — evidências, consequências. */
-    function listaEditavel(tipo, titulo, itens, ajuda = "") {
-        return `
-        <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <label class="form-label mb-0">${titulo}</label>
-                ${leitura ? "" : `<button type="button" class="btn btn-sm btn-light" data-add="${tipo}"><i class="ti ti-plus"></i> Adicionar</button>`}
-            </div>
-            ${ajuda ? `<div class="form-text fs-12 mb-2">${ajuda}</div>` : ""}
-            ${
-                itens.length === 0
-                    ? '<p class="fs-12 text-muted mb-0">Nenhum item.</p>'
-                    : itens
-                          .map(
-                              (texto, i) => `
-            <div class="input-group input-group-sm mb-1">
-                <input type="text" class="form-control" value="${esc(texto)}" data-lista="${tipo}" data-idx="${i}" ${leitura ? "disabled" : ""} />
-                ${leitura ? "" : `<button class="btn btn-light" type="button" data-remover="${tipo}" data-idx="${i}" aria-label="Remover"><i class="ti ti-trash"></i></button>`}
-            </div>`
-                          )
-                          .join("")
-            }
-        </div>`;
-    }
-
-    function editorCausas() {
-        const causas = edicao.causas ?? [];
-        return `
-        <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <label class="form-label mb-0">Causas <span class="text-danger">*</span></label>
-                ${leitura ? "" : `<button type="button" class="btn btn-sm btn-light" data-add="causa"><i class="ti ti-plus"></i> Adicionar causa</button>`}
-            </div>
-            <div class="form-text fs-12 mb-2">
-                São as causas que o órgão relaciona à Iniciativa. Sem nenhuma, a Iniciativa fica presa
-                numa pendência que a interface não permite resolver.
-            </div>
-            ${
-                causas.length === 0
-                    ? '<div class="alert alert-warning py-2 px-3 fs-12 mb-0">Este Programa não tem causas. Nenhum órgão conseguirá concluir uma Iniciativa nele.</div>'
-                    : causas
-                          .map(
-                              (c, i) => `
-            <div class="input-group input-group-sm mb-1">
-                <span class="input-group-text">${i + 1}</span>
-                <input type="text" class="form-control" value="${esc(c.texto)}" data-causa-texto="${i}" ${leitura ? "disabled" : ""} />
-                ${leitura ? "" : `<button class="btn btn-light" type="button" data-remover-causa="${i}" aria-label="Remover causa"><i class="ti ti-trash"></i></button>`}
-            </div>`
-                          )
-                          .join("")
-            }
-        </div>`;
-    }
-
-    function editorIndicadores() {
-        const indicadores = edicao.indicadores ?? [];
-        return `
-        <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <label class="form-label mb-0">Indicadores do Programa</label>
-                ${leitura ? "" : `<button type="button" class="btn btn-sm btn-light" data-add="indicador"><i class="ti ti-plus"></i> Adicionar indicador</button>`}
-            </div>
-            ${
-                indicadores.length === 0
-                    ? '<p class="fs-12 text-muted mb-0">Nenhum indicador.</p>'
-                    : indicadores
-                          .map(
-                              (ind, i) => `
-            <div class="border rounded p-2 mb-2">
-                <div class="row g-2">
-                    <div class="col-md-6">
-                        <input type="text" class="form-control form-control-sm" placeholder="Nome" value="${esc(ind.nome ?? "")}" data-ind="${i}:nome" ${leitura ? "disabled" : ""} />
-                    </div>
-                    <div class="col-md-2">
-                        <input type="text" class="form-control form-control-sm" placeholder="Unidade" value="${esc(ind.unidade ?? "")}" data-ind="${i}:unidade" ${leitura ? "disabled" : ""} />
-                    </div>
-                    <div class="col-md-2">
-                        <input type="text" class="form-control form-control-sm" placeholder="Linha base" value="${esc(ind.linhaBase ?? "")}" data-ind="${i}:linhaBase" ${leitura ? "disabled" : ""} />
-                    </div>
-                    <div class="col-md-2 d-flex gap-1">
-                        <input type="text" class="form-control form-control-sm" placeholder="Meta" value="${esc(ind.meta ?? "")}" data-ind="${i}:meta" ${leitura ? "disabled" : ""} />
-                        ${leitura ? "" : `<button class="btn btn-sm btn-light" type="button" data-remover-ind="${i}" aria-label="Remover indicador"><i class="ti ti-trash"></i></button>`}
-                    </div>
-                </div>
-            </div>`
-                          )
-                          .join("")
-            }
         </div>`;
     }
 
@@ -235,31 +274,35 @@ export function montarFormularioPrograma({ novo }) {
 
     function lerFormulario() {
         const v = (campo) => document.getElementById(campo)?.value ?? "";
+        const problemaId = catalogoProblema.ler()[0] ?? "";
+        const indicadorIds = catalogoIndicadores.ler();
+        const problema = (estado.problemas ?? []).find((p) => p.id === problemaId);
+
         Object.assign(edicao, {
-            codigo: v("f-codigo").trim(),
             nome: v("f-nome").trim(),
             ...vinculoEstrategico(catalogoEixo.ler()[0] ?? "", catalogoObjetivo.ler()[0] ?? ""),
             descricao: v("f-descricao").trim(),
-            problema: v("f-problema").trim(),
-            populacaoAfetada: v("f-populacaoAfetada").trim(),
             objetivo: v("f-objetivo").trim(),
             resultadoEsperado: v("f-resultadoEsperado").trim(),
-            orgaoCoordenador: v("f-orgaoCoordenador").trim(),
-            governanca: v("f-governanca").trim(),
-            aptidao: v("f-aptidao"),
-            disponibilizacao: v("f-disponibilizacao"),
+            disponibilizacao: v("f-status"),
+
+            // O texto do problema acompanha o vínculo: as telas de análise o leem.
+            problemaId,
+            problema: problema?.nome ?? "",
+            populacaoIds: catalogoPopulacao.ler(),
+            causaIds: catalogoCausas.ler(),
+
+            // Os indicadores ficam também no formato antigo, que o resto do
+            // sistema lê; a identidade é o que vale.
+            indicadorIds,
+            indicadores: indicadorIds
+                .map((iid) => (estado.indicadores ?? []).find((i) => i.id === iid))
+                .filter(Boolean)
+                .map((i) => ({ nome: i.nome, unidade: i.unidade ?? "", linhaBase: i.linhaBase ?? "", meta: "" })),
         });
 
-        document.querySelectorAll("[data-lista]").forEach((el) => {
-            edicao[el.dataset.lista][Number(el.dataset.idx)] = el.value;
-        });
-        document.querySelectorAll("[data-causa-texto]").forEach((el) => {
-            edicao.causas[Number(el.dataset.causaTexto)].texto = el.value;
-        });
-        document.querySelectorAll("[data-ind]").forEach((el) => {
-            const [i, campo] = el.dataset.ind.split(":");
-            edicao.indicadores[Number(i)][campo] = el.value;
-        });
+        // A aptidão não se escolhe: é o que o Programa tem ou não tem.
+        edicao.aptidao = faltaParaOperar({ problemaId, indicadorIds }).length ? "incompleto" : "apto";
     }
 
     /* ---------- desenho ---------- */
@@ -267,71 +310,59 @@ export function montarFormularioPrograma({ novo }) {
     function corpo() {
         return `
         <div class="row g-3">
-            <div class="col-md-2">${campoTexto("f-codigo", "Código", edicao.codigo, { obrigatorio: true })}</div>
-            <div class="col-md-10">${campoTexto("f-nome", "Nome do Programa", edicao.nome, { obrigatorio: true })}</div>
+            <div class="col-md-8">${campoTexto("f-nome", "Nome do programa", edicao.nome, { obrigatorio: true })}</div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label class="form-label" for="f-status">Status <span class="text-danger">*</span></label>
+                    <select class="form-select" id="f-status" ${leitura ? "disabled" : ""}>
+                        ${STATUS.map(([k, rotulo]) => `<option value="${k}"${edicao.disponibilizacao === k ? " selected" : ""}>${esc(DISPONIBILIZACAO_LABEL[k] ?? rotulo)}</option>`).join("")}
+                    </select>
+                    ${campoErro("f-status")}
+                </div>
+            </div>
         </div>
+        ${campoTexto("f-descricao", "Descrição do programa", edicao.descricao, { linhas: 3, obrigatorio: true })}
+        ${campoTexto("f-objetivo", "Objetivo do programa", edicao.objetivo, { linhas: 2 })}
+        ${campoTexto("f-resultadoEsperado", "Resultado esperado do programa", edicao.resultadoEsperado, { linhas: 2 })}
+
         <div class="row g-3">
             <div class="col-md-6">${catalogoEixo.html(edicao.eixoId ? [edicao.eixoId] : [])}</div>
             <div class="col-md-6">${catalogoObjetivo.html(edicao.objetivoId ? [edicao.objetivoId] : [])}</div>
         </div>
-        ${campoTexto("f-descricao", "Descrição do Programa", edicao.descricao, { linhas: 2 })}
 
-        <div class="border-top border-dashed my-3"></div>
-        <h6 class="rotulo-secao mb-3">Diagnóstico</h6>
-        ${campoTexto("f-problema", "Problema central", edicao.problema, { linhas: 2, obrigatorio: true })}
-        ${listaEditavel("evidencias", "Evidências", edicao.evidencias ?? [], "Dados que sustentam o problema.")}
-        ${editorCausas()}
-        ${listaEditavel("consequencias", "Consequências", edicao.consequencias ?? [])}
-        ${campoTexto("f-populacaoAfetada", "População afetada", edicao.populacaoAfetada)}
-
-        <div class="border-top border-dashed my-3"></div>
-        <h6 class="rotulo-secao mb-3">Objetivo e resultado</h6>
-        ${campoTexto("f-objetivo", "Objetivo", edicao.objetivo, { linhas: 2, obrigatorio: true })}
-        ${campoTexto("f-resultadoEsperado", "Resultado esperado", edicao.resultadoEsperado, { linhas: 2 })}
-        ${editorIndicadores()}
-
-        <div class="border-top border-dashed my-3"></div>
-        <h6 class="rotulo-secao mb-3">Governança</h6>
-        <div class="row g-3">
-            <div class="col-md-6">${campoTexto("f-orgaoCoordenador", "Órgão coordenador", edicao.orgaoCoordenador)}</div>
-            <div class="col-md-6">${campoTexto("f-governanca", "Governança do Programa", edicao.governanca)}</div>
-        </div>`;
+        ${catalogoProblema.html(problemaInicial ? [problemaInicial] : [])}
+        ${catalogoPopulacao.html(populacaoInicial)}
+        ${catalogoCausas.html(causasIniciais)}
+        ${catalogoIndicadores.html(indicadoresIniciais)}
+        ${catalogoIniciativas.html(iniciativasIniciais)}`;
     }
 
-    function lateral() {
-        const falta = faltaParaDisponibilizar(edicao);
-        return `
-        <div class="card">
-            <div class="card-header d-block p-3">
-                <h4 class="card-title mb-1">Situação do Programa</h4>
-                <p class="text-muted mb-0 fs-13">Se o diagnóstico está pronto e se os órgãos já podem contribuir.</p>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label" for="f-aptidao">Aptidão</label>
-                    <select class="form-select" id="f-aptidao" ${leitura ? "disabled" : ""}>
-                        <option value="incompleto"${edicao.aptidao === "incompleto" ? " selected" : ""}>Diagnóstico incompleto</option>
-                        <option value="apto"${edicao.aptidao === "apto" ? " selected" : ""}>Apto</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" for="f-disponibilizacao">Disponibilização</label>
-                    <select class="form-select" id="f-disponibilizacao" ${leitura ? "disabled" : ""}>
-                        ${Object.entries(DISPONIBILIZACAO_LABEL)
-                            .map(([k, v]) => `<option value="${k}"${edicao.disponibilizacao === k ? " selected" : ""}>${esc(v)}</option>`)
-                            .join("")}
-                    </select>
-                </div>
-                ${
-                    falta.length
-                        ? `<div class="alert alert-warning py-2 px-3 fs-12 mb-0">
-                    Diagnóstico incompleto — falta: <strong>${esc(falta.join(", "))}</strong>.
-                    Disponibilizar assim deixa os órgãos sem base para contribuir.
-                </div>`
-                        : `<p class="fs-12 text-muted mb-0">Diagnóstico completo.</p>`
-                }
-            </div>
-        </div>`;
+    function ligarCatalogos(escopo) {
+        catalogoEixo.ligar(escopo);
+        catalogoObjetivo.ligar(escopo);
+        catalogoProblema.ligar(escopo);
+        catalogoPopulacao.ligar(escopo);
+        catalogoCausas.ligar(escopo);
+        catalogoIndicadores.ligar(escopo);
+        catalogoIniciativas.ligar(escopo);
+
+        // Escolher outro Problema refaz a população e as causas — a matriz as chama
+        // de "vínculo de problema". O catálogo redesenha o próprio bloco a cada
+        // escolha; observá-lo é o jeito de saber, sem pedir ao catálogo um aviso
+        // que ele não dá. Só a troca de Problema refaz: buscar não apaga o que a pessoa
+        // ajustou.
+        let ultimo = catalogoProblema.ler()[0] ?? "";
+        const bloco = escopo.querySelector("#pprb-bloco");
+        if (bloco) {
+            new MutationObserver(() => {
+                const atual = catalogoProblema.ler()[0] ?? "";
+                if (atual === ultimo) return;
+                ultimo = atual;
+                const problema = (estado.problemas ?? []).find((p) => p.id === atual);
+                catalogoPopulacao.definir(problema?.populacaoIds ?? []);
+                catalogoCausas.definir(problema?.causaIds ?? []);
+            }).observe(bloco, { childList: true, subtree: true });
+        }
     }
 
     function render() {
@@ -343,12 +374,11 @@ export function montarFormularioPrograma({ novo }) {
                 <div class="card">
                     <div class="card-header d-block p-3">
                         <h4 class="card-title mb-1">Programa</h4>
-                        <p class="text-muted mb-0 fs-13">Identidade, diagnóstico, objetivo e governança.</p>
+                        <p class="text-muted mb-0 fs-13">Identidade, vínculos e situação do Programa.</p>
                     </div>
                     <div class="card-body" id="formulario">${corpo()}</div>
                 </div>
             </div>
-            <div class="col-12" id="lateral">${lateral()}</div>
         </div>
 
         <div class="mt-1 mb-4 d-flex gap-2 align-items-center">
@@ -362,93 +392,48 @@ export function montarFormularioPrograma({ novo }) {
 
         const escopo = document.getElementById("formulario");
         limparAoDigitar(escopo);
-        // Religados a cada desenho: o campo de busca é recriado junto com o
-        // corpo do formulário, e os ouvintes dele vão embora com o antigo.
-        catalogoEixo.ligar(escopo);
-        catalogoObjetivo.ligar(escopo);
-    }
-
-    /** Redesenha só o formulário: acrescentar uma causa não é recarregar a tela. */
-    function redesenhar() {
-        document.getElementById("formulario").innerHTML = corpo();
-        document.getElementById("lateral").innerHTML = lateral();
-        const escopo = document.getElementById("formulario");
-        limparAoDigitar(escopo);
-        // Religados a cada desenho: o campo de busca é recriado junto com o
-        // corpo do formulário, e os ouvintes dele vão embora com o antigo.
-        catalogoEixo.ligar(escopo);
-        catalogoObjetivo.ligar(escopo);
+        ligarCatalogos(escopo);
     }
 
     /* ---------- eventos ---------- */
 
-    document.addEventListener("click", async (e) => {
-        if (leitura) return;
-
-        const add = e.target.closest("[data-add]");
-        if (add) {
-            lerFormulario();
-            const tipo = add.dataset.add;
-            if (tipo === "causa") edicao.causas.push({ id: `c-${uid()}`, texto: "" });
-            else if (tipo === "indicador") edicao.indicadores.push({ nome: "", unidade: "", linhaBase: "", meta: "" });
-            else edicao[tipo].push("");
-            return redesenhar();
-        }
-
-        const remover = e.target.closest("[data-remover]");
-        if (remover) {
-            lerFormulario();
-            edicao[remover.dataset.remover].splice(Number(remover.dataset.idx), 1);
-            return redesenhar();
-        }
-
-        const removerCausa = e.target.closest("[data-remover-causa]");
-        if (removerCausa) {
-            lerFormulario();
-            const i = Number(removerCausa.dataset.removerCausa);
-            const causa = edicao.causas[i];
-            const usada = estado.iniciativas.filter((ini) => ini.causas.includes(causa.id));
-            if (usada.length) {
-                const confirmou = await confirmarExclusao({
-                    titulo: "Remover causa",
-                    texto: `${usada.length} Iniciativa${usada.length > 1 ? "s" : ""} ${usada.length > 1 ? "referenciam" : "referencia"} esta causa. Removê-la deixa ${usada.length > 1 ? "essas contribuições" : "essa contribuição"} sem o vínculo.`,
-                    confirmar: "Remover",
-                });
-                if (!confirmou) return;
-            }
-            edicao.causas.splice(i, 1);
-            return redesenhar();
-        }
-
-        const removerInd = e.target.closest("[data-remover-ind]");
-        if (removerInd) {
-            lerFormulario();
-            edicao.indicadores.splice(Number(removerInd.dataset.removerInd), 1);
-            return redesenhar();
-        }
-
-        if (!e.target.closest("#salvar")) return;
+    document.addEventListener("click", (e) => {
+        if (leitura || !e.target.closest("#salvar")) return;
 
         lerFormulario();
         const escopo = document.getElementById("formulario");
+        const falta = faltaParaOperar({ problemaId: edicao.problemaId, indicadorIds: edicao.indicadorIds });
+
         const ok = validar(escopo, [
-            { campo: "f-codigo", valido: !!edicao.codigo, mensagem: "Informe o código do Programa." },
             { campo: "f-nome", valido: !!edicao.nome, mensagem: "Informe o nome do Programa." },
+            { campo: "f-status", valido: !!edicao.disponibilizacao, mensagem: "Escolha o status." },
+            { campo: "f-descricao", valido: !!edicao.descricao, mensagem: "Descreva o Programa." },
+            {
+                // Regra de negócio da matriz: um programa só fica vigente com problema e indicadores.
+                campo: "f-status",
+                valido: edicao.disponibilizacao !== "vigente" || falta.length === 0,
+                mensagem: `Um Programa só fica vigente com ${falta.join(" e ")} vinculado${falta.length > 1 ? "s" : ""}.`,
+            },
         ]);
         if (!ok) return;
 
-        const falta = faltaParaDisponibilizar(edicao);
-        if (edicao.disponibilizacao === "disponivel" && falta.length) {
-            const confirmou = await confirmarExclusao({
-                titulo: "Disponibilizar com diagnóstico incompleto",
-                texto: `Falta ${falta.join(", ")}. Os órgãos verão o Programa sem base para contribuir.`,
-                confirmar: "Disponibilizar assim mesmo",
-            });
-            if (!confirmou) return;
+        if (novo) {
+            edicao.codigo = proximoCodigo();
+            addPrograma(edicao);
+        } else {
+            updPrograma(edicao.id, edicao);
         }
 
-        if (estado.programas.some((p) => p.id === edicao.id)) updPrograma(edicao.id, edicao);
-        else addPrograma(edicao);
+        // A Iniciativa guarda o Programa dela: incluir uma aqui a traz para este
+        // Programa, tirá-la a deixa sem. As causas dela eram do Programa de antes,
+        // e deixam de valer no novo.
+        const escolhidas = new Set(catalogoIniciativas.ler());
+        for (const ini of estado.iniciativas ?? []) {
+            const estava = ini.programaId === edicao.id;
+            const quer = escolhidas.has(ini.id);
+            if (estava === quer) continue;
+            updIniciativa(ini.id, { programaId: quer ? edicao.id : "", causas: [] });
+        }
         avisar(`Programa ${novo ? "criado" : "editado"} com sucesso.`);
         window.location.href = voltar;
     });

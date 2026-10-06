@@ -34,7 +34,12 @@ const normal = (t) =>
 /**
  * @param {object} cfg
  * @param {{rotulo: string, texto: (item: object) => string}} cfg.livre
- * @param {Array<{id: string, rotulo: string, opcoes: () => Array<{valor: string, rotulo: string}>, valorDe: (item: object) => string[]}>} [cfg.campos]
+ * @param {Array<object>} [cfg.campos] Um por coluna filtrável. O `tipo` é o componente
+ *   da aba Filtros da matriz de mapeamento:
+ *     "multi"    (padrão) escolha múltipla — `opcoes()` e `valorDe(item)` devolvem listas;
+ *     "texto"    campo de texto livre — `valorDe(item)` devolve o texto a procurar;
+ *     "booleano" Sim/Não — `valorDe(item)` devolve ["sim"] ou ["nao"], e `sim`/`nao`
+ *                dão os rótulos das duas escolhas.
  * @param {string} [cfg.exportar] Nome do arquivo gerado; sem ele, não há botão de exportar.
  * @param {() => string} [cfg.acao] A ação da tela — "Novo…" —, que no Inspinia mora
  *   no cabeçalho do card, junto dos filtros, e não numa faixa acima dele.
@@ -49,9 +54,11 @@ export function criarFiltros(cfg) {
     let termo = "";
     let termoValendo = "";
 
+    const tipoDe = (c) => c.tipo ?? "multi";
+
     // As opções saem dos próprios registros: opção que não filtra nada não
     // aparece. Calculadas uma vez, porque a barra não se redesenha.
-    const opcoes = new Map(campos.map((c) => [c.id, c.opcoes()]));
+    const opcoes = new Map(campos.filter((c) => tipoDe(c) === "multi").map((c) => [c.id, c.opcoes()]));
 
     const ativo = () => !!termoValendo.trim() || campos.some((c) => valendo.get(c.id).size > 0);
 
@@ -60,7 +67,14 @@ export function criarFiltros(cfg) {
         for (const c of campos) {
             const escolhidos = valendo.get(c.id);
             if (escolhidos.size === 0) continue;
-            const valores = c.valorDe(item) ?? [];
+
+            if (tipoDe(c) === "texto") {
+                const [procurado] = [...escolhidos];
+                if (!normal([c.valorDe(item)].flat().join(" ")).includes(normal(procurado))) return false;
+                continue;
+            }
+
+            const valores = [c.valorDe(item) ?? []].flat();
             if (!valores.some((v) => escolhidos.has(v))) return false;
         }
         return true;
@@ -82,6 +96,32 @@ export function criarFiltros(cfg) {
                 </div>
                 ${campos
                     .map((c) => {
+                        if (tipoDe(c) === "texto") {
+                            return `
+                <div class="filtro-campo">
+                    <div class="app-search">
+                        <input type="search" class="form-control" id="filtro-${esc(c.id)}" data-filtro="${esc(c.id)}"
+                               placeholder="${esc(c.rotulo)}" aria-label="Filtrar por ${esc(c.rotulo)}" />
+                        <i class="ti ${esc(icone(c))} app-search-icon text-muted"></i>
+                    </div>
+                </div>`;
+                        }
+
+                        if (tipoDe(c) === "booleano") {
+                            return `
+                <div class="filtro-campo">
+                    <div class="app-search">
+                        <select class="form-select form-control" id="filtro-${esc(c.id)}" data-filtro="${esc(c.id)}"
+                                aria-label="Filtrar por ${esc(c.rotulo)}">
+                            <option value="">${esc(c.rotulo)}</option>
+                            <option value="sim">${esc(c.sim ?? "Sim")}</option>
+                            <option value="nao">${esc(c.nao ?? "Não")}</option>
+                        </select>
+                        <i class="ti ${esc(icone(c))} app-search-icon text-muted"></i>
+                    </div>
+                </div>`;
+                        }
+
                         const lista = opcoes.get(c.id);
                         if (!lista.length) return "";
                         return `
@@ -133,7 +173,7 @@ export function criarFiltros(cfg) {
         // sendo um `select multiple` que funciona, só mais feio.
         const escolhas = new Map();
         if (typeof Choices !== "undefined") {
-            for (const c of campos) {
+            for (const c of campos.filter((c) => tipoDe(c) === "multi")) {
                 const campo = barra.querySelector(`#filtro-${c.id}`);
                 if (!campo) continue;
                 escolhas.set(
@@ -154,7 +194,10 @@ export function criarFiltros(cfg) {
 
         const lerCampo = (c) => {
             const campo = barra.querySelector(`#filtro-${c.id}`);
-            return new Set([...(campo?.selectedOptions ?? [])].map((o) => o.value));
+            if (tipoDe(c) === "multi") return new Set([...(campo?.selectedOptions ?? [])].map((o) => o.value));
+            // Texto e booleano guardam um valor só; vazio quer dizer "sem filtro".
+            const v = (campo?.value ?? "").trim();
+            return v ? new Set([v]) : new Set();
         };
 
         const aplicar = () => {
@@ -167,7 +210,7 @@ export function criarFiltros(cfg) {
         // Enter no campo livre é "Buscar": quem digita e aperta Enter não espera
         // ter de procurar um botão.
         barra.addEventListener("keydown", (e) => {
-            if (e.target.id === "filtro-livre" && e.key === "Enter") {
+            if ((e.target.id === "filtro-livre" || e.target.matches?.('input[data-filtro]')) && e.key === "Enter") {
                 e.preventDefault();
                 aplicar();
             }
@@ -182,9 +225,12 @@ export function criarFiltros(cfg) {
             if (e.target.closest("#filtro-limpar")) {
                 barra.querySelector("#filtro-livre").value = "";
                 for (const c of campos) {
+                    const campo = barra.querySelector(`#filtro-${c.id}`);
+                    if (!campo) continue;
                     const escolha = escolhas.get(c.id);
                     if (escolha) escolha.removeActiveItems();
-                    else for (const o of barra.querySelector(`#filtro-${c.id}`)?.options ?? []) o.selected = false;
+                    else if (tipoDe(c) === "multi") for (const o of campo.options ?? []) o.selected = false;
+                    else campo.value = "";
                 }
                 aplicar();
                 return;

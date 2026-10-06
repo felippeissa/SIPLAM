@@ -110,9 +110,13 @@ export function catalogo(cfg) {
                 ${campos.map((c) => `<td class="fs-13 text-muted">${esc(r[c.id] || "—")}</td>`).join("")}
                 ${extras.map((c) => `<td class="fs-13 text-muted">${c.valor(r, estado())}</td>`).join("")}
                 <td class="text-end align-top text-nowrap">
-                    <button type="button" class="btn btn-sm btn-light me-1" data-${px}-editar="${id}" title="Editar ${esc(singular.toLowerCase())}">
+                    ${
+                        cfg.semCriar
+                            ? ""
+                            : `<button type="button" class="btn btn-sm btn-light me-1" data-${px}-editar="${id}" title="Editar ${esc(singular.toLowerCase())}">
                         <i class="ti ti-pencil"></i>
-                    </button>
+                    </button>`
+                    }
                     <button type="button" class="btn btn-sm btn-light" data-${px}-tirar="${id}" title="Desvincular">
                         <i class="ti ti-x"></i>
                     </button>
@@ -125,7 +129,10 @@ export function catalogo(cfg) {
     function sugestoes() {
         if (!aberto) return "";
         const lista = achados();
-        const novo = termo.trim() && !existeComNome(termo);
+        // `semCriar` é para o vínculo com o que se cadastra em outro lugar — uma
+        // Iniciativa, por exemplo, que é do órgão e não nasce de uma tela da
+        // Área Central. Ali a lista só escolhe o que já existe.
+        const novo = !cfg.semCriar && termo.trim() && !existeComNome(termo);
 
         if (!lista.length && !novo) {
             return `<div class="list-group-item fs-13 text-muted">Nenhum${artigo === "a" ? "a" : ""} ${singular.toLowerCase()} encontrad${artigo}.</div>`;
@@ -157,7 +164,7 @@ export function catalogo(cfg) {
 
         return `
         <div class="mb-3" id="${px}-bloco">
-            <label class="form-label" for="${px}-busca">${esc(plural)}</label>
+            <label class="form-label" for="${px}-busca">${esc(plural)}${cfg.obrigatorio ? ' <span class="text-danger">*</span>' : ""}</label>
 
             <!--
                 Sem botão ao lado: cadastrar é oferta da própria lista, quando o
@@ -167,7 +174,7 @@ export function catalogo(cfg) {
             -->
             <div class="position-relative mb-2 ${cfg.unico && escolhidos.length ? "d-none" : ""}" id="${px}-caixa">
                 <input type="text" class="form-control" id="${px}-busca" autocomplete="off"
-                       placeholder="Busque ${artigo === "a" ? "uma" : "um"} ${singular.toLowerCase()}, ou digite para cadastrar…" />
+                       placeholder="Busque ${artigo === "a" ? "uma" : "um"} ${singular.toLowerCase()}${cfg.semCriar ? "" : ", ou digite para cadastrar"}…" />
                 <div class="list-group position-absolute w-100 shadow-sm d-none" id="${px}-sugestoes"
                      style="z-index:5; max-height:16rem; overflow:auto"></div>
             </div>
@@ -186,7 +193,10 @@ export function catalogo(cfg) {
                     <tbody id="${px}-corpo">${linhas()}</tbody>
                 </table>
             </div>
-            <div class="invalid-feedback d-block" id="${px}-erro"></div>
+            <!-- O slot de erro leva o id do campo de busca para que a validação
+                 do formulário, que escreve no id do campo mais "-erro", alcance
+                 este vínculo como alcança qualquer outro campo. -->
+            <div class="invalid-feedback d-block" id="${px}-busca-erro"></div>
         </div>`;
     }
 
@@ -301,7 +311,7 @@ export function catalogo(cfg) {
             caixa.innerHTML = sugestoes();
             caixa.classList.toggle("d-none", !aberto);
         }
-        const erro = document.getElementById(`${px}-erro`);
+        const erro = document.getElementById(`${px}-busca-erro`);
         if (erro) erro.textContent = "";
     }
 
@@ -387,5 +397,23 @@ export function catalogo(cfg) {
         });
     }
 
-    return { html, ligar, ler: () => [...escolhidos] };
+    return {
+        html,
+        ligar,
+        ler: () => [...escolhidos],
+
+        /**
+         * Troca a seleção de fora, sem a pessoa ter escolhido nada.
+         *
+         * É para o vínculo que **depende de outro**: no Programa, população e
+         * causas começam pelas do Problema escolhido, e escolher outro Problema
+         * as refaz. Os ids que não pertencem ao catálogo — de outro plano, por
+         * exemplo — ficam de fora.
+         */
+        definir(ids) {
+            const validos = new Set(todos().map((r) => r.id));
+            escolhidos = [...new Set(ids)].filter((id) => validos.has(id));
+            redesenhar();
+        },
+    };
 }

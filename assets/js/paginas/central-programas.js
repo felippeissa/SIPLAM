@@ -20,13 +20,14 @@ const doPlano = (p) => !p.ppaId || !plano || p.ppaId === plano.id;
 const programasDoPlano = () => estado.programas.filter(doPlano);
 
 
-/** O que falta para o Programa poder ser oferecido aos órgãos. */
+/**
+ * O que falta para o Programa operar. É a regra da matriz de mapeamento para o
+ * status "vigente": problema e indicadores cadastrados.
+ */
 function faltaParaDisponibilizar(p) {
     const falta = [];
-    if (!p.problema?.trim()) falta.push("problema central");
-    if (!p.objetivo?.trim()) falta.push("objetivo");
-    if ((p.causas ?? []).length === 0) falta.push("causas");
-    if ((p.indicadores ?? []).length === 0) falta.push("indicadores de resultado");
+    if (!p.problema?.trim()) falta.push("problema");
+    if ((p.indicadores ?? []).length === 0) falta.push("indicadores");
     return falta;
 }
 
@@ -125,7 +126,7 @@ function corpo() {
             <td>${chip(APTIDAO_LABEL[p.aptidao ?? "incompleto"], p.aptidao === "apto" ? "ok" : "alerta")}</td>
             <td>${chip(
                 DISPONIBILIZACAO_LABEL[p.disponibilizacao ?? "em_estruturacao"],
-                p.disponibilizacao === "disponivel" ? "ok" : "neutro"
+                p.disponibilizacao === "disponivel" || p.disponibilizacao === "vigente" ? "ok" : "neutro"
             )}</td>
             <td class="text-end coluna-acoes">${
                 leitura

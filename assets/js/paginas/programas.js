@@ -5,7 +5,7 @@
  * Corrige T6.1.7: a ordenação por prioridade aplicava uma regra implícita que a
  * interface nunca explicava.
  */
-import { obterEstado, marcarSemContribuicao, reconsiderarParticipacao, removeIniciativa, addIniciativa, noPlano } from "../dados/store.js";
+import { obterEstado, marcarSemContribuicao, reconsiderarParticipacao, removeIniciativa, noPlano } from "../dados/store.js";
 import {
     eixos,
     objetivos,
@@ -34,7 +34,6 @@ let filtro = "todos";
 let eixo = "todos";
 let objetivo = "todos";
 let ordem = "prioridade";
-let novaEm = null;
 const abertos = new Set();
 
 const TOM_PARTICIPACAO = {
@@ -206,60 +205,6 @@ function linhaPrograma(l) {
     }`;
 }
 
-function modalNova() {
-    const p = estado.programas.find((x) => x.id === novaEm);
-    const causas = p?.causas ?? [];
-
-    return `
-<div class="modal fade" id="modal-nova" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div>
-                    <h5 class="modal-title fs-15">Nova Iniciativa</h5>
-                    <div class="fs-12 text-muted">${esc(p?.codigo)} — ${esc(p?.nome)}</div>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label" for="n-nome">Nome da Iniciativa <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="n-nome" placeholder="Ex.: Ampliação da rede pública de alimentação" />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" for="n-descricao">Detalhamento</label>
-                    <textarea class="form-control" id="n-descricao" rows="3"></textarea>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" for="n-publico">Público-alvo</label>
-                    <input type="text" class="form-control" id="n-publico" />
-                </div>
-                <div class="mb-0">
-                    <label class="form-label">Causas do Programa enfrentadas</label>
-                    ${
-                        causas.length === 0
-                            ? '<div class="alert alert-warning py-2 px-3 fs-12 mb-0">Este Programa não tem causas cadastradas. Sem ao menos uma, a Iniciativa não poderá ser enviada.</div>'
-                            : causas
-                                  .map(
-                                      (c) => `
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="${c.id}" id="c-${c.id}" data-causa />
-                        <label class="form-check-label" for="c-${c.id}">${esc(c.texto)}</label>
-                    </div>`
-                                  )
-                                  .join("")
-                    }
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="criar">Criar Iniciativa</button>
-            </div>
-        </div>
-    </div>
-</div>`;
-}
-
 function render() {
     const ls = linhas();
     const inis = estado.iniciativas.filter((i) => i.orgao === orgao && noPlano(estado).iniciativa(i));
@@ -311,23 +256,13 @@ function render() {
                 </tbody>
             </table>
         </div>
-    </div>
-    ${novaEm ? modalNova() : ""}`;
+    </div>`;
 
     document.getElementById("busca").value = busca;
     document.getElementById("filtro").value = filtro;
     document.getElementById("eixo").value = eixo;
     document.getElementById("objetivo").value = objetivo;
     document.getElementById("ordem").value = ordem;
-
-    if (novaEm) {
-        const el = document.getElementById("modal-nova");
-        new bootstrap.Modal(el).show();
-        el.addEventListener("hidden.bs.modal", () => {
-            novaEm = null;
-            render();
-        }, { once: true });
-    }
 }
 
 document.addEventListener("click", (e) => {
@@ -340,8 +275,9 @@ document.addEventListener("click", (e) => {
 
     const nova = e.target.closest("[data-nova]");
     if (nova) {
-        novaEm = nova.dataset.nova;
-        return render();
+        // Criar tem tela própria, com os mesmos campos da ficha.
+        location.href = `iniciativa/criar.html?programa=${encodeURIComponent(nova.dataset.nova)}`;
+        return;
     }
 
     const sem = e.target.closest("[data-sem]");
@@ -364,23 +300,6 @@ document.addEventListener("click", (e) => {
             render();
         }
         return;
-    }
-
-    if (e.target.closest("#criar")) {
-        const nome = document.getElementById("n-nome").value.trim();
-        if (!nome) {
-            alert("Informe o nome da Iniciativa.");
-            return;
-        }
-        const causas = [...document.querySelectorAll("[data-causa]:checked")].map((c) => c.value);
-        const id = addIniciativa({
-            programaId: novaEm,
-            nome,
-            descricao: document.getElementById("n-descricao").value.trim(),
-            publicoAlvo: document.getElementById("n-publico").value.trim(),
-            causas,
-        });
-        location.href = `iniciativa.html?id=${id}`;
     }
 });
 

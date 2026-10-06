@@ -6,6 +6,7 @@
  * tela em lugar nenhum — ninguém conseguia fechar um apontamento.
  */
 import { obterEstado, iniciarAnalise, devolver, validar, addComentario, resolverComentario } from "../dados/store.js";
+import { camposDaIniciativa, idDoStatus, podeIr } from "../iniciativa-campos.js";
 import { ANOS } from "../dados/seed.js";
 import {
     STATUS_LABEL,
@@ -134,14 +135,11 @@ function render() {
     const eventos = estado.eventos.filter((ev) => ev.iniciativaId === ini.id);
     const previsto = recursosDaIniciativa(estado, ini.id);
 
+    // As ações de análise — iniciar, devolver, validar — são o campo Status, como na
+    // matriz de mapeamento. Aqui só o que a Central não pode fazer é dito.
     const acoesCabecalho = somenteLeitura()
         ? `<span class="fs-12 text-muted align-self-center">Perfil de acompanhamento — sem ações de análise.</span>`
-        : ini.status === "enviada"
-            ? `<button class="btn btn-sm btn-primary" id="iniciar"><i class="ti ti-player-play me-1"></i>Iniciar análise</button>`
-            : ini.status === "em_analise"
-              ? `<button class="btn btn-sm btn-outline-warning" id="devolver"><i class="ti ti-arrow-back-up me-1"></i>Devolver para ajuste</button>
-                 <button class="btn btn-sm btn-primary" id="validar"><i class="ti ti-check me-1"></i>Validar</button>`
-              : `<span class="fs-12 text-muted">Sem ação disponível neste status.</span>`;
+        : "";
 
     document.getElementById("conteudo").innerHTML = `
     <div class="my-3">
@@ -179,34 +177,7 @@ function render() {
         <div class="col-12">
             ${secao(
                 "Iniciativa",
-                `
-                <div class="row g-3 fs-13">
-                    <div class="col-12">
-                        <div class="rotulo-secao mb-1">Detalhamento</div>
-                        <div>${esc(ini.descricao || "—")}</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="rotulo-secao mb-1">Público-alvo</div>
-                        <div>${esc(ini.publicoAlvo || "—")}</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="rotulo-secao mb-1">Unidade responsável</div>
-                        <div>${esc(ini.unidadeResponsavel || "—")}</div>
-                    </div>
-                    <div class="col-12">
-                        <div class="rotulo-secao mb-1">Causas do Programa enfrentadas</div>
-                        ${
-                            ini.causas.length === 0
-                                ? `<p class="mb-0">${chip("Nenhuma causa relacionada", "impeditivo")}</p>`
-                                : `<ul class="mb-0">${ini.causas
-                                      .map((cid) => {
-                                          const causa = programa?.causas.find((c) => c.id === cid);
-                                          return `<li>${esc(causa?.texto ?? cid)}</li>`;
-                                      })
-                                      .join("")}</ul>`
-                        }
-                    </div>
-                </div>`,
+                camposDaIniciativa({ ini, estado, visao: "central", travado: true, statusTravado: somenteLeitura() }),
                 somenteLeitura()
                     ? ""
                     : `<button class="btn btn-sm btn-outline-primary" data-apontar-iniciativa="1">
@@ -331,38 +302,6 @@ document.addEventListener("click", (e) => {
     const ini = estado.iniciativas.find((i) => i.id === id);
     if (!ini) return;
 
-    if (e.target.closest("#iniciar")) {
-        iniciarAnalise(ini.id);
-        return render();
-    }
-
-    if (e.target.closest("#devolver")) {
-        const abertos = comentariosDaIniciativa(estado, ini.id).filter((c) => !c.resolvido).length;
-        const aviso =
-            abertos === 0
-                ? "Nenhum apontamento registrado. Devolver assim mesmo?"
-                : `Devolver com ${abertos} apontamento(s) aberto(s)? A Iniciativa volta ao órgão para ajuste.`;
-        if (confirm(aviso)) {
-            devolver(ini.id);
-            render();
-        }
-        return;
-    }
-
-    if (e.target.closest("#validar")) {
-        const r = resumoPendencias(pendenciasIniciativa(estado, ini));
-        // O órgão não consegue enviar com impeditiva; aqui o analista é avisado (T5.9.11).
-        const aviso =
-            r.impeditivos > 0
-                ? `A Iniciativa ainda tem ${r.impeditivos} pendência(s) impeditiva(s). Validar assim mesmo?`
-                : "Validar a Iniciativa? Ela passa a compor o plano.";
-        if (confirm(aviso)) {
-            validar(ini.id);
-            render();
-        }
-        return;
-    }
-
     const apIni = e.target.closest("[data-apontar-iniciativa]");
     if (apIni) {
         novoApontamento = { alvoTipo: "iniciativa", alvoId: ini.id, campo: "descricao" };
@@ -396,6 +335,50 @@ document.addEventListener("click", (e) => {
         bootstrap.Modal.getInstance(document.getElementById("modal-apontamento")).hide();
         novoApontamento = null;
         render();
+    }
+});
+
+/**
+ * O status da Iniciativa, escolhido pela Central.
+ *
+ * Cada opção é uma transição que o sistema já tinha: iniciar a análise não pede
+ * nada; devolver e validar pedem confirmação. Se a pessoa desiste, a tela se
+ * redesenha e o campo volta ao status que a Iniciativa de fato tem.
+ */
+document.addEventListener("change", (e) => {
+    if (e.target.id !== "f-status") return;
+    const ini = estado.iniciativas.find((i) => i.id === id);
+    if (!ini) return;
+
+    const destino = idDoStatus(e.target.value, "central");
+    // Texto que não é um status, ou um status para onde a Iniciativa não pode ir
+    // agora: a tela volta ao que ela tem.
+    if (!destino || !podeIr("central", ini.status, destino)) return render();
+
+    if (destino === "em_analise") {
+        iniciarAnalise(ini.id);
+        return render();
+    }
+
+    if (destino === "devolvida") {
+        const abertos = comentariosDaIniciativa(estado, ini.id).filter((c) => !c.resolvido).length;
+        const aviso =
+            abertos === 0
+                ? "Nenhum apontamento registrado. Devolver assim mesmo?"
+                : `Devolver com ${abertos} apontamento(s) aberto(s)? A Iniciativa volta ao órgão para ajuste.`;
+        if (confirm(aviso)) devolver(ini.id);
+        return render();
+    }
+
+    if (destino === "validada") {
+        const r = resumoPendencias(pendenciasIniciativa(estado, ini));
+        // O órgão não consegue enviar com impeditiva; aqui o analista é avisado (T5.9.11).
+        const aviso =
+            r.impeditivos > 0
+                ? `A Iniciativa ainda tem ${r.impeditivos} pendência(s) impeditiva(s). Validar assim mesmo?`
+                : "Validar a Iniciativa? Ela passa a compor o plano.";
+        if (confirm(aviso)) validar(ini.id);
+        return render();
     }
 });
 

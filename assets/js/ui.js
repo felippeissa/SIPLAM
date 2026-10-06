@@ -18,6 +18,7 @@ const STATUS_TOM = {
     em_analise: "info",
     devolvida: "alerta",
     validada: "ok",
+    divergencia: "alerta",
 };
 
 /** Pílula semântica em cinco tons. */

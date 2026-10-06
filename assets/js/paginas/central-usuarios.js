@@ -47,6 +47,9 @@ const PERFIS = [
 
 const nomeDoPerfil = (id) => PERFIS.find((p) => p.id === id)?.nome ?? id;
 
+const tamanhoLegivel = (bytes) =>
+    bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+
 let analisando = null;
 
 const usuarios = () => estado.usuarios ?? [];
@@ -56,7 +59,7 @@ const usuarios = () => estado.usuarios ?? [];
  * Uma solicitação nova entra no fim da lista e, com dezenas de aprovados na
  * frente, some da tela — justamente a linha que exige ação.
  */
-const URGENCIA = { aguardando: 0, aprovado: 1, revogado: 2, reprovado: 3 };
+const URGENCIA = { aguardando: 0, aprovado: 1, reprovado: 2 };
 
 function visiveis() {
     return usuarios()
@@ -115,11 +118,9 @@ function indicadores() {
     return faixaIndicadores(
         [
             { valor: conta("aguardando"), rotulo: "Aguardando aprovação" },
-            { valor: conta("aprovado"), rotulo: "Com acesso ativo" },
-            { valor: conta("revogado"), rotulo: "Acesso revogado" },
+            { valor: conta("aprovado"), rotulo: "Aprovados" },
             { valor: conta("reprovado"), rotulo: "Reprovados" },
-        ],
-        "O cadastro é feito pela própria pessoa. O perfil é definido aqui, no momento da aprovação."
+        ]
     );
 }
 
@@ -128,25 +129,21 @@ function indicadores() {
  * dela. Botões diferentes em colunas diferentes fariam o olho procurar a ação a
  * cada linha.
  *
- * O que aparece depende da situação, porque só faz sentido revogar quem tem
- * acesso e reativar quem não tem. **Rever decisão** aparece em toda situação já
- * decidida — aprovar ou reprovar não é irreversível, e mudar de ideia sobre o
- * perfil de alguém é rotina, não exceção.
+ * São duas, as do RF3: **aprovar** e **reprovar**. O que aparece depende da
+ * situação — oferecer "aprovar" a quem já está aprovado não faria nada. Decidir
+ * não é irreversível: de aprovado se reprova, de reprovado se aprova, e aí o
+ * perfil a conceder é escolhido de novo.
  */
 function acoes(u) {
     if (leitura) return "";
 
     const aprovar = { rotulo: "Aprovar", atributo: `data-aprovar="${u.id}"`, tom: "" };
     const reprovar = { rotulo: "Reprovar", atributo: `data-reprovar="${u.id}"`, tom: "text-danger" };
-    const rever = { rotulo: "Rever decisão", atributo: `data-rever="${u.id}"`, tom: "" };
-    const revogar = { rotulo: "Revogar acesso", atributo: `data-acesso="${u.id}"`, tom: "text-danger" };
-    const ativar = { rotulo: "Ativar acesso", atributo: `data-acesso="${u.id}"`, tom: "" };
 
     const itens = {
         aguardando: [aprovar, reprovar],
-        aprovado: [rever, revogar],
-        reprovado: [rever],
-        revogado: [rever, ativar],
+        aprovado: [reprovar],
+        reprovado: [aprovar],
     }[u.situacao];
 
     if (!itens?.length) return "";
@@ -162,7 +159,7 @@ function acoes(u) {
 
 function linha(u) {
     const s = situacaoUsuario(u.situacao);
-    const semAcesso = u.situacao === "revogado" || u.situacao === "reprovado";
+    const semAcesso = u.situacao === "reprovado";
     return `
     <tr class="${semAcesso ? "text-muted" : ""}">
         <td>
@@ -239,6 +236,38 @@ function ficha(u) {
         ${campo("Órgão", u.orgao)}
         ${campo("Perfil pedido", u.perfilSolicitado ? nomeDoPerfil(u.perfilSolicitado) : "")}
     </div>
+    ${
+        u.observacao
+            ? `
+    <div class="mb-3">
+        <div class="rotulo-secao mb-1">Observação de quem se registrou</div>
+        <p class="fs-13 mb-0">${esc(u.observacao)}</p>
+    </div>`
+            : ""
+    }
+    ${
+        (u.anexos ?? []).length
+            ? `
+    <div class="mb-3">
+        <div class="rotulo-secao mb-1">Documentos anexados</div>
+        <ul class="list-group">
+            ${u.anexos
+                .map(
+                    (a) => `
+            <li class="list-group-item d-flex align-items-center gap-2 py-2">
+                <i class="ti ti-paperclip text-muted"></i>
+                <span class="fs-13 text-truncate">${esc(a.nome)}</span>
+                <span class="fs-12 text-muted ms-auto">${esc(tamanhoLegivel(a.tamanho))}</span>
+            </li>`
+                )
+                .join("")}
+        </ul>
+        <div class="form-text fs-12">
+            No protótipo o arquivo não é enviado: guarda-se a ficha dele.
+        </div>
+    </div>`
+            : ""
+    }
     ${
         u.foraDaBase
             ? `<div class="alert alert-warning py-2 px-3 fs-12">
@@ -364,62 +393,6 @@ function abrirReprovacao() {
 
     // Reprovar nao concede papel nenhum.
     document.getElementById("confirmar-reprovacao").addEventListener("click", () => decidir(u, "reprovado", [], el));
-
-    el.addEventListener("hidden.bs.modal", () => {
-        analisando = null;
-    });
-}
-
-/**
- * Rever decisão: a janela de quem muda de ideia.
- *
- * Aqui a ficha volta, porque rever é decidir de novo com o caso à vista — e os
- * dois caminhos ficam abertos: conceder outro perfil, acrescentar um, ou virar
- * a decisão para o outro lado.
- */
-function abrirRevisao() {
-    const u = analisando;
-    const el = document.getElementById("modal-analise");
-    const s = situacaoUsuario(u.situacao);
-    document.getElementById("modal-conteudo").innerHTML = `
-    <div class="modal-header">
-        <h5 class="modal-title">Rever decisão</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-    </div>
-    <div class="modal-body" id="form-analise">
-        <p class="text-muted fs-12 mb-3">
-            Solicitado em ${esc(u.criadoEm ?? "—")}${u.decididoEm ? ` · decidido em ${esc(u.decididoEm)}` : ""}.
-            Hoje: ${esc(s.rotulo)}.
-        </p>
-        ${ficha(u)}
-        <hr class="my-3" />
-        ${escolhaDePerfis(u, "a")}
-        <div class="form-text fs-12">
-            Os perfis que a pessoa já tem vêm marcados. Marcar mais acrescenta; desmarcar retira.
-        </div>
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-        ${u.situacao === "reprovado" ? "" : `<button type="button" class="btn btn-outline-danger" id="reprovar">Reprovar</button>`}
-        <button type="button" class="btn btn-primary" id="aprovar">${u.situacao === "aprovado" ? "Salvar perfis" : "Conceder acesso"}</button>
-    </div>`;
-
-    const modal = new bootstrap.Modal(el);
-    modal.show();
-
-    const escopo = document.getElementById("form-analise");
-    limparAoDigitar(escopo);
-
-    document.getElementById("aprovar").addEventListener("click", () => {
-        const perfis = [...escopo.querySelectorAll("[data-perfil]:checked")].map((c) => c.value);
-        const ok = validar(escopo, [
-            { campo: "a-perfis", valido: perfis.length > 0, mensagem: "Escolha ao menos um perfil." },
-        ]);
-        if (!ok) return;
-        decidir(u, "aprovado", perfis, el);
-    });
-
-    document.getElementById("reprovar")?.addEventListener("click", () => decidir(u, "reprovado", [], el));
 
     el.addEventListener("hidden.bs.modal", () => {
         analisando = null;
@@ -595,11 +568,15 @@ function abrirNovo() {
     );
 }
 
+/**
+ * Liga o que a tela precisa depois de desenhada.
+ *
+ * Só o corpo da tabela se refaz a cada filtro; a barra fica de pé, com o que
+ * foi escolhido, e as ações das linhas novas precisam ser religadas.
+ */
 function ligar() {
     document.getElementById("novo")?.addEventListener("click", abrirNovo);
 
-    // Só o corpo da tabela se refaz a cada filtro; a barra fica de pé, com o
-    // que foi escolhido, e as ações das linhas novas precisam ser religadas.
     filtros.ligar(() => {
         document.getElementById("corpo-lista").innerHTML = visiveis().map(linha).join("") || vazio();
         ligarAcoes();
@@ -625,18 +602,6 @@ function ligarAcoes() {
 
     aoClicar("aprovar", abrirAprovacao);
     aoClicar("reprovar", abrirReprovacao);
-    aoClicar("rever", abrirRevisao);
-
-    document.querySelectorAll("[data-acesso]").forEach((b) =>
-        b.addEventListener("click", () => {
-            const u = usuarios().find((x) => x.id === b.dataset.acesso);
-            if (!u) return;
-            const revogando = u.situacao === "aprovado";
-            updItem("usuarios", u.id, { situacao: revogando ? "revogado" : "aprovado" });
-            avisar(revogando ? "Acesso revogado." : "Acesso reativado.");
-            render();
-        })
-    );
 }
 
 render();

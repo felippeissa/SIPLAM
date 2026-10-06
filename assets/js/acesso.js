@@ -57,9 +57,10 @@
             id: "gestao-setorial",
             nome: "Alta gestão setorial",
             visao: "setorial",
-            // Acumulativo: fará tudo que o Setorial faz, mais aprovar. A tela
-            // inicial dele entra numa entrega adiante; por ora, home provisória.
-            inicio: null,
+            // Acumulativo: faz tudo que o Setorial faz, mais aprovar. A matriz de
+            // mapeamento o põe entre quem usa as telas do setorial, e por isso ele
+            // entra pela mesma porta.
+            inicio: "programas.html",
             leitura: false,
             descricao: "Faz tudo que o Planejamento setorial faz e aprova a proposta do órgão",
         },
@@ -67,10 +68,11 @@
             id: "gestao-central",
             nome: "Alta gestão central",
             visao: "central",
-            // Sem tela própria ainda: cai na home provisória.
-            inicio: null,
-            leitura: true,
-            descricao: "Acompanha a consolidação do plano",
+            // Acumulativo: faz tudo que o Administrador central faz, mais aprovar. A
+            // matriz o põe entre quem usa os cadastros estratégicos ("ADC / AGC").
+            inicio: "central.html",
+            leitura: false,
+            descricao: "Faz tudo do Administrador central e aprova a consolidação",
         },
         {
             id: "controle",

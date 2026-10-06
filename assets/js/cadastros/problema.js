@@ -5,10 +5,9 @@ import { catalogo } from "../catalogo.js";
 /**
  * Cadastro de Problemas.
  *
- * Nome, descrição, quem o problema atinge, o que o mede, o que o explica e o
- * que acontece se ele não for enfrentado:
+ * Os campos são os da matriz de mapeamento, e na ordem dela:
  *
- *   Problema → População afetada → Indicadores → Causas (e subcausas) → Consequências
+ *   Nome* · Descrição · População afetada* · Causa e subcausa* · Consequências*
  *
  * O problema **não pertence** a uma causa: ele aponta para elas. A mesma causa
  * explica mais de um problema, o que uma hierarquia proibiria.
@@ -18,25 +17,14 @@ import { catalogo } from "../catalogo.js";
  * grupos distintos, com tamanhos distintos, e somá-los numa frase apaga a
  * diferença que o plano precisa enxergar; e o mesmo grupo é atingido por mais de
  * um problema, então o texto vive num lugar só.
+ *
+ * Indicadores deixaram de ser campo do problema em 06/10/2026: a matriz não os
+ * lista aqui — o indicador de impacto se vincula ao Programa.
  */
 
 const valor = (id) => document.getElementById(id)?.value.trim() ?? "";
 
 /* ---------- catálogos ---------- */
-
-const indicadores = catalogo({
-    colecao: "indicadores",
-    singular: "Indicador",
-    plural: "Indicadores",
-    artigo: "o",
-    prefixo: "ind",
-    campos: [{ id: "unidade", rotulo: "Unidade", tipo: "texto", ajuda: "Percentual, Unidade, Pessoa atendida…" }],
-    colunasExtra: [
-        { rotulo: "Periodicidade", valor: (i) => esc(i.periodicidade || "—") },
-        { rotulo: "Linha de base", valor: (i) => esc(i.linhaBase || "—") },
-    ],
-    usos: (id, estado) => (estado.problemas ?? []).filter((p) => (p.indicadorIds ?? []).includes(id)).length,
-});
 
 const populacoes = catalogo({
     colecao: "populacoes",
@@ -44,6 +32,7 @@ const populacoes = catalogo({
     plural: "População afetada",
     artigo: "o",
     prefixo: "pop",
+    obrigatorio: true,
     campos: [
         {
             id: "estimativa",
@@ -58,12 +47,13 @@ const populacoes = catalogo({
 const causas = catalogo({
     colecao: "causas",
     singular: "Causa",
-    plural: "Causas e subcausas",
+    plural: "Causa e subcausa",
     artigo: "a",
     prefixo: "cau",
+    obrigatorio: true,
     campos: [
         { id: "justificativa", rotulo: "Justificativa", ajuda: "Por que ela origina o problema" },
-        { id: "evidencia", rotulo: "Evidência", ajuda: "O número, a série ou o estudo que a sustenta" },
+        { id: "descricao", rotulo: "Descrição", ajuda: "O que caracteriza esta causa" },
     ],
     colunasExtra: [
         {
@@ -86,10 +76,10 @@ export const problema = {
     pasta: "central-problema",
     listagem: "central-problema.html",
     titulo: "Cadastro de Problemas",
-    subtitulo: "O que o plano enfrenta: quem atinge, o que o mede e o que o explica.",
+    subtitulo: "O que o plano enfrenta: quem atinge, o que o explica e o que acontece se ele não for enfrentado.",
     novoRotulo: "Novo problema",
     singular: "Problema",
-    rotuloNome: "Nome",
+    rotuloNome: "Nome do problema",
     exemplo: "Acesso desigual ao cuidado integral na primeira infância",
     podeExcluir: true,
 
@@ -97,32 +87,24 @@ export const problema = {
     semDescricao: true,
 
     filtros: [
-        { tipo: "vinculo", id: "causas", rotulo: "Causas", colecao: "causas", campo: "causaIds" },
-        { tipo: "vinculo", id: "indicadores", rotulo: "Indicadores", colecao: "indicadores", campo: "indicadorIds" },
         { tipo: "vinculo", id: "populacoes", rotulo: "População afetada", colecao: "populacoes", campo: "populacaoIds" },
+        { tipo: "vinculo", id: "causas", rotulo: "Causas", colecao: "causas", campo: "causaIds" },
     ],
 
     extra: {
         colunas: [
             {
-                rotulo: "Causas",
-                valor: (item) => {
-                    const total = (item.causaIds ?? []).length;
-                    return total ? `${total} ${total === 1 ? "causa" : "causas"}` : '<span class="text-muted">—</span>';
-                },
-            },
-            {
-                rotulo: "Indicadores",
-                valor: (item) => {
-                    const total = (item.indicadorIds ?? []).length;
-                    return total ? `${total} ${total === 1 ? "indicador" : "indicadores"}` : '<span class="text-muted">—</span>';
-                },
-            },
-            {
                 rotulo: "População afetada",
                 valor: (item) => {
                     const total = (item.populacaoIds ?? []).length;
                     return total ? `${total} ${total === 1 ? "grupo" : "grupos"}` : '<span class="text-muted">—</span>';
+                },
+            },
+            {
+                rotulo: "Causas",
+                valor: (item) => {
+                    const total = (item.causaIds ?? []).length;
+                    return total ? `${total} ${total === 1 ? "causa" : "causas"}` : '<span class="text-muted">—</span>';
                 },
             },
         ],
@@ -137,14 +119,10 @@ export const problema = {
 
             ${populacoes.html(item.populacaoIds ?? [])}
 
-            ${indicadores.html(item.indicadorIds ?? [])}
-            <div class="invalid-feedback d-block" id="f-indicadores-erro"></div>
-
             ${causas.html(item.causaIds ?? [])}
-            <div class="invalid-feedback d-block" id="f-causas-erro"></div>
 
             <div class="mb-0">
-                <label class="form-label" for="f-consequencias">Consequências</label>
+                <label class="form-label" for="f-consequencias">Consequências <span class="text-danger">*</span></label>
                 <textarea class="form-control" id="f-consequencias" rows="3"
                           placeholder="O que acontece se este problema não for enfrentado">${esc(item.consequencias ?? "")}</textarea>
                 ${campoErro("f-consequencias")}
@@ -153,35 +131,29 @@ export const problema = {
 
         ligar(escopo) {
             populacoes.ligar(escopo);
-            indicadores.ligar(escopo);
             causas.ligar(escopo);
         },
 
         ler: () => ({
             populacaoIds: populacoes.ler(),
-            indicadorIds: indicadores.ler(),
             causaIds: causas.ler(),
             consequencias: valor("f-consequencias"),
         }),
 
-        regras(dados) {
-            for (const id of ["f-indicadores-erro", "f-causas-erro"]) {
-                const erro = document.getElementById(id);
-                if (erro) erro.textContent = "";
-            }
-
-            const falha = (id, mensagem) => {
-                document.getElementById(id).textContent = mensagem;
-                return [{ campo: id.replace("-erro", ""), valido: false, mensagem: "" }];
-            };
-
-            if (!(dados.indicadorIds ?? []).length) {
-                return falha("f-indicadores-erro", "Escolha ao menos um indicador: é ele que diz se o problema está diminuindo.");
-            }
-            if (!(dados.causaIds ?? []).length) {
-                return falha("f-causas-erro", "Escolha ao menos uma causa. Um problema sem causa não se explica.");
-            }
-            return [];
-        },
+        // Os campos de lista não são `input`: o erro vai para o espaço que o
+        // catálogo reserva, com o id do campo de busca.
+        regras: (dados) => [
+            {
+                campo: "pop-busca",
+                valido: (dados.populacaoIds ?? []).length > 0,
+                mensagem: "Escolha ao menos um grupo da população afetada.",
+            },
+            {
+                campo: "cau-busca",
+                valido: (dados.causaIds ?? []).length > 0,
+                mensagem: "Escolha ao menos uma causa. Um problema sem causa não se explica.",
+            },
+            { campo: "f-consequencias", valido: !!dados.consequencias, mensagem: "Descreva as consequências do problema." },
+        ],
     },
 };

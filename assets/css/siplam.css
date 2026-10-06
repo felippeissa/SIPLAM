@@ -479,3 +479,68 @@
        .table-responsive existe para fazer. */
     min-width: 64rem;
 }
+
+/* ---------- Teste: fundo da área de conteúdo ---------- */
+/* Cinza levíssimo atrás dos cards, para que o branco deles marque onde há
+   conteúdo. Experimento pedido em 25/09/2026 — se não convencer, apaga-se este
+   bloco inteiro e nada mais muda. */
+.content-page,
+.wrapper {
+    background-color: #f1f2f7;
+}
+
+/* ---------- Seletor de ano (vigência do PPA) ---------- */
+.seletor-ano {
+    position: relative;
+}
+
+.seletor-ano input[readonly] {
+    cursor: pointer;
+    background-color: var(--bs-body-bg);
+}
+
+.seletor-ano input[disabled] {
+    cursor: not-allowed;
+    background-color: var(--bs-secondary-bg);
+}
+
+.seletor-ano-painel {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 1060;
+    width: 17rem;
+    padding: 0.75rem;
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.375rem;
+    box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.12);
+}
+
+.seletor-ano-grade {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem;
+}
+
+.seletor-ano-item {
+    padding: 0.4rem 0;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+    background: transparent;
+    color: var(--bs-body-color);
+    font-size: 13px;
+}
+
+.seletor-ano-item:hover {
+    background-color: var(--siplam-aninhado-bg);
+}
+
+.seletor-ano-item.corrente {
+    border-color: var(--bs-border-color);
+}
+
+.seletor-ano-item.ativo {
+    background-color: var(--bs-primary);
+    color: #fff;
+}

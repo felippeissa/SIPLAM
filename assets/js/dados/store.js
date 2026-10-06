@@ -30,7 +30,7 @@ import { ESTRUTURA_REAL, PROGRAMAS_PPA } from "./programas-ppa.js";
  */
 export const SITUACOES_PPA = [
     { id: "elaboracao", rotulo: "Em elaboração", tom: "info", editavel: true, ajuda: "Em construção pelos órgãos e pela Área Central." },
-    { id: "submetido", rotulo: "Submetido para aprovação", tom: "alerta", editavel: false, ajuda: "Encaminhado para apreciação; não se edita mais." },
+    { id: "submetido", rotulo: "Submetido", tom: "alerta", editavel: false, ajuda: "Encaminhado para apreciação; não se edita mais." },
     { id: "aprovado", rotulo: "Aprovado", tom: "ok", editavel: false, ajuda: "Aprovado, aguardando o início da vigência." },
     { id: "reprovado", rotulo: "Reprovado", tom: "impeditivo", editavel: false, ajuda: "Não aprovado. Para corrigir, o plano volta à elaboração." },
     { id: "vigente", rotulo: "Vigente", tom: "ok", editavel: false, ajuda: "Em execução. Mudanças só por alteração do plano." },
@@ -111,7 +111,7 @@ function ppasIniciais() {
 /**
  * Situações do usuário, na ordem do fluxo.
  *
- *   aguardando → aprovado → revogado → aprovado (reativado)
+ *   aguardando → aprovado, ou aguardando → reprovado
  *        ↓
  *    reprovado
  *
@@ -123,7 +123,6 @@ export const SITUACOES_USUARIO = [
     { id: "aguardando", rotulo: "Aguardando aprovação", tom: "alerta" },
     { id: "aprovado", rotulo: "Aprovado", tom: "ok" },
     { id: "reprovado", rotulo: "Reprovado", tom: "impeditivo" },
-    { id: "revogado", rotulo: "Acesso revogado", tom: "neutro" },
 ];
 
 export const situacaoUsuario = (id) => SITUACOES_USUARIO.find((s) => s.id === id) ?? SITUACOES_USUARIO[0];
@@ -149,8 +148,8 @@ function usuariosIniciais() {
         { id: "us-9", nome: "Bianca Siqueira", email: "bianca.siqueira@exemplo.go", login: "bianca.siqueira", orgao: "Secretaria de Segurança Pública", perfis: [], situacao: "aguardando", criadoEm: "16/09/2026" },
         { id: "us-10", nome: "Otávio Lemes", email: "otavio.lemes@exemplo.go", login: "otavio.lemes", orgao: "Secretaria de Infraestrutura", perfis: [], situacao: "aguardando", criadoEm: "17/09/2026" },
 
-        { id: "us-11", nome: "Paulo Medeiros", email: "paulo.medeiros@exemplo.go", login: "paulo.medeiros", orgao: "Secretaria de Infraestrutura", perfis: ["setorial"], situacao: "revogado", criadoEm: "03/02/2026", decididoEm: "05/02/2026", decididoPor: "João Peixoto" },
-        { id: "us-12", nome: "Lúcia Andrade", email: "lucia.andrade@exemplo.go", login: "lucia.andrade", orgao: "Secretaria de Indústria e Comércio", perfis: ["setorial", "gestao-setorial"], situacao: "revogado", criadoEm: "27/01/2026", decididoEm: "29/01/2026", decididoPor: "Maria Fonseca" },
+        { id: "us-11", nome: "Paulo Medeiros", email: "paulo.medeiros@exemplo.go", login: "paulo.medeiros", orgao: "Secretaria de Infraestrutura", perfis: ["setorial"], situacao: "reprovado", criadoEm: "03/02/2026", decididoEm: "05/02/2026", decididoPor: "João Peixoto" },
+        { id: "us-12", nome: "Lúcia Andrade", email: "lucia.andrade@exemplo.go", login: "lucia.andrade", orgao: "Secretaria de Indústria e Comércio", perfis: ["setorial", "gestao-setorial"], situacao: "reprovado", criadoEm: "27/01/2026", decididoEm: "29/01/2026", decididoPor: "Maria Fonseca" },
 
         { id: "us-13", nome: "Sérgio Vilela", email: "sergio.vilela@exemplo.go", login: "sergio.vilela", orgao: "Secretaria de Agricultura", perfis: [], situacao: "reprovado", criadoEm: "28/08/2026", decididoEm: "30/08/2026", decididoPor: "Maria Fonseca" },
         { id: "us-14", nome: "Daniel Prado", email: "daniel.prado@exemplo.go", login: "daniel.prado", orgao: "Secretaria de Saúde", perfis: [], situacao: "reprovado", criadoEm: "09/09/2026", decididoEm: "10/09/2026", decididoPor: "João Peixoto" },
@@ -596,7 +595,7 @@ function carregar() {
     // Usuários gravados quando a situação era só "ativo"/"inativo" e não havia login.
     for (const u of base.usuarios) {
         if (u.situacao === "ativo") u.situacao = "aprovado";
-        if (u.situacao === "inativo") u.situacao = "revogado";
+        if (u.situacao === "inativo" || u.situacao === "revogado") u.situacao = "reprovado";
         if (!u.login) u.login = (u.email ?? "").split("@")[0];
     }
 
@@ -684,6 +683,69 @@ function completarCadastros(base) {
                 criadoEm: hoje(),
             })
         );
+    }
+
+    /**
+     * Os indicadores que moram dentro do Programa viram cadastro.
+     *
+     * O Programa sempre guardou os seus indicadores de resultado como uma lista
+     * aninhada — nome, unidade, linha de base —, e o Cadastro de Indicadores foi
+     * construído depois, com outros. Quem abria o Programa para editar via zero
+     * indicadores onde havia dois, e salvar os apagava. Aqui cada um que o cadastro
+     * ainda não tem passa a ter, e o Programa passa a apontar para eles pelo
+     * identificador — que é o vínculo que a matriz de mapeamento descreve.
+     */
+    const proximoNumero = () =>
+        (base.indicadores ?? []).reduce((m, i) => Math.max(m, Number(String(i.id).replace(/\D/g, "")) || 0), 0) + 1;
+    for (const prog of base.programas ?? []) {
+        if (Array.isArray(prog.indicadorIds)) continue;
+
+        prog.indicadorIds = (prog.indicadores ?? []).map((legado) => {
+            const achado = base.indicadores.find((i) => i.nome === legado.nome);
+            if (achado) return achado.id;
+            const novo = {
+                id: `in-${String(proximoNumero()).padStart(3, "0")}`,
+                ppaId: prog.ppaId ?? ppaId,
+                nome: legado.nome,
+                descricao: "",
+                tipo: "Resultado",
+                unidade: legado.unidade ?? "",
+                linhaBase: legado.linhaBase ?? "",
+                situacao: "Ativo",
+                metas: [],
+                criadoEm: hoje(),
+            };
+            base.indicadores.push(novo);
+            return novo.id;
+        });
+    }
+
+    /**
+     * O vocabulário dos indicadores passou a ser o da matriz de mapeamento
+     * (06/10/2026). Quatro listas tinham sido preenchidas sem referência — as que
+     * a matriz agora define —, e o estado já gravado traz os valores antigos.
+     * Cada um vira o seu equivalente; o que não tem equivalente fica como está,
+     * e a tela o mantém escolhível em vez de apagá-lo.
+     */
+    const TROCA = {
+        polaridade: { "Quanto maior, melhor": "Maior-Melhor", "Quanto menor, melhor": "Menor-Melhor", "Quanto mais próximo da meta, melhor": "" },
+        unidade: { Unidade: "Número absoluto" },
+        abrangencia: { Regional: "Regional (região de planejamento)" },
+        situacao: { Novo: "Em construção", "Em uso": "Ativo", "Em revisão": "Em construção" },
+    };
+    for (const ind of base.indicadores ?? []) {
+        for (const [campo, mapa] of Object.entries(TROCA)) {
+            if (Object.hasOwn(mapa, ind[campo])) ind[campo] = mapa[ind[campo]];
+        }
+        ind.metas ??= [];
+    }
+
+    // A descrição do Programa passou a ser obrigatória (matriz de mapeamento) e
+    // boa parte dos Programas anteriores não a tem. O objetivo é o texto mais
+    // próximo do que uma descrição diria; sem ele, editar qualquer um desses
+    // Programas esbarraria num campo vazio que a pessoa nem sabe o que pôr.
+    for (const p of base.programas ?? []) {
+        if (!p.descricao?.trim() && p.objetivo?.trim()) p.descricao = p.objetivo;
     }
 
     // As causas guardam nomes de subcausa até aqui; agora viram vínculo por
@@ -877,7 +939,7 @@ function tocar(iniciativaId) {
 
 /* ---------- Iniciativa ---------- */
 
-export function addIniciativa({ programaId, nome, descricao, publicoAlvo, causas }) {
+export function addIniciativa({ programaId, nome, descricao, publicoAlvo = "", causas = [], problemaId = "", status = "em_preenchimento", motivo = "" }) {
     const id = `ini-${uid()}`;
     estado.iniciativas.push({
         id,
@@ -887,7 +949,9 @@ export function addIniciativa({ programaId, nome, descricao, publicoAlvo, causas
         descricao,
         publicoAlvo,
         causas,
-        status: "em_preenchimento",
+        problemaId,
+        motivo,
+        status,
         atualizadoEm: hoje(),
         versao: 1,
     });
@@ -921,6 +985,28 @@ export function enviar(id) {
     const versao = ini.versao + (ini.status === "devolvida" ? 1 : 0);
     Object.assign(ini, { status: "enviada", enviadoEm: hoje(), atualizadoEm: hoje(), versao });
     registrarEvento(id, estado.orgaoAtual, `Iniciativa enviada para análise (versão ${versao})`);
+    gravar();
+}
+
+/**
+ * O órgão discorda do que recebeu — o Programa, o problema, uma causa — e diz
+ * isso em vez de enviar. É status do setorial, ao lado de "em preenchimento" e
+ * "enviada" (matriz de mapeamento), e vem com um motivo.
+ */
+export function reportarDivergencia(id) {
+    const ini = estado.iniciativas.find((i) => i.id === id);
+    if (!ini) return;
+    Object.assign(ini, { status: "divergencia", atualizadoEm: hoje() });
+    registrarEvento(id, estado.orgaoAtual, "Divergência reportada pelo órgão");
+    gravar();
+}
+
+/** A divergência foi resolvida e a Iniciativa volta a ser preenchida. */
+export function retomarPreenchimento(id) {
+    const ini = estado.iniciativas.find((i) => i.id === id);
+    if (!ini) return;
+    Object.assign(ini, { status: "em_preenchimento", atualizadoEm: hoje() });
+    registrarEvento(id, estado.orgaoAtual, "Divergência encerrada: a Iniciativa volta ao preenchimento");
     gravar();
 }
 

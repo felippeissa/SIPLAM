@@ -3,15 +3,21 @@
  *
  * Tela pública: não exige sessão, porque quem chega aqui ainda não tem acesso.
  *
+ * Uma coluna, e **o formulário inteiro à vista desde o começo**. Esconder os
+ * campos até o CPF ser buscado economizava tela e cobrava o preço errado: quem
+ * chega não vê o que vai ter de informar, e descobre a cada passo.
+ *
  * Quem se registra informa o CPF, e o vínculo funcional responde pelo resto:
  * nome, e-mail e login vêm da base, não do teclado — digitados à mão, cada
- * solicitação chegaria à Área Central com um login que ninguém reconhece.
+ * solicitação chegaria à Área Central com um login que ninguém reconhece. Por
+ * isso os três chegam travados: são consulta, não digitação.
  *
- * **No protótipo, qualquer CPF passa.** Quando a base funcional não conhece o
- * número, a tela não barra: os campos abrem em branco para serem preenchidos à
- * mão, e o aviso diz que o dado não foi conferido. Sem isso não haveria como
- * testar a tela sem decorar os oito CPFs de demonstração. Com a integração
- * ligada, este caminho manual deixa de existir.
+ * **No protótipo a base é fingida.** Os oito CPFs de demonstração respondem de
+ * verdade; qualquer outro produz um servidor plausível, montado a partir dos
+ * próprios dígitos do CPF — o mesmo CPF devolve sempre a mesma pessoa, que é
+ * como uma base se comporta. Sem isso não haveria como demonstrar a tela sem
+ * decorar oito números. Com a integração ligada, `inventar()` sai e só a
+ * consulta real fica.
  *
  * O órgão é livre, e nem vem sugerido: a lotação da base de pessoal não é a
  * mesma coisa que o órgão para o qual se preenche o plano — quem está lotado
@@ -22,6 +28,16 @@
  * O perfil é o único campo de escolha, e é **pedido**, não concedido. Quem
  * aprova é o Administrador central, que recebe o pedido já marcado e decide se
  * confirma ou troca.
+ *
+ * No fim vêm dois campos opcionais, e os dois existem pelo mesmo motivo: a
+ * solicitação chega à análise sem ninguém para perguntar nada. A **observação**
+ * é onde se explica o que a ficha não mostra — órgão diferente da lotação,
+ * perfil pedido por causa de uma função nova — e o **documento** é onde se prova
+ * isso: portaria, ofício, designação.
+ *
+ * O arquivo não sai do navegador. Sem servidor não há para onde enviar, então o
+ * que a solicitação guarda é a ficha do anexo — nome, tipo e tamanho —, que é o
+ * que a tela de análise precisa mostrar.
  */
 import { obterEstado, addItem, buscarNaBaseFuncional, formatarCpf } from "../dados/store.js";
 import { ORGAOS } from "../dados/seed.js";
@@ -30,11 +46,11 @@ import { campoErro, validar, limparAoDigitar, acusar } from "../validacao.js";
 
 /** Espelha `assets/js/acesso.js`. */
 const PERFIS = [
-    { id: "setorial", nome: "Planejamento setorial", descricao: "Preenche e envia a contribuição do órgão" },
-    { id: "gestao-setorial", nome: "Alta gestão setorial", descricao: "Faz o mesmo e aprova a proposta do órgão" },
-    { id: "admin-central", nome: "Administrador central", descricao: "Analisa, valida e administra os Programas" },
-    { id: "gestao-central", nome: "Alta gestão central", descricao: "Faz o mesmo e aprova a consolidação" },
-    { id: "controle", nome: "Consulta", descricao: "Consulta o plano, sem escrever" },
+    { id: "setorial", nome: "Planejamento setorial" },
+    { id: "gestao-setorial", nome: "Alta gestão setorial" },
+    { id: "admin-central", nome: "Administrador central" },
+    { id: "gestao-central", nome: "Alta gestão central" },
+    { id: "controle", nome: "Consulta" },
 ];
 
 const estado = obterEstado();
@@ -44,25 +60,78 @@ const usuarios = () => estado.usuarios ?? [];
 const digitos = (v) => String(v ?? "").replace(/\D/g, "");
 const igual = (a, b) => (a ?? "").trim().toLocaleLowerCase("pt-BR") === (b ?? "").trim().toLocaleLowerCase("pt-BR");
 
-/** Quem a base funcional achou, ou o que está sendo digitado à mão. */
+/** O que a base — real ou fingida — respondeu para o CPF digitado. */
 let pessoa = null;
 
-/** True quando o CPF não estava na base e os dados são preenchidos na tela. */
-let manual = false;
+/** Os documentos escolhidos, como fichas: o arquivo em si não vai a lugar nenhum. */
+let anexos = [];
+
+/** Um anexo por vez tem limite; a soma também, para a solicitação não virar mala. */
+const LIMITE_ARQUIVO = 5 * 1024 * 1024;
+const LIMITE_TOTAL = 15 * 1024 * 1024;
+const TIPOS = ".pdf,.jpg,.jpeg,.png";
+
+const tamanhoLegivel = (bytes) =>
+    bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+
+/* ---------- a base fingida ---------- */
+
+const PRIMEIROS = [
+    "Ana", "Bruno", "Carla", "Daniel", "Eduarda", "Felipe", "Gabriela", "Henrique",
+    "Isabela", "João", "Karina", "Lucas", "Mariana", "Nelson", "Olívia", "Paulo",
+    "Renata", "Sérgio", "Tatiana", "Vinícius",
+];
+
+const SOBRENOMES = [
+    "Almeida", "Barbosa", "Carvalho", "Dias", "Esteves", "Ferreira", "Gomes", "Henriques",
+    "Iglesias", "Jardim", "Lima", "Machado", "Nogueira", "Oliveira", "Pereira", "Queiroz",
+    "Ribeiro", "Santana", "Teixeira", "Vasconcelos",
+];
+
+/** Tira os acentos: login e e-mail institucionais não os têm. */
+const semAcento = (t) =>
+    t.normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .toLocaleLowerCase("pt-BR");
+
+/**
+ * Inventa um servidor a partir do CPF.
+ *
+ * Determinístico de propósito: o índice de cada nome sai dos dígitos do próprio
+ * CPF, então o mesmo número devolve sempre a mesma pessoa. Um sorteio de
+ * verdade mudaria o nome a cada tecla apagada e recolocada, e a demonstração
+ * pareceria quebrada.
+ */
+function inventar(cpf) {
+    const d = digitos(cpf).split("").map(Number);
+    const soma = (de, ate) => d.slice(de, ate).reduce((s, n) => s + n, 0);
+
+    const primeiro = PRIMEIROS[soma(0, 4) % PRIMEIROS.length];
+    const meio = SOBRENOMES[soma(3, 7) % SOBRENOMES.length];
+    const ultimo = SOBRENOMES[soma(6, 11) % SOBRENOMES.length];
+    const sobrenome = meio === ultimo ? ultimo : `${meio} ${ultimo}`;
+
+    const login = `${semAcento(primeiro)}.${semAcento(ultimo)}`;
+    return {
+        cpf: formatarCpf(cpf),
+        nome: `${primeiro} ${sobrenome}`,
+        email: `${login}@goias.gov.br`,
+        login,
+    };
+}
+
+/** A base de demonstração primeiro; o resto, inventado. */
+const consultar = (cpf) => buscarNaBaseFuncional(cpf) ?? inventar(cpf);
 
 /* ---------- desenho ---------- */
 
-function campoLido(id, rotulo, valor, ajuda = "") {
-    // No modo manual o mesmo campo vira editável: é o único jeito de testar a
-    // tela com um CPF que a base de demonstração não tem.
-    return `
+/** Campo de leitura: vem da base, e por isso não se digita. */
+const campoLido = (id, rotulo, valor) => `
     <div class="mb-3">
-        <label class="form-label" for="${id}">${esc(rotulo)}${manual ? ' <span class="text-danger">*</span>' : ""}</label>
-        <input type="text" class="form-control" id="${id}" value="${esc(valor ?? "")}" ${manual ? "" : "disabled"} />
-        ${ajuda ? `<div class="form-text fs-12">${esc(ajuda)}</div>` : ""}
-        ${manual ? campoErro(id) : ""}
+        <label class="form-label" for="${id}">${esc(rotulo)} <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="${id}" value="${esc(valor ?? "")}"
+               placeholder="Preenchido pelo vínculo funcional" disabled />
     </div>`;
-}
 
 /**
  * Os órgãos oferecidos.
@@ -87,46 +156,21 @@ function formulario() {
     <div id="form-registro">
         <div class="mb-3">
             <label class="form-label" for="r-cpf">CPF<span class="text-danger">*</span></label>
-            <div class="input-group">
-                <input type="text" class="form-control codigo" id="r-cpf" inputmode="numeric"
-                       placeholder="000.000.000-00" maxlength="14" autocomplete="off"
-                       value="${esc(pessoa?.cpf ?? "")}" ${pessoa ? "disabled" : ""} />
-                ${
-                    pessoa
-                        ? `<button type="button" class="btn btn-light" id="trocar">Trocar</button>`
-                        : `<button type="button" class="btn btn-outline-primary" id="buscar">Buscar</button>`
-                }
-            </div>
-            <!-- Dentro de um input-group o campo deixa de ser irmão do slot, e a
-                 regra do Bootstrap que revela o erro não alcança. Daí o d-block. -->
-            <div class="invalid-feedback d-block" id="r-cpf-erro"></div>
+            <input type="text" class="form-control codigo" id="r-cpf" inputmode="numeric"
+                   placeholder="000.000.000-00" maxlength="14" autocomplete="off" value="${esc(pessoa?.cpf ?? "")}" />
+            ${campoErro("r-cpf")}
         </div>
 
-        ${
-            pessoa
-                ? `
-        ${
-            manual
-                ? `<div class="alert alert-warning py-2 px-3 fs-12 mb-3">
-            <i class="ti ti-alert-triangle me-1"></i>
-            Este CPF não está no vínculo funcional. Preencha os dados à mão — o administrador
-            central vai conferi-los na análise.
-        </div>`
-                : `<div class="alert alert-light border py-2 px-3 fs-12 mb-3">
-            <i class="ti ti-id-badge me-1"></i>Dados do vínculo funcional.
-        </div>`
-        }
+        ${campoLido("r-nome", "Nome completo", pessoa?.nome)}
+        ${campoLido("r-email", "E-mail institucional", pessoa?.email)}
+        ${campoLido("r-login", "Login", pessoa?.login)}
 
-        ${campoLido("r-nome", "Nome completo", pessoa.nome)}
-        ${campoLido("r-email", "E-mail institucional", pessoa.email)}
-        ${campoLido("r-login", "Login", pessoa.login, "É o nome que você vai usar para entrar.")}
         <div class="mb-3">
             <label class="form-label" for="r-orgao">Órgão<span class="text-danger">*</span></label>
             <select class="form-select" id="r-orgao">
                 <option value="">Selecione seu órgão</option>
                 ${orgaos().map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join("")}
             </select>
-            <div class="form-text fs-12">Aquele para o qual você vai preencher o plano.</div>
             ${campoErro("r-orgao")}
         </div>
 
@@ -136,26 +180,60 @@ function formulario() {
                 <option value="">Selecione o perfil</option>
                 ${PERFIS.map((p) => `<option value="${p.id}">${esc(p.nome)}</option>`).join("")}
             </select>
-            <div class="form-text fs-12" id="r-perfil-ajuda">
-                O administrador central confirma ou ajusta na análise.
-            </div>
             ${campoErro("r-perfil")}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="r-observacao">Observação</label>
+            <textarea class="form-control" id="r-observacao" rows="3" maxlength="600"
+                      placeholder="Algo que ajude na análise: a função que você exerce, por que precisa deste perfil…"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="r-arquivo">Documento</label>
+            <input type="file" class="form-control" id="r-arquivo" accept="${TIPOS}" multiple />
+            <div class="invalid-feedback d-block" id="r-arquivo-erro"></div>
+            <div id="r-anexos" class="mt-2"></div>
         </div>
 
         <div class="d-grid">
             <button type="button" class="btn btn-primary fw-semibold py-2" id="enviar">Enviar solicitação</button>
-        </div>`
-                : ""
-        }
+        </div>
     </div>
 
     <p class="text-center mt-3 mb-0 fs-13">
         Já tem acesso? <a href="index.html" class="fw-semibold">Entrar</a>
     </p>`;
 
-    const escopo = document.getElementById("form-registro");
-    limparAoDigitar(escopo);
+    limparAoDigitar(document.getElementById("form-registro"));
     ligar();
+}
+
+/** Os documentos já escolhidos, com o botão de tirar cada um. */
+function listaDeAnexos() {
+    if (!anexos.length) return "";
+    return `
+    <ul class="list-group">
+        ${anexos
+            .map(
+                (a, n) => `
+        <li class="list-group-item d-flex align-items-center gap-2 py-2">
+            <i class="ti ti-paperclip text-muted"></i>
+            <span class="fs-13 text-truncate">${esc(a.nome)}</span>
+            <span class="fs-12 text-muted ms-auto">${esc(tamanhoLegivel(a.tamanho))}</span>
+            <button type="button" class="btn btn-sm btn-light" data-tirar="${n}" aria-label="Remover ${esc(a.nome)}">
+                <i class="ti ti-x"></i>
+            </button>
+        </li>`
+            )
+            .join("")}
+    </ul>`;
+}
+
+/** Redesenha só a lista: refazer o formulário perderia o que já foi digitado. */
+function redesenharAnexos() {
+    const caixa = document.getElementById("r-anexos");
+    if (caixa) caixa.innerHTML = listaDeAnexos();
 }
 
 /* ---------- ações ---------- */
@@ -163,104 +241,90 @@ function formulario() {
 function ligar() {
     const cpf = document.getElementById("r-cpf");
 
-    cpf?.addEventListener("input", () => {
+    // A consulta acontece enquanto se digita, ao fechar os onze dígitos: não há
+    // botão de buscar porque não há decisão a tomar entre digitar e consultar.
+    cpf.addEventListener("input", () => {
         cpf.value = formatarCpf(cpf.value);
-    });
-    // Enter no CPF busca, em vez de não fazer nada.
-    cpf?.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter") return;
-        e.preventDefault();
-        buscar();
+        preencher(cpf.value);
     });
 
-    document.getElementById("buscar")?.addEventListener("click", buscar);
+    document.getElementById("r-arquivo").addEventListener("change", (e) => {
+        const erro = document.getElementById("r-arquivo-erro");
+        erro.textContent = "";
 
-    document.getElementById("trocar")?.addEventListener("click", () => {
-        pessoa = null;
-        manual = false;
-        formulario();
-        document.getElementById("r-cpf").focus();
+        for (const arquivo of e.target.files) {
+            if (arquivo.size > LIMITE_ARQUIVO) {
+                erro.textContent = `${arquivo.name} tem ${tamanhoLegivel(arquivo.size)} e o limite é ${tamanhoLegivel(LIMITE_ARQUIVO)}.`;
+                continue;
+            }
+            const total = anexos.reduce((s, a) => s + a.tamanho, 0) + arquivo.size;
+            if (total > LIMITE_TOTAL) {
+                erro.textContent = `Os documentos somados passam de ${tamanhoLegivel(LIMITE_TOTAL)}. Tire algum antes de acrescentar outro.`;
+                break;
+            }
+            if (anexos.some((a) => a.nome === arquivo.name && a.tamanho === arquivo.size)) continue;
+            anexos.push({ nome: arquivo.name, tipo: arquivo.type, tamanho: arquivo.size });
+        }
+
+        // O campo se esvazia para que escolher de novo acrescente, em vez de
+        // substituir o que já está na lista.
+        e.target.value = "";
+        redesenharAnexos();
     });
 
-    // A ajuda embaixo do perfil diz o que o perfil escolhido faz: a lista de
-    // nomes sozinha não distingue “Alta gestão setorial” de “Planejamento
-    // setorial” para quem está pedindo acesso pela primeira vez.
-    const perfil = document.getElementById("r-perfil");
-    perfil?.addEventListener("change", () => {
-        const escolhido = PERFIS.find((p) => p.id === perfil.value);
-        document.getElementById("r-perfil-ajuda").textContent = escolhido
-            ? `${escolhido.descricao}. O administrador central confirma ou ajusta na análise.`
-            : "O administrador central confirma ou ajusta na análise.";
+    document.getElementById("r-anexos").addEventListener("click", (e) => {
+        const botao = e.target.closest("[data-tirar]");
+        if (!botao) return;
+        anexos.splice(Number(botao.dataset.tirar), 1);
+        redesenharAnexos();
     });
 
-    document.getElementById("enviar")?.addEventListener("click", enviar);
+    document.getElementById("enviar").addEventListener("click", enviar);
 }
 
-function buscar() {
-    const valor = document.getElementById("r-cpf").value;
-    const escopo = document.getElementById("form-registro");
+/**
+ * Responde ao CPF digitado.
+ *
+ * Só os três campos de identificação mudam — o formulário não se redesenha, ou
+ * o órgão, o perfil, a observação e os anexos já escolhidos se perderiam a cada
+ * tecla.
+ */
+function preencher(valor) {
+    const completo = digitos(valor).length === 11;
+    pessoa = completo ? { ...consultar(valor), cpf: formatarCpf(valor) } : null;
 
-    // Só o formato é exigido. O dígito verificador não barra: no protótipo é
-    // preciso poder testar com qualquer número.
-    const ok = validar(escopo, [
-        { campo: "r-cpf", valido: digitos(valor).length === 11, mensagem: "O CPF tem 11 dígitos." },
-    ]);
-    if (!ok) return;
-
-    // Pedir acesso duas vezes não adianta: a primeira solicitação continua na
-    // fila, e duas fichas do mesmo servidor confundem quem analisa.
-    const jaExiste = usuarios().find((u) => digitos(u.cpf) === digitos(valor));
-    if (jaExiste) {
-        acusar(
-            "r-cpf",
-            jaExiste.situacao === "aguardando"
-                ? "Já existe uma solicitação para esse CPF, aguardando análise."
-                : "Esse CPF já tem cadastro no SIPLAM. Use “Entrar”."
-        );
-        return;
-    }
-
-    const achado = buscarNaBaseFuncional(valor);
-    manual = !achado;
-    pessoa = achado ?? { cpf: formatarCpf(valor), nome: "", email: "", login: "", orgao: "" };
-
-    formulario();
-    document.getElementById(manual ? "r-nome" : "r-perfil")?.focus();
+    document.getElementById("r-nome").value = pessoa?.nome ?? "";
+    document.getElementById("r-email").value = pessoa?.email ?? "";
+    document.getElementById("r-login").value = pessoa?.login ?? "";
 }
 
 function enviar() {
     const escopo = document.getElementById("form-registro");
+    const cpf = document.getElementById("r-cpf").value;
     const perfil = document.getElementById("r-perfil").value;
     const orgao = document.getElementById("r-orgao").value;
 
-    // No modo manual os três campos de identificação vêm da tela, e não da base.
-    if (manual) {
-        pessoa = {
-            ...pessoa,
-            nome: document.getElementById("r-nome").value.trim(),
-            email: document.getElementById("r-email").value.trim(),
-            login: document.getElementById("r-login").value.trim(),
-        };
-    }
+    // Pedir acesso duas vezes não adianta: a primeira solicitação continua na
+    // fila, e duas fichas do mesmo servidor confundem quem analisa.
+    const jaExiste = usuarios().find((u) => digitos(u.cpf) === digitos(cpf));
 
     const ok = validar(escopo, [
-        { campo: "r-nome", valido: !manual || !!pessoa.nome, mensagem: "Informe o nome completo." },
+        // Só o formato é exigido. O dígito verificador não barra: no protótipo é
+        // preciso poder testar com qualquer número.
+        { campo: "r-cpf", valido: digitos(cpf).length === 11, mensagem: "O CPF tem 11 dígitos." },
         {
-            campo: "r-email",
-            valido: !manual || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pessoa.email),
-            mensagem: "Informe um e-mail válido.",
-        },
-        { campo: "r-login", valido: !manual || pessoa.login.length >= 3, mensagem: "O login precisa de ao menos 3 caracteres." },
-        {
-            campo: "r-login",
-            valido: !manual || /^[a-z0-9._-]+$/i.test(pessoa.login),
-            mensagem: "Use apenas letras, números, ponto, hífen ou sublinhado.",
+            campo: "r-cpf",
+            valido: !jaExiste,
+            mensagem:
+                jaExiste?.situacao === "aguardando"
+                    ? "Já existe uma solicitação para esse CPF, aguardando análise."
+                    : "Esse CPF já tem cadastro no SIPLAM. Use “Entrar”.",
         },
         { campo: "r-orgao", valido: orgao !== "", mensagem: "Escolha o seu órgão." },
         { campo: "r-perfil", valido: perfil !== "", mensagem: "Escolha o perfil de que você precisa." },
         {
-            campo: manual ? "r-login" : "r-perfil",
-            valido: !usuarios().some((u) => igual(u.login, pessoa.login)),
+            campo: "r-perfil",
+            valido: !usuarios().some((u) => igual(u.login, pessoa?.login)),
             mensagem: "Esse login já está em uso. Procure o administrador central.",
         },
     ]);
@@ -274,11 +338,12 @@ function enviar() {
         orgao,
         // Pedido, não concedido: `perfis` só é preenchido na aprovação.
         perfilSolicitado: perfil,
-        // Marca quem se cadastrou fora do vínculo funcional, para a análise saber
-        // que os dados não foram conferidos por ninguém.
-        foraDaBase: manual,
         perfis: [],
         situacao: "aguardando",
+        observacao: document.getElementById("r-observacao").value.trim(),
+        // Fichas dos documentos: nome, tipo e tamanho. O conteúdo ficaria no
+        // servidor, que ainda não existe.
+        anexos: [...anexos],
     });
     confirmacao(pessoa.nome, perfil);
 }

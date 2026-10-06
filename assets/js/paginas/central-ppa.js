@@ -7,7 +7,7 @@
 import { obterEstado, situacaoPpa } from "../dados/store.js";
 import { montarShell, barraTitulo, somenteLeitura, perfilAtual, url } from "../shell.js";
 import { esc, chip } from "../ui.js";
-import { criarFiltros, opcoesDe } from "../filtros.js";
+import { criarFiltros } from "../filtros.js";
 
 const { estado } = montarShell();
 
@@ -16,35 +16,46 @@ const { estado } = montarShell();
  * enxergam o plano — precisam dele para se situar — mas não o criam nem o
  * alteram: abrir o ciclo é ato da administração do plano.
  */
-const leitura = somenteLeitura() || (!!perfilAtual() && perfilAtual() !== "admin-central");
+const leitura = somenteLeitura() || (!!perfilAtual() && !["admin-central", "gestao-central"].includes(perfilAtual()));
 
 /** O período do plano, como a tabela o mostra. */
 const vigenciaDe = (p) => `${p.primeiroAno}–${p.ultimoAno}`;
 
+/** Cada ano que o plano cobre: quem digita "2030" quer o plano que o inclui. */
+const anosDe = (p) => {
+    const anos = [];
+    for (let a = Number(p.primeiroAno); a <= Number(p.ultimoAno); a += 1) anos.push(String(a));
+    return anos;
+};
+
 /**
- * O filtro espelha a tabela, coluna por coluna: Plano no campo livre — que
- * alcança também a descrição — e Vigência, Processo SEI e Situação em escolha
- * múltipla.
+ * Os filtros são os da aba "Filtros" da matriz de mapeamento, campo a campo e
+ * com o componente que ela indica:
+ *
+ *   Plano — texto livre · Vigência — texto · Processo SEI — booleano ·
+ *   Situação — escolha múltipla · Descrição — texto
+ *
+ * A matriz deixa Situação e Descrição sem componente; escolhi o que o dado pede:
+ * a situação é uma lista curta e fechada, e a descrição é prosa.
  */
 const filtros = criarFiltros({
-    livre: {
-        rotulo: "Plano",
-        texto: (p) => `${p.nome} ${p.descricao ?? ""} ${p.processoSei ?? ""} ${vigenciaDe(p)}`,
-    },
+    livre: { rotulo: "Plano", texto: (p) => p.nome },
     campos: [
         {
             id: "vigencia",
+            tipo: "texto",
             rotulo: "Vigência",
             icone: "ti-calendar",
-            opcoes: () => opcoesDe(estado.ppas, vigenciaDe),
-            valorDe: (p) => [vigenciaDe(p)],
+            valorDe: (p) => `${vigenciaDe(p)} ${anosDe(p).join(" ")}`,
         },
         {
             id: "processo",
+            tipo: "booleano",
             rotulo: "Processo SEI",
+            sim: "Com processo",
+            nao: "Sem processo",
             icone: "ti-file-text",
-            opcoes: () => opcoesDe(estado.ppas, (p) => p.processoSei),
-            valorDe: (p) => (p.processoSei ? [p.processoSei] : []),
+            valorDe: (p) => (p.processoSei ? "sim" : "nao"),
         },
         {
             id: "situacao",
@@ -56,6 +67,13 @@ const filtros = criarFiltros({
                 return [...vistas.values()].sort((a, b) => a.rotulo.localeCompare(b.rotulo, "pt-BR"));
             },
             valorDe: (p) => [p.situacao],
+        },
+        {
+            id: "descricao",
+            tipo: "texto",
+            rotulo: "Descrição",
+            icone: "ti-align-left",
+            valorDe: (p) => p.descricao ?? "",
         },
     ],
     exportar: "ppas",

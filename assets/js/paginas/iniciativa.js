@@ -11,6 +11,8 @@ import {
     addEntrega,
     removeEntrega,
     enviar,
+    reportarDivergencia,
+    retomarPreenchimento,
 } from "../dados/store.js";
 import {
     podeEditar,
@@ -28,6 +30,7 @@ import { ANOS } from "../dados/seed.js";
 import { montarShell, barraTitulo, somenteLeitura } from "../shell.js";
 import { chip, statusChip, esc, secao, faixaIndicadores } from "../ui.js";
 import { quadroFinanceiro, listaPendencias, chipsPendencias } from "../ui-financeiro.js";
+import { camposDaIniciativa, idDoStatus, podeIr } from "../iniciativa-campos.js";
 
 const { estado } = montarShell();
 const id = new URLSearchParams(location.search).get("id");
@@ -86,11 +89,7 @@ function render() {
                 </div>
             </div>
             <div class="d-flex flex-wrap gap-2">
-                ${
-                    editavel
-                        ? `<button class="btn btn-sm btn-primary" id="abrir-envio"><i class="ti ti-send me-1"></i>Enviar para análise</button>`
-                        : `<span class="fs-12 text-muted align-self-center">${esc(STATUS_LABEL[ini.status])} — edição bloqueada</span>`
-                }
+                ${editavel ? "" : `<span class="fs-12 text-muted align-self-center">${esc(STATUS_LABEL[ini.status])} — edição bloqueada</span>`}
             </div>
         </div>
     </div>
@@ -107,45 +106,7 @@ function render() {
         <div class="col-12">
             ${secao(
                 "Dados da Iniciativa",
-                `
-                <div class="mb-3">
-                    <label class="form-label" for="f-nome">Nome ${marca("nome")}</label>
-                    <input type="text" class="form-control" id="f-nome" value="${esc(ini.nome)}"${dis} />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" for="f-descricao">Detalhamento ${marca("descricao")}</label>
-                    <textarea class="form-control" id="f-descricao" rows="3"${dis}>${esc(ini.descricao)}</textarea>
-                </div>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label" for="f-publicoAlvo">Público-alvo ${marca("publicoAlvo")}</label>
-                        <input type="text" class="form-control" id="f-publicoAlvo" value="${esc(ini.publicoAlvo)}"${dis} />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label" for="f-unidadeResponsavel">Unidade responsável</label>
-                        <input type="text" class="form-control" id="f-unidadeResponsavel" value="${esc(ini.unidadeResponsavel ?? "")}"${dis} />
-                    </div>
-                </div>
-                <div class="mt-3">
-                    <label class="form-label" for="f-resultadoEsperado">Resultado esperado ${marca("resultadoEsperado")}</label>
-                    <textarea class="form-control" id="f-resultadoEsperado" rows="2"${dis}>${esc(ini.resultadoEsperado ?? "")}</textarea>
-                </div>
-                <p class="form-text fs-12 mb-0">As alterações são gravadas automaticamente neste protótipo.</p>`
-            )}
-
-            ${secao(
-                `Causas do Programa enfrentadas ${marca("causas")}`,
-                (programa?.causas ?? []).length === 0
-                    ? '<div class="alert alert-warning py-2 px-3 fs-12 mb-0">O Programa não tem causas cadastradas. Sem ao menos uma, esta Iniciativa não pode ser enviada — fale com a Área Central.</div>'
-                    : programa.causas
-                          .map(
-                              (c) => `
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="${c.id}" id="ca-${c.id}" data-causa ${ini.causas.includes(c.id) ? "checked" : ""}${dis} />
-                    <label class="form-check-label" for="ca-${c.id}">${esc(c.texto)}</label>
-                </div>`
-                          )
-                          .join("")
+                camposDaIniciativa({ ini, estado, visao: "setorial", travado: !editavel, statusTravado: somenteLeitura(), marca })
             )}
 
             ${secao(
@@ -294,9 +255,7 @@ document.addEventListener("input", (e) => {
     const campos = {
         "f-nome": "nome",
         "f-descricao": "descricao",
-        "f-publicoAlvo": "publicoAlvo",
-        "f-unidadeResponsavel": "unidadeResponsavel",
-        "f-resultadoEsperado": "resultadoEsperado",
+        "f-motivo": "motivo",
     };
     const campo = campos[e.target.id];
     if (!campo) return;
@@ -310,6 +269,40 @@ document.addEventListener("change", (e) => {
         updIniciativa(id, { causas });
         avisarSalvo();
         render();
+        return;
+    }
+
+    if (e.target.id === "f-programa") {
+        // As causas pertencem ao Programa: trocar de Programa deixa as escolhidas
+        // sem a que se ligar, e o problema volta ao do novo Programa.
+        const novo = e.target.value;
+        const problema = (estado.problemas ?? []).find((p) => p.id === `pb-${novo}`)?.id ?? "";
+        updIniciativa(id, { programaId: novo, causas: [], problemaId: problema });
+        avisarSalvo();
+        render();
+        return;
+    }
+
+    if (e.target.id === "f-problema") {
+        updIniciativa(id, { problemaId: e.target.value });
+        avisarSalvo();
+        return;
+    }
+
+    if (e.target.id === "f-status") {
+        const destino = idDoStatus(e.target.value, "setorial");
+        const ini = estado.iniciativas.find((i) => i.id === id);
+        // Texto que não é um status, ou um status para onde a Iniciativa não pode ir
+        // agora: a tela volta ao que ela tem.
+        if (!destino || !podeIr("setorial", ini.status, destino)) return render();
+        // Enviar tem conferência de pendências: abre a janela, que decide.
+        if (destino === "enviada") {
+            envioAberto = true;
+            return render();
+        }
+        if (destino === "divergencia") reportarDivergencia(id);
+        else if (destino === "em_preenchimento") retomarPreenchimento(id);
+        return render();
     }
 });
 
@@ -334,11 +327,6 @@ document.addEventListener("click", (e) => {
             render();
         }
         return;
-    }
-
-    if (e.target.closest("#abrir-envio")) {
-        envioAberto = true;
-        return render();
     }
 
     if (e.target.closest("#confirmar-envio")) {

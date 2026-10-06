@@ -5,16 +5,16 @@ import { catalogo } from "../catalogo.js";
 /**
  * Cadastro de Causas.
  *
- * Nome, justificativa, evidência e as Subcausas que a detalham.
+ * Os campos são os da matriz de mapeamento: **nome**, **justificativa** e
+ * **descrição** — e, dentro da mesma tela, as **subcausas** da causa.
  *
- * A causa **não aponta para Iniciativas aqui**. O vínculo entre causa e
- * Iniciativa nasce do outro lado: é o órgão que, ao escrever a Iniciativa, diz
- * quais causas ela enfrenta.
+ * A subcausa não tem cadastro próprio no menu: a matriz diz que ela "é
+ * realizada na tela de causa" e que "toda subcausa deve ter causa atrelada".
+ * Por isso o catálogo abre a janela de cadastro de dentro daqui, e a causa guarda
+ * só os identificadores — o texto vive num lugar só, na coleção de subcausas.
  *
- * A Subcausa deixou de morar dentro da causa e virou cadastro do sistema: a
- * mesma subcausa costuma explicar mais de uma causa, e guardada dentro de uma
- * delas teria de ser redigitada — com outra grafia — em cada uma. Aqui a causa
- * guarda só os identificadores; o texto vive num lugar só.
+ * Evidência e Iniciativas relacionadas saíram em 06/10/2026: a matriz não as
+ * lista. Os dados antigos continuam guardados, só não aparecem.
  */
 
 const valor = (id) => document.getElementById(id)?.value.trim() ?? "";
@@ -27,7 +27,7 @@ const subcausas = catalogo({
     prefixo: "sub",
     campos: [
         { id: "justificativa", rotulo: "Justificativa", ajuda: "Por que ela origina a causa" },
-        { id: "evidencia", rotulo: "Evidência", ajuda: "O número, a série ou o estudo que a sustenta" },
+        { id: "descricao", rotulo: "Descrição", ajuda: "O que caracteriza esta subcausa" },
     ],
 
     // Quantas causas usam esta subcausa. A janela de edição avisa quando é mais
@@ -50,13 +50,13 @@ export const causa = {
     subtitulo: "O que origina os problemas do plano.",
     novoRotulo: "Nova causa",
     singular: "Causa",
-    rotuloNome: "Nome",
+    rotuloNome: "Nome da causa",
     genero: "f",
     exemplo: "Déficit de vagas em creche",
     podeExcluir: true,
 
-    // Justificativa e evidência ficam no corpo, logo abaixo do nome; a descrição
-    // genérica não se aplica aqui.
+    // Justificativa e descrição ficam no corpo, logo abaixo do nome; a descrição
+    // genérica do formulário não se aplica aqui.
     semDescricao: true,
 
     filtros: [
@@ -75,15 +75,15 @@ export const causa = {
                 },
             },
             {
-                rotulo: "Evidência",
-                valor: (item) => (item.evidencia ? esc(item.evidencia) : '<span class="text-muted">—</span>'),
+                rotulo: "Justificativa",
+                valor: (item) => (item.justificativa ? esc(item.justificativa) : '<span class="text-muted">—</span>'),
             },
         ],
 
         html(item) {
             return `
-            ${area("f-justificativa", "Justificativa da causa", item.justificativa, "Por que ela origina os problemas que explica")}
-            ${area("f-evidencia", "Evidência da causa", item.evidencia, "O número, a série ou o estudo que a sustenta")}
+            ${area("f-justificativa", "Justificativa", item.justificativa, "Por que esta causa origina os problemas que explica")}
+            ${area("f-descricao", "Descrição", item.descricao, "O que caracteriza esta causa")}
             ${subcausas.html(item.subcausaIds ?? [])}`;
         },
 
@@ -93,7 +93,7 @@ export const causa = {
 
         ler: () => ({
             justificativa: valor("f-justificativa"),
-            evidencia: valor("f-evidencia"),
+            descricao: valor("f-descricao"),
             subcausaIds: subcausas.ler(),
         }),
     },

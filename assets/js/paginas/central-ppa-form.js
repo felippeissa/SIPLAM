@@ -2,17 +2,30 @@
  * Criar e editar o PPA, em tela própria.
  *
  * O PPA não usa o construtor genérico: tem vigência com dois anos, situação e
- * Processo SEI que só se leem, e regras que nenhum outro cadastro tem.
+ * regras que nenhum outro cadastro tem.
  *
- * Quatro campos preenchíveis — nome, vigência e descrição. Situação e Processo
- * SEI aparecem porque a pessoa precisa saber onde o plano está, não porque ela
- * os decide aqui.
+ * Os campos são os da matriz de mapeamento, na ordem dela: nome, Processo SEI,
+ * ano inicial, ano final, situação, descrição e janela de aprovações. Os anos são calendários que só
+ * têm anos — o plano vai de 01/01 do primeiro a 31/12 do último —, e a
+ * **situação é editável**: a matriz a marca assim, e é por ela que o plano anda
+ * de elaboração até encerrado. O Processo SEI é automático: vem da integração.
+ *
+ * **Situação é campo de texto**, como a matriz o define (componente TEXTO), mas
+ * de texto com cinco respostas válidas: o campo sugere as da matriz e a regra
+ * recusa qualquer outra. Texto livre sem essa regra deixaria a pessoa escrever
+ * "quase aprovado" num campo de que dependem as travas de elaboração e vigência.
+ *
+ * **Janela de aprovações** são os períodos em que o setorial pode incluir
+ * Iniciativas e Entregas. A matriz só dá o nome do campo e manda validar o resto com
+ * o negócio; cada janela tem, por ora, nome e período — o que o próprio texto da
+ * matriz descreve.
  */
 import {
     obterEstado,
     addPpa,
     updPpa,
     removePpa,
+    SITUACOES_PPA,
     ppaVazio,
     situacaoPpa,
     anoDeElaboracao,
@@ -23,6 +36,7 @@ import { esc, chip } from "../ui.js";
 import { confirmarExclusao } from "../confirmar.js";
 import { avisar } from "../toast.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
+import { seletorDeAno, ligarSeletoresDeAno } from "../seletor-ano.js";
 
 export function montarFormularioPpa({ novo }) {
     const { estado } = montarShell();
@@ -31,7 +45,7 @@ export function montarFormularioPpa({ novo }) {
     // ato da administração do plano, não de quem o preenche.
     // Sem perfil na sessão — tela aberta direto pelo endereço, como no protótipo —
     // não há a quem restringir: trancar tudo faria o sistema parecer quebrado.
-    const doPerfil = somenteLeitura() || (!!perfilAtual() && perfilAtual() !== "admin-central");
+    const doPerfil = somenteLeitura() || (!!perfilAtual() && !["admin-central", "gestao-central"].includes(perfilAtual()));
     const voltar = url("central-ppa.html");
 
     const id = new URLSearchParams(location.search).get("id");
@@ -60,25 +74,77 @@ export function montarFormularioPpa({ novo }) {
      */
     const situacao = situacaoPpa(p.situacao);
     const fechado = !novo && !situacao.editavel;
-    const leitura = doPerfil || fechado;
 
-    /** Os anos oferecidos. Só o ano importa: o plano vai de 1º/01 a 31/12. */
-    function anosPossiveis() {
-        const base = new Date().getFullYear();
-        const anos = [];
-        for (let a = base - 2; a <= base + 14; a++) anos.push(a);
-        for (const ppa of estado.ppas) {
-            for (const a of [Number(ppa.primeiroAno), Number(ppa.ultimoAno)]) {
-                if (a && !anos.includes(a)) anos.push(a);
-            }
+    // Nome, vigência e descrição travam com o plano fechado; a situação não, porque é
+    // ela que o destrava ou o leva adiante. Só o perfil sem escrita trava tudo.
+    const leitura = doPerfil || fechado;
+    const situacaoTravada = doPerfil;
+
+    /**
+     * As situações oferecidas: as cinco da matriz. Plano que já está em outra —
+     * "reprovado", que vem do fluxo — mantém a sua, para a tela não apagá-la.
+     */
+    const OFERECIDAS = ["elaboracao", "submetido", "aprovado", "vigente", "encerrado"];
+    const opcoesDeSituacao = SITUACOES_PPA.filter((s) => OFERECIDAS.includes(s.id) || s.id === p.situacao);
+
+    /** As janelas em edição. Moram aqui porque a tabela se redesenha a cada linha acrescentada. */
+    let janelas = structuredClone(p.janelas ?? []);
+    const janelaVazia = () => ({ id: `jn-${Math.random().toString(36).slice(2, 9)}`, nome: "", de: "", ate: "" });
+
+    function tabelaDeJanelas() {
+        return `
+        <div class="table-responsive border rounded">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Nome da janela</th>
+                        <th style="width:11rem">De</th>
+                        <th style="width:11rem">Até</th>
+                        <th style="width:3rem"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${
+                        janelas.length
+                            ? janelas
+                                  .map(
+                                      (j) => `
+                    <tr>
+                        <td><input type="text" class="form-control form-control-sm" data-janela="${j.id}:nome" value="${esc(j.nome)}" ${leitura ? "disabled" : ""} /></td>
+                        <td><input type="date" class="form-control form-control-sm" data-janela="${j.id}:de" value="${esc(j.de)}" ${leitura ? "disabled" : ""} /></td>
+                        <td><input type="date" class="form-control form-control-sm" data-janela="${j.id}:ate" value="${esc(j.ate)}" ${leitura ? "disabled" : ""} /></td>
+                        <td class="text-end">
+                            ${leitura ? "" : `<button type="button" class="btn btn-sm btn-light" data-janela-tirar="${j.id}" aria-label="Remover janela"><i class="ti ti-trash"></i></button>`}
+                        </td>
+                    </tr>`
+                                  )
+                                  .join("")
+                            : '<tr><td colspan="4" class="text-center text-muted py-3 fs-12">Nenhuma janela de aprovação.</td></tr>'
+                    }
+                </tbody>
+            </table>
+        </div>`;
+    }
+
+    /** Guarda no módulo o que está digitado, antes de redesenhar a tabela. */
+    function lerJanelasDaTela() {
+        for (const el of document.querySelectorAll("[data-janela]")) {
+            const [jid, campo] = el.dataset.janela.split(":");
+            const janela = janelas.find((j) => j.id === jid);
+            if (janela) janela[campo] = el.value;
         }
-        return anos.sort((x, y) => x - y);
+    }
+
+    /** O texto digitado na situação → o identificador; vazio se não for uma das cinco. */
+    const normaliza = (s) => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+    function idDaSituacao(texto) {
+        const n = normaliza(texto);
+        return SITUACOES_PPA.find((s) => normaliza(s.rotulo) === n || normaliza(s.id) === n)?.id ?? "";
     }
 
     const diagnosticos = novo ? 0 : (estado.diagnosticos ?? []).filter((d) => d.ppaId === p.id).length;
 
     function render() {
-        const anos = anosPossiveis();
         document.getElementById("conteudo").innerHTML = `
         ${barraTitulo(novo ? "Novo PPA" : `Editar ${esc(p.nome)}`, [novo ? "Novo" : "Editar"])}
 
@@ -87,7 +153,7 @@ export function montarFormularioPpa({ novo }) {
                 ? `<div class="alert alert-light border py-2 px-3 fs-13">
             <i class="ti ti-lock me-1"></i>
             Só um plano <strong>em elaboração</strong> se edita. Este está
-            ${esc(situacao.rotulo.toLowerCase())}, então a tela mostra e não altera.
+            ${esc(situacao.rotulo.toLowerCase())}: os campos ficam travados, e a situação é o que se altera.
         </div>`
                 : ""
         }
@@ -103,80 +169,71 @@ export function montarFormularioPpa({ novo }) {
                         <div class="row">
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label class="form-label" for="f-nome">Nome do plano <span class="text-danger">*</span></label>
+                                    <label class="form-label" for="f-nome">Nome do PPA <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="f-nome" value="${esc(p.nome)}" ${leitura ? "disabled" : ""} />
                                     ${campoErro("f-nome")}
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label" for="f-primeiroAno">Vigência <span class="text-danger">*</span></label>
-                                    <div class="input-group" id="f-vigencia">
-                                        <select class="form-select" id="f-primeiroAno" ${leitura || !novo ? "disabled" : ""}>
-                                            ${anos.map((a) => `<option value="${a}"${String(p.primeiroAno) === String(a) ? " selected" : ""}>${a}</option>`).join("")}
-                                        </select>
-                                        <span class="input-group-text">a</span>
-                                        <select class="form-select" id="f-ultimoAno" ${leitura || !novo ? "disabled" : ""}>
-                                            ${anos.map((a) => `<option value="${a}"${String(p.ultimoAno) === String(a) ? " selected" : ""}>${a}</option>`).join("")}
-                                        </select>
-                                    </div>
-                                    <div class="invalid-feedback d-block" id="f-vigencia-erro"></div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label" for="f-processoSei">Processo SEI</label>
                                     <input type="text" class="form-control codigo" id="f-processoSei"
-                                           value="${esc(p.processoSei ?? "")}" disabled />
+                                           value="${esc(p.processoSei ?? "")}" placeholder="Gerado pela integração com o SEI" disabled />
                                 </div>
                             </div>
-                            <!-- Situação, ano de elaboração e diagnósticos vinculados
-                                 não se escolhem: são reflexo do plano. Ficam aqui,
-                                 desabilitados, e não num cartão ao lado. -->
-                            <div class="col-md-6">
+                            <div class="col-md-8">
+                                <div id="f-vigencia" class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="f-primeiroAno">Ano inicial (vigência) <span class="text-danger">*</span></label>
+                                            ${seletorDeAno({ id: "f-primeiroAno", valor: p.primeiroAno, desabilitado: leitura, rotulo: "Ano inicial da vigência" })}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="f-ultimoAno">Ano final (vigência) <span class="text-danger">*</span></label>
+                                            ${seletorDeAno({ id: "f-ultimoAno", valor: p.ultimoAno, desabilitado: leitura, rotulo: "Ano final da vigência" })}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="invalid-feedback d-block mb-2" id="f-vigencia-erro"></div>
+                            </div>
+                            <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label class="form-label" for="f-situacao">Situação</label>
-                                    <input type="text" class="form-control" id="f-situacao"
-                                           value="${esc(situacaoPpa(p.situacao).rotulo)}" disabled />
-                                    <div class="form-text fs-12">${esc(situacaoPpa(p.situacao).ajuda)}</div>
+                                    <label class="form-label" for="f-situacao">Situação <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="f-situacao" list="lista-situacoes" autocomplete="off"
+                                           value="${esc(situacaoPpa(p.situacao).rotulo)}" ${situacaoTravada ? "disabled" : ""} />
+                                    <datalist id="lista-situacoes">
+                                        ${opcoesDeSituacao.map((s) => `<option value="${esc(s.rotulo)}"></option>`).join("")}
+                                    </datalist>
+                                    ${campoErro("f-situacao")}
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label" for="f-anoElaboracao">Ano de elaboração</label>
-                                    <input type="text" class="form-control" id="f-anoElaboracao"
-                                           value="${esc(anoDeElaboracao(p))}" disabled />
-                                </div>
-                            </div>
-                            ${
-                                novo
-                                    ? ""
-                                    : `<div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label" for="f-diagnosticos">Diagnósticos vinculados</label>
-                                    <input type="text" class="form-control" id="f-diagnosticos"
-                                           value="${diagnosticos === 0 ? "Nenhum" : `${diagnosticos} ${diagnosticos === 1 ? "diagnóstico" : "diagnósticos"}`}" disabled />
-                                </div>
-                            </div>`
-                            }
                             <div class="col-12">
                                 <label class="form-label" for="f-descricao">Descrição</label>
                                 <textarea class="form-control" id="f-descricao" rows="12" ${leitura ? "disabled" : ""}>${esc(p.descricao ?? "")}</textarea>
+                            </div>
+                            <div class="col-12 mt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label mb-0">Janela de aprovações</label>
+                                    ${leitura ? "" : '<button type="button" class="btn btn-sm btn-light" id="janela-nova"><i class="ti ti-plus me-1"></i>Adicionar janela</button>'}
+                                </div>
+                                <div id="f-janelas"><div id="janelas-tabela">${tabelaDeJanelas()}</div></div>
+                                <div class="invalid-feedback d-block" id="f-janelas-erro"></div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-</div>
+        </div>
 
         <div class="mt-1 mb-4 d-flex gap-2 align-items-center">
             ${
-                leitura
+                doPerfil
                     ? `<a href="${voltar}" class="btn btn-light">Voltar</a>`
                     : `
             ${
-                novo
+                novo || leitura
                     ? ""
                     : `<button type="button" class="btn btn-outline-danger me-auto" id="excluir"
                     ${diagnosticos ? 'disabled title="Diagnósticos vinculados impedem a exclusão"' : ""}>
@@ -189,6 +246,7 @@ export function montarFormularioPpa({ novo }) {
         </div>`;
 
         limparAoDigitar(document.getElementById("formulario"));
+        ligarSeletoresDeAno(document.getElementById("formulario"));
         ligar();
     }
 
@@ -199,7 +257,10 @@ export function montarFormularioPpa({ novo }) {
             nome: v("f-nome").trim(),
             primeiroAno: v("f-primeiroAno"),
             ultimoAno: v("f-ultimoAno"),
+            // Desabilitado, o campo não muda nada: vale a situação que o plano tem.
+            situacao: document.getElementById("f-situacao")?.disabled ? p.situacao : idDaSituacao(v("f-situacao")),
             descricao: v("f-descricao").trim(),
+            janelas: (lerJanelasDaTela(), janelas.map((j) => ({ ...j, nome: j.nome.trim() }))),
         };
     }
 
@@ -210,9 +271,22 @@ export function montarFormularioPpa({ novo }) {
         const ultimo = document.getElementById("f-ultimoAno");
         primeiro?.addEventListener("change", () => {
             if (Number(ultimo.value) >= Number(primeiro.value)) return;
-            const alvo = Number(primeiro.value) + 3;
-            const existe = [...ultimo.options].some((o) => Number(o.value) === alvo);
-            ultimo.value = String(existe ? alvo : primeiro.value);
+            ultimo.value = String(Number(primeiro.value) + 3);
+            ultimo.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+
+        const tabela = document.getElementById("janelas-tabela");
+        document.getElementById("janela-nova")?.addEventListener("click", () => {
+            lerJanelasDaTela();
+            janelas.push(janelaVazia());
+            tabela.innerHTML = tabelaDeJanelas();
+        });
+        tabela?.addEventListener("click", (e) => {
+            const tirar = e.target.closest("[data-janela-tirar]");
+            if (!tirar) return;
+            lerJanelasDaTela();
+            janelas = janelas.filter((j) => j.id !== tirar.dataset.janelaTirar);
+            tabela.innerHTML = tabelaDeJanelas();
         });
 
         document.getElementById("salvar")?.addEventListener("click", () => {
@@ -221,8 +295,21 @@ export function montarFormularioPpa({ novo }) {
             document.getElementById("f-vigencia-erro").textContent = "";
 
             const colide = ppaQueColide(estado, dados);
+            document.getElementById("f-janelas-erro").textContent = "";
+            const janelaIncompleta = dados.janelas.find((j) => !j.nome || !j.de || !j.ate);
+            const janelaInvertida = dados.janelas.find((j) => j.de && j.ate && j.ate < j.de);
             const ok = validar(escopo, [
                 { campo: "f-nome", valido: !!dados.nome, mensagem: "Informe o nome do plano." },
+                {
+                    campo: "f-situacao",
+                    valido: !!dados.situacao,
+                    mensagem: `Escolha uma das situações: ${opcoesDeSituacao.map((s) => s.rotulo).join(", ")}.`,
+                },
+                {
+                    campo: "f-vigencia",
+                    valido: !!dados.primeiroAno && !!dados.ultimoAno,
+                    mensagem: "Escolha o ano inicial e o ano final da vigência.",
+                },
                 {
                     campo: "f-vigencia",
                     valido: Number(dados.ultimoAno) >= Number(dados.primeiroAno),
@@ -234,6 +321,39 @@ export function montarFormularioPpa({ novo }) {
                     campo: "f-vigencia",
                     valido: !colide,
                     mensagem: `Já existe um plano para esse período: ${esc(colide?.nome ?? "")}.`,
+                },
+                {
+                    // Só um plano fica em elaboração por vez: dois seriam duas
+                    // frentes de construção para o mesmo sistema, e os órgãos não
+                    // saberiam em qual contribuir.
+                    campo: "f-nome",
+                    valido:
+                        dados.situacao !== "elaboracao" ||
+                        !estado.ppas.some((outro) => outro.id !== dados.id && outro.situacao === "elaboracao"),
+                    mensagem: `Já existe um plano em elaboração: ${esc(
+                        estado.ppas.find((outro) => outro.id !== dados.id && outro.situacao === "elaboracao")?.nome ?? ""
+                    )}.`,
+                },
+                {
+                    campo: "f-janelas",
+                    valido: !janelaIncompleta,
+                    mensagem: "Cada janela precisa de nome, início e fim.",
+                },
+                {
+                    campo: "f-janelas",
+                    valido: !janelaInvertida,
+                    mensagem: `O fim da janela “${janelaInvertida?.nome}” não pode ser anterior ao início.`,
+                },
+                {
+                    // Dois planos vigentes seriam duas leis valendo para os mesmos
+                    // anos.
+                    campo: "f-situacao",
+                    valido:
+                        dados.situacao !== "vigente" ||
+                        !estado.ppas.some((outro) => outro.id !== dados.id && outro.situacao === "vigente"),
+                    mensagem: `Já existe um plano vigente: ${esc(
+                        estado.ppas.find((outro) => outro.id !== dados.id && outro.situacao === "vigente")?.nome ?? ""
+                    )}.`,
                 },
                 {
                     // O plano é construído no ano anterior à vigência. Criar antes

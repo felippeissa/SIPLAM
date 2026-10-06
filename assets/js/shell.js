@@ -35,7 +35,6 @@ const MENU_CENTRAL = [
     { href: "central-eixo.html", rotulo: "Eixos", icone: "ti-layout-columns" },
     { href: "central-objetivo.html", rotulo: "Objetivos Estratégicos", icone: "ti-target-arrow" },
     { href: "central-causa.html", rotulo: "Causas", icone: "ti-binary-tree" },
-    { href: "central-subcausa.html", rotulo: "Subcausas", icone: "ti-git-branch" },
     { href: "central-indicador.html", rotulo: "Indicadores", icone: "ti-chart-dots" },
     { href: "central-problema.html", rotulo: "Problemas", icone: "ti-alert-triangle" },
     { href: "central-programas.html", rotulo: "Programa", icone: "ti-layout-grid" },
@@ -76,14 +75,14 @@ const PERFIL = {
         nome: "Alta gestão setorial",
         visao: "setorial",
         leitura: false,
-        construcao: true,
+        construcao: false,
         descricao: "Faz tudo do Planejamento setorial e aprova a proposta do órgão",
     },
     "gestao-central": {
         nome: "Alta gestão central",
         visao: "central",
-        leitura: true,
-        construcao: true,
+        leitura: false,
+        construcao: false,
         descricao: "Faz tudo do Administrador central e aprova a consolidação",
     },
     controle: {
@@ -322,7 +321,14 @@ function topbar(estado, visao) {
 }
 
 function sidenav(visao) {
-    const menu = emConstrucao() ? [] : visao === "central" ? MENU_CENTRAL : MENU_SETORIAL;
+    let menu = emConstrucao() ? [] : visao === "central" ? MENU_CENTRAL : MENU_SETORIAL;
+
+    // A gestão de usuários é do Administrador central (RF3). A Alta gestão central
+    // faz o mais que ele faz — cadastros, análise —, mas não administra acessos.
+    if (perfilDaSessao() === "gestao-central") {
+        const corte = menu.findIndex((item) => item.grupo === "Administração");
+        if (corte >= 0) menu = menu.slice(0, corte);
+    }
     const atual = paginaAtual();
     const raiz = inicio(visao);
 
