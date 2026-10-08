@@ -11,7 +11,7 @@
 >
     <head>
         <meta charset="utf-8" />
-        <title>Escolha de perfil | SIPLAM</title>
+        <title>Escolha do plano | SIPLAM</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="Escolha de perfil de acesso ao SIPLAM — Plano Plurianual do Estado de Goiás." />
         <meta name="author" content="Governo do Estado de Goiás" />
@@ -40,62 +40,97 @@
         <div class="auth-box align-items-center d-flex">
             <div class="container">
                 <div class="row justify-content-center">
-                    <div class="col-xxl-4 col-md-6 col-sm-8">
-                        <div class="card p-4">
-                            <div class="auth-brand text-center mb-3">
-                                <img src="assets/img/logo-siplam.svg" alt="SIPLAM" height="34" />
-                                <p class="fw-semibold mt-3 mb-0">Escolha um perfil para acessar o sistema.</p>
-                            </div>
-
-                            <form id="form-perfil" novalidate>
-                                <div class="mb-3">
-                                    <label for="perfil" class="form-label">Perfil</label>
-                                    <select class="form-control" data-choices data-choices-sorting-false id="perfil" name="perfil">
-                                        <option value="" placeholder>Escolha uma opção</option>
-                                        <option value="setorial">Planejamento setorial</option>
-                                        <option value="admin-central">Administrador central</option>
-                                        <option value="gestao-setorial">Alta gestão setorial</option>
-                                        <option value="gestao-central">Alta gestão central</option>
-                                        <option value="controle">Consulta</option>
-                                    </select>
-                                    <div class="invalid-feedback d-block d-none" id="erroPerfil">
-                                        Escolha um perfil para continuar.
-                                    </div>
-                                </div>
-
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" id="lembrar" checked />
-                                    <label class="form-check-label" for="lembrar">Lembrar minha escolha</label>
-                                </div>
-
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-outline-primary py-2 flex-fill" id="cancelar">
-                                        Cancelar
-                                    </button>
-                                    <button type="submit" class="btn btn-primary py-2 flex-fill">Continuar</button>
-                                </div>
-                            </form>
+                    <div class="col-xxl-8 col-xl-10">
+                                                <div class="auth-brand text-center mb-4">
+                            <img src="assets/img/logo-siplam.svg" alt="SIPLAM" height="34" />
+                            <p class="fw-semibold mt-3 mb-0">Escolha o perfil, o órgão e o plano para acessar.</p>
                         </div>
 
-                        <p class="text-center text-muted mt-3 mb-0 fs-12">
-                            O perfil define a tela inicial, o menu e o que você pode fazer no sistema.
-                        </p>
+                        <form id="form-perfil" novalidate>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label for="sel-perfil" class="form-label">Perfil <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="sel-perfil"></select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="sel-orgao" class="form-label">Órgão <span class="text-danger" id="orgao-obrig">*</span></label>
+                                    <select class="form-select" id="sel-orgao"></select>
+                                </div>
+                            </div>
+                            <input type="hidden" id="perfil" name="perfil" />
+                            <!-- Cards soltos: escolher um leva direto ao sistema. -->
+                            <div class="row g-3" id="grade-planos"></div>
+                            <div class="invalid-feedback d-block d-none text-center mt-2" id="erroPerfil">
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
 
-        <script>
-            // Aplica a escolha lembrada antes de o Choices assumir o campo.
-            (function () {
-                var lembrarSalvo = Acesso.ler(Acesso.CHAVES.lembrarPerfil) !== "nao";
-                var salvo = Acesso.ler(Acesso.CHAVES.perfil);
-                var select = document.getElementById("perfil");
-                var lembrar = document.getElementById("lembrar");
+        <script type="module">
+            import { obterEstado, ppaCorrente } from "./assets/js/dados/store.js";
+            import { cartaoPlano } from "./assets/js/cartao-plano.js";
+            const estado = obterEstado();
+            const campo = document.getElementById("perfil");
+            const grade = document.getElementById("grade-planos");
+            const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
-                lembrar.checked = lembrarSalvo;
-                if (lembrarSalvo && salvo) select.value = salvo;
-            })();
+            function marcar(id) {
+                campo.value = id;
+                grade.querySelectorAll("[data-plano]").forEach((c) => {
+                    const ativo = c.dataset.plano === id;
+                    c.classList.toggle("border-primary", ativo);
+                    c.setAttribute("aria-pressed", ativo);
+                    c.querySelector("[data-marca]")?.classList.toggle("d-none", !ativo);
+                });
+                
+            }
+
+            grade.innerHTML = [...estado.ppas]
+                .sort((a, b) => Number(b.primeiroAno) - Number(a.primeiroAno))
+                .map((p) => cartaoPlano(estado, p, { href: "ppa-detalhe.html?id=" + encodeURIComponent(p.id) }))
+                .join("");
+
+            grade.addEventListener("click", (e) => {
+                if (e.target.closest("[data-detalhe]")) return;
+                const c = e.target.closest("[data-plano]");
+                if (c) {
+                    marcar(c.dataset.plano);
+                    document.getElementById("form-perfil").requestSubmit();
+                }
+            });
+            grade.addEventListener("keydown", (e) => {
+                const c = e.target.closest("[data-plano]");
+                if (c && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    marcar(c.dataset.plano);
+                    document.getElementById("form-perfil").requestSubmit();
+                }
+            });
+
+            const atual = ppaCorrente(estado);
+            if (atual) marcar(atual.id);
+
+            // ----- perfil e órgão -----
+            import("./assets/js/usuarios-decisao.js").then(({ PERFIS }) => {
+                const habilitados = new Set(["admin-central"]); // os demais perfis ainda não têm tela
+                const orgaos = [...new Set([...(estado.iniciativas ?? []).map((i) => i.orgao), estado.orgaoAtual].filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+                const sp = document.getElementById("sel-perfil");
+                const so = document.getElementById("sel-orgao");
+                sp.innerHTML = '<option value="">Escolha um perfil</option>' + PERFIS.map((p) => `<option value="${p.id}"${habilitados.has(p.id) ? "" : " disabled"}>${esc(p.nome)}</option>`).join("");
+                so.innerHTML = '<option value="">Escolha um órgão</option>' + orgaos.map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join("");
+                const salvo = localStorage.getItem("siplam.perfilSessao");
+                if (salvo && habilitados.has(salvo)) sp.value = salvo;
+
+                // Só os perfis do órgão exigem órgão; a Central atua sobre todos.
+                const setorial = () => PERFIS.find((p) => p.id === sp.value)?.visao === "setorial";
+                const atualizar = () => (document.getElementById("orgao-obrig").hidden = !setorial());
+                sp.addEventListener("change", atualizar);
+                atualizar();
+
+                window.__acesso = { sp, so, setorial };
+            });
         </script>
 
         <!-- Vendor js -->
@@ -104,42 +139,34 @@
         <!-- App js -->
         <script src="inspinia/assets/js/app.js"></script>
 
-        <!-- Choices — inicialização dos selects com [data-choices] -->
-        <script src="inspinia/assets/js/pages/form-choice.js"></script>
 
         <script>
             (function () {
                 if (!Acesso.exigirSessao()) return;
 
                 var select = document.getElementById("perfil");
-                var lembrar = document.getElementById("lembrar");
-                var erro = document.getElementById("erroPerfil");
+                                var erro = document.getElementById("erroPerfil");
 
                 document.getElementById("form-perfil").addEventListener("submit", function (e) {
                     e.preventDefault();
 
-                    if (!select.value) {
-                        erro.classList.remove("d-none");
-                        return;
+                    var a = window.__acesso || {};
+                    var falta = !a.sp || !a.sp.value ? "Escolha um perfil para continuar."
+                        : a.setorial() && !a.so.value ? "Escolha o órgão para continuar."
+                        : !select.value ? "Escolha um plano para continuar." : "";
+                    erro.textContent = falta;
+                    erro.classList.toggle("d-none", !falta);
+                    if (falta) return;
+
+                    Acesso.gravar("siplam.ppaSelecionado", select.value);
+                    Acesso.gravar(Acesso.CHAVES.lembrarPerfil, "sim");
+                    Acesso.gravar("siplam.perfilSessao", a.sp.value);
+                    if (a.so.value) {
+                        var bruto = JSON.parse(localStorage.getItem("siplam.estado.v1") || "{}");
+                        bruto.orgaoAtual = a.so.value;
+                        localStorage.setItem("siplam.estado.v1", JSON.stringify(bruto));
                     }
-
-                    erro.classList.add("d-none");
-
-                    if (lembrar.checked) {
-                        Acesso.gravar(Acesso.CHAVES.perfil, select.value);
-                        Acesso.gravar(Acesso.CHAVES.lembrarPerfil, "sim");
-                    } else {
-                        Acesso.remover(Acesso.CHAVES.perfil);
-                        Acesso.gravar(Acesso.CHAVES.lembrarPerfil, "nao");
-                    }
-
-                    // O perfil da sessão vale mesmo quando o usuário não quer lembrar.
-                    Acesso.gravar("siplam.perfilSessao", select.value);
-                    window.location.href = Acesso.telaInicial(select.value);
-                });
-
-                document.getElementById("cancelar").addEventListener("click", function () {
-                    Acesso.sair();
+                    window.location.href = "ppa-detalhe.html?id=" + encodeURIComponent(select.value);
                 });
             })();
         </script>

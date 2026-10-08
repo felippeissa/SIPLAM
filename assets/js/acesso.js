@@ -49,7 +49,7 @@
             id: "admin-central",
             nome: "Administrador central",
             visao: "central",
-            inicio: "central.html",
+            inicio: "ppa-detalhe.html",
             leitura: false,
             descricao: "Analisa, valida e administra os Programas",
         },
@@ -70,7 +70,7 @@
             visao: "central",
             // Acumulativo: faz tudo que o Administrador central faz, mais aprovar. A
             // matriz o põe entre quem usa os cadastros estratégicos ("ADC / AGC").
-            inicio: "central.html",
+            inicio: "ppa-detalhe.html",
             leitura: false,
             descricao: "Faz tudo do Administrador central e aprova a consolidação",
         },

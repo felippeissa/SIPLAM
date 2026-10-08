@@ -32,7 +32,7 @@ const anosDe = (p) => {
  * Os filtros são os da aba "Filtros" da matriz de mapeamento, campo a campo e
  * com o componente que ela indica:
  *
- *   Plano — texto livre · Vigência — texto · Processo SEI — booleano ·
+ *   Plano — texto livre · Vigência — texto · Processo SEI — texto (número do processo) ·
  *   Situação — escolha múltipla · Descrição — texto
  *
  * A matriz deixa Situação e Descrição sem componente; escolhi o que o dado pede:
@@ -50,12 +50,10 @@ const filtros = criarFiltros({
         },
         {
             id: "processo",
-            tipo: "booleano",
+            tipo: "texto",
             rotulo: "Processo SEI",
-            sim: "Com processo",
-            nao: "Sem processo",
             icone: "ti-file-text",
-            valorDe: (p) => (p.processoSei ? "sim" : "nao"),
+            valorDe: (p) => p.processoSei ?? "",
         },
         {
             id: "situacao",

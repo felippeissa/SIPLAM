@@ -56,7 +56,7 @@ export function catalogo(cfg) {
     const todos = () => {
         const dados = estado();
         const plano = ppaCorrente(dados);
-        return (dados[colecao] ?? []).filter((r) => !r.ppaId || !plano || r.ppaId === plano.id);
+        return (dados[colecao] ?? []).filter((r) => (!r.ppaId || !plano || r.ppaId === plano.id) && (!cfg.filtro || cfg.filtro(r)));
     };
     const porId = (id) => todos().find((r) => r.id === id);
 

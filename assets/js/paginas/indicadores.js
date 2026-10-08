@@ -148,7 +148,7 @@ function modal() {
                 ${
                     edicao.novo
                         ? ""
-                        : '<button type="button" class="btn btn-outline-danger me-auto" id="excluir-ind">Excluir indicador</button>'
+                        : '<button type="button" class="btn btn-danger me-auto" id="excluir-ind">Excluir indicador</button>'
                 }
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="salvar-ind">Salvar indicador</button>

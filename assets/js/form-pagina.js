@@ -158,7 +158,7 @@ export function montarFormulario(cfg) {
         const excluir =
             novo || !cfg.podeExcluir
                 ? ""
-                : `<button type="button" class="btn btn-outline-danger me-auto" id="excluir"
+                : `<button type="button" class="btn btn-danger" id="excluir"
                     ${usos ? `disabled title="${esc(cfg.filhos[0].rotulo)} vinculados impedem a exclusão"` : ""}>
                     Excluir
                 </button>`;
@@ -171,20 +171,19 @@ export function montarFormulario(cfg) {
     function render() {
         document.getElementById("conteudo").innerHTML = `
         ${barraTitulo(novo ? esc(cfg.novoRotulo) : `Editar ${esc(cfg.singular.toLowerCase())}`, [novo ? "Novo" : "Editar"])}
-
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header d-block p-3">
+                    <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2 p-3">
+                        <div>
                         <h4 class="card-title mb-1">${esc(cfg.titulo)}</h4>
-                        <p class="text-muted mb-0 fs-13">${esc(cfg.subtitulo)}</p>
+                        <p class="text-muted mb-0 fs-13">${esc(cfg.subtitulo)}</p></div>
+                        <div class="d-flex gap-2 align-items-center">${acoes()}</div>
                     </div>
                     <div class="card-body" id="formulario">${camposPrincipais()}</div>
                 </div>
             </div>
-        </div>
-
-        <div class="mt-1 mb-4 d-flex gap-2 align-items-center">${acoes()}</div>`;
+        </div>`;
 
         const escopo = document.getElementById("formulario");
         limparAoDigitar(escopo);

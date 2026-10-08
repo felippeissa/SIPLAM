@@ -147,7 +147,6 @@ export function montarFormularioPpa({ novo }) {
     function render() {
         document.getElementById("conteudo").innerHTML = `
         ${barraTitulo(novo ? "Novo PPA" : `Editar ${esc(p.nome)}`, [novo ? "Novo" : "Editar"])}
-
         ${
             fechado
                 ? `<div class="alert alert-light border py-2 px-3 fs-13">
@@ -161,9 +160,26 @@ export function montarFormularioPpa({ novo }) {
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header d-block p-3">
+                    <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2 p-3">
+                        <div>
                         <h4 class="card-title mb-1">Plano Plurianual</h4>
-                        <p class="text-muted mb-0 fs-13">A identidade do plano e o período que ele rege.</p>
+                        <p class="text-muted mb-0 fs-13">A identidade do plano e o período que ele rege.</p></div>
+                        <div class="d-flex gap-2 align-items-center">
+            ${
+                doPerfil
+                    ? `<a href="${voltar}" class="btn btn-light">Voltar</a>`
+                    : `
+            ${
+                novo || leitura
+                    ? ""
+                    : `<button type="button" class="btn btn-danger" id="excluir"
+                    ${diagnosticos ? 'disabled title="Diagnósticos vinculados impedem a exclusão"' : ""}>
+                    Excluir plano
+                </button>`
+            }
+            <a href="${voltar}" class="btn btn-light">Cancelar</a>
+            <button type="button" class="btn btn-primary" id="salvar">${novo ? "Cadastrar" : "Salvar"}</button>`
+            }</div>
                     </div>
                     <div class="card-body" id="formulario">
                         <div class="row">
@@ -225,24 +241,6 @@ export function montarFormularioPpa({ novo }) {
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="mt-1 mb-4 d-flex gap-2 align-items-center">
-            ${
-                doPerfil
-                    ? `<a href="${voltar}" class="btn btn-light">Voltar</a>`
-                    : `
-            ${
-                novo || leitura
-                    ? ""
-                    : `<button type="button" class="btn btn-outline-danger me-auto" id="excluir"
-                    ${diagnosticos ? 'disabled title="Diagnósticos vinculados impedem a exclusão"' : ""}>
-                    Excluir plano
-                </button>`
-            }
-            <a href="${voltar}" class="btn btn-light">Cancelar</a>
-            <button type="button" class="btn btn-primary" id="salvar">${novo ? "Cadastrar" : "Salvar"}</button>`
-            }
         </div>`;
 
         limparAoDigitar(document.getElementById("formulario"));

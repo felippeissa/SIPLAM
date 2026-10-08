@@ -12,8 +12,8 @@
  * Substitui `src/components/ppa/shell.tsx` do protótipo.
  */
 import { obterEstado, ppaCorrente, situacaoPpa, selecionarPpa } from "./dados/store.js";
+import { cartaoPlano } from "./cartao-plano.js";
 import { esc } from "./ui.js";
-import { confirmarExclusao } from "./confirmar.js";
 import { instalarBusca } from "./busca.js";
 import { instalarAtena } from "./atena.js";
 import { instalarNotificacoes } from "./notificacoes.js";
@@ -26,25 +26,67 @@ const MENU_SETORIAL = [
     { href: "indicadores.html", rotulo: "Indicadores", icone: "ti-target" },
 ];
 
-/** Menu da área central — o analista analisa, valida e administra. */
+/**
+ * Menu da área central, em módulos.
+ *
+ * Três níveis, como o Inspinia desenha um menu aninhado: o **módulo**, o
+ * **grupo** dentro dele e a **tela**. Hoje há um módulo só — Planejamento —, e o
+ * desenho já cabe os que vierem. A Visão Geral e a Visão por Programas saíram do
+ * menu em 08/10/2026; os endereços delas continuam respondendo.
+ *
+ * O menu do setorial segue plano: ainda não foi reorganizado.
+ */
 const MENU_CENTRAL = [
-    { href: "central.html", rotulo: "Visão Geral", icone: "ti-gauge" },
-    { href: "central-hub.html", rotulo: "Visão por Programas", icone: "ti-layout-dashboard" },
-    { grupo: "Cadastros Estratégicos" },
-    { href: "central-ppa.html", rotulo: "PPA", icone: "ti-calendar-stats" },
-    { href: "central-eixo.html", rotulo: "Eixos", icone: "ti-layout-columns" },
-    { href: "central-objetivo.html", rotulo: "Objetivos Estratégicos", icone: "ti-target-arrow" },
-    { href: "central-causa.html", rotulo: "Causas", icone: "ti-binary-tree" },
-    { href: "central-indicador.html", rotulo: "Indicadores", icone: "ti-chart-dots" },
-    { href: "central-problema.html", rotulo: "Problemas", icone: "ti-alert-triangle" },
-    { href: "central-programas.html", rotulo: "Programa", icone: "ti-layout-grid" },
-    { grupo: "Relatórios" },
-    { href: "central-relatorio-lei.html", rotulo: "Relatório final da lei do PPA", icone: "ti-file-text" },
-    { href: "central-relatorio-finalisticas.html", rotulo: "Relatório consolidado de finalísticas", icone: "ti-report" },
-    { grupo: "Administração" },
-    { href: "central-usuarios.html", rotulo: "Usuários", icone: "ti-users" },
+    { href: "ppa-detalhe.html", rotulo: "Home", icone: "ti-home" },
+    { href: "pagina-inicial.html", rotulo: "Dashboard", icone: "ti-layout-dashboard" },
+    {
+        modulo: "Planejamento",
+        icone: "ti-clipboard-list",
+        grupos: [
+            {
+                grupo: "Cadastros",
+                icone: "ti-database",
+                itens: [
+                    { href: "central-ppa.html", rotulo: "PPA", icone: "ti-calendar-stats" },
+                    { href: "central-eixo.html", rotulo: "Eixos", icone: "ti-layout-columns" },
+                    { href: "central-objetivo.html", rotulo: "Objetivos Estratégicos", icone: "ti-target-arrow" },
+                    { href: "central-causa.html", rotulo: "Causas", icone: "ti-binary-tree" },
+                    { href: "central-indicador.html", rotulo: "Indicadores", icone: "ti-chart-dots" },
+                    { href: "central-problema.html", rotulo: "Problemas", icone: "ti-alert-triangle" },
+                    { href: "central-programas.html", rotulo: "Programa", icone: "ti-layout-grid" },
+                ],
+            },
+            {
+                grupo: "Gestão",
+                icone: "ti-adjustments",
+                itens: [{ href: "central-usuarios.html", rotulo: "Usuários", icone: "ti-users" }],
+            },
+            {
+                grupo: "Relatórios",
+                icone: "ti-report-analytics",
+                itens: [
+                    { href: "central-relatorio-lei.html", rotulo: "Relatório final da lei do PPA", icone: "ti-file-text" },
+                    { href: "central-relatorio-finalisticas.html", rotulo: "Relatório consolidado de finalísticas", icone: "ti-report" },
+                ],
+            },
+        ],
+    },
 ];
 
+/** As telas de um menu, uma a uma, cada qual com o módulo e o grupo onde mora. */
+function telasDoMenu(menu) {
+    const telas = [];
+    for (const item of menu) {
+        if (item.modulo) {
+            for (const g of item.grupos) {
+                for (const tela of g.itens) telas.push({ ...tela, modulo: item.modulo, grupo: g.grupo });
+            }
+        } else if (item.href) {
+            telas.push(item);
+        }
+    }
+    return telas;
+}
 
 /**
  * Perfis do sistema. A visão, o modo de leitura e o menu decorrem daqui.
@@ -58,6 +100,7 @@ const MENU_CENTRAL = [
  */
 const PERFIL = {
     setorial: {
+        selecionavel: false,
         nome: "Planejamento setorial",
         visao: "setorial",
         leitura: false,
@@ -65,6 +108,7 @@ const PERFIL = {
         descricao: "Preenche e envia a contribuição do órgão",
     },
     "admin-central": {
+        selecionavel: true,
         nome: "Administrador central",
         visao: "central",
         leitura: false,
@@ -72,6 +116,7 @@ const PERFIL = {
         descricao: "Analisa, valida e administra os Programas",
     },
     "gestao-setorial": {
+        selecionavel: false,
         nome: "Alta gestão setorial",
         visao: "setorial",
         leitura: false,
@@ -79,6 +124,7 @@ const PERFIL = {
         descricao: "Faz tudo do Planejamento setorial e aprova a proposta do órgão",
     },
     "gestao-central": {
+        selecionavel: false,
         nome: "Alta gestão central",
         visao: "central",
         leitura: false,
@@ -86,6 +132,7 @@ const PERFIL = {
         descricao: "Faz tudo do Administrador central e aprova a consolidação",
     },
     controle: {
+        selecionavel: false,
         nome: "Consulta",
         visao: "central",
         leitura: true,
@@ -93,6 +140,12 @@ const PERFIL = {
         descricao: "Consulta o plano, sem escrever",
     },
 };
+
+/**
+ * `selecionavel` diz se o perfil pode ser escolhido na tela de perfil e no
+ * "Trocar perfil". Por ora só o Administrador central: os outros ficam
+ * bloqueados, à vista, até as telas deles chegarem.
+ */
 
 /** O perfil ainda não tem telas construídas? */
 export function emConstrucao() {
@@ -157,7 +210,8 @@ function paginaAtual() {
 }
 
 function inicio(visao) {
-    return url(visao === "central" ? "central.html" : "programas.html");
+    // A Visão Geral saiu do menu: a Central começa pelo primeiro cadastro.
+    return url(visao === "central" ? "ppa-detalhe.html" : "programas.html");
 }
 
 /**
@@ -174,33 +228,61 @@ function chipDoPlano(estado) {
     const ppa = ppaCorrente(estado);
     if (!ppa) return "";
 
-    const planos = [...(estado.ppas ?? [])].sort((a, b) => Number(b.primeiroAno) - Number(a.primeiroAno));
-
+    // O plano é o título da barra e, ao mesmo tempo, o botão que abre a troca.
     return `
-    <select class="form-select w-auto ms-2" id="seletor-ppa"
-            aria-label="Plano em que você está trabalhando"
-            title="Plano em que você está trabalhando">
-        ${planos
-            .map(
-                (p) => `
-        <option value="${p.id}"${p.id === ppa.id ? " selected" : ""}>
-            ${esc(p.primeiroAno)}–${esc(p.ultimoAno)} · ${esc(situacaoPpa(p.situacao).rotulo)}
-        </option>`
-            )
-            .join("")}
-    </select>`;
+    <button type="button" class="btn btn-link text-body text-decoration-none fw-medium fs-5 p-0 ms-2 d-flex align-items-center gap-1"
+            id="plano-corrente" title="Trocar de plano" aria-haspopup="dialog">
+        <span>PPA ${esc(ppa.primeiroAno)}–${esc(ppa.ultimoAno)}
+        <span class="fw-medium">· ${esc(situacaoPpa(ppa.situacao).rotulo)}</span></span>
+        <i class="ti ti-chevron-down fs-lg"></i>
+    </button>`;
 }
 
 /**
  * Trocar de plano muda o que as telas mostram e a que plano o próximo cadastro
- * se vincula. Recarrega em vez de redesenhar: toda tela lê o estado na abertura,
- * e meia tela atualizada seria pior que esperar um instante.
+ * se vincula. O botão do título abre uma janela com os planos; escolher um
+ * recarrega em vez de redesenhar — toda tela lê o estado na abertura, e meia
+ * tela atualizada seria pior que esperar um instante. Na Home, o endereço leva
+ * o plano junto.
  */
-function instalarTrocaDePlano() {
-    document.addEventListener("change", (e) => {
-        if (e.target.id !== "seletor-ppa") return;
-        selecionarPpa(e.target.value);
-        window.location.reload();
+function instalarTrocaDePlano(estado) {
+    const botao = document.getElementById("plano-corrente");
+    if (!botao) return;
+
+    const atual = ppaCorrente(estado);
+    const planos = [...(estado.ppas ?? [])].sort((a, b) => Number(b.primeiroAno) - Number(a.primeiroAno));
+
+    const el = document.createElement("div");
+    el.className = "modal fade";
+    el.tabIndex = -1;
+    el.innerHTML = `
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Trocar de plano</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    ${planos.map((p) => cartaoPlano(estado, p, { href: url(`ppa-detalhe.html?id=${encodeURIComponent(p.id)}`), ativo: p.id === atual?.id })).join("")}
+                </div>
+            </div>
+        </div>
+    </div>`;
+    document.body.appendChild(el);
+
+    const modal = new bootstrap.Modal(el);
+    botao.addEventListener("click", () => modal.show());
+    el.addEventListener("click", (e) => {
+        if (e.target.closest("[data-detalhe]")) return;
+        const b = e.target.closest("[data-plano]");
+        if (!b || b.dataset.plano === atual?.id) return;
+        selecionarPpa(b.dataset.plano);
+        if (paginaAtual() === "ppa-detalhe.html") {
+            window.location.href = url(`ppa-detalhe.html?id=${encodeURIComponent(b.dataset.plano)}`);
+        } else {
+            window.location.reload();
+        }
     });
 }
 
@@ -219,6 +301,50 @@ function quemEntrou(estado, central) {
         papel: PERFIL[perfilId]?.nome || (central ? "Administrador central" : "Planejamento setorial"),
         orgao: central ? null : estado.orgaoAtual,
     };
+}
+
+/**
+ * Os perfis, para escolher direto no menu do usuário.
+ *
+ * Antes eram dois itens que levavam a uma janela com a lista; a lista agora está
+ * aqui. O atual vem marcado, e os que ainda não podem ser escolhidos aparecem
+ * bloqueados — a mesma regra da tela de escolha de perfil.
+ */
+function perfisDoMenu() {
+    const atual = perfilDaSessao();
+    return Object.entries(PERFIL)
+        .map(
+            ([id, p]) => `
+                        <button type="button" class="dropdown-item${id === atual ? " active" : ""}" data-perfil="${id}" ${p.selecionavel ? "" : "disabled"}>
+                            <i class="ti ${id === atual ? "ti-circle-check" : "ti-circle"} me-1 fs-lg align-middle"></i>
+                            <span class="align-middle">${p.nome}</span>
+                        </button>`
+        )
+        .join("");
+}
+
+/** Modo escuro: o escolhido fica guardado e vale em todas as telas. */
+function instalarTema() {
+    const raiz = document.documentElement;
+    const botao = document.getElementById("trocar-tema");
+    const aplicar = (tema) => {
+        raiz.setAttribute("data-bs-theme", tema);
+        const icone = botao?.querySelector("i");
+        if (icone) icone.className = `ti ${tema === "dark" ? "ti-sun" : "ti-moon"} topbar-link-icon`;
+        if (botao) botao.title = tema === "dark" ? "Modo claro" : "Modo escuro";
+    };
+    let tema = "light";
+    try {
+        tema = localStorage.getItem("siplam.tema") === "dark" ? "dark" : "light";
+    } catch (e) {}
+    aplicar(tema);
+    botao?.addEventListener("click", () => {
+        tema = raiz.getAttribute("data-bs-theme") === "dark" ? "light" : "dark";
+        aplicar(tema);
+        try {
+            localStorage.setItem("siplam.tema", tema);
+        } catch (e) {}
+    });
 }
 
 function topbar(estado, visao) {
@@ -259,12 +385,19 @@ function topbar(estado, visao) {
                 mais visível do sistema com o que ninguém consulta. Continuam no
                 menu do usuário, que é onde se olha para conferir quem se é.
             -->
-            <div class="topbar-item d-none d-md-flex ms-1 align-items-center">
-                ${chipDoPlano(estado)}
-            </div>
         </div>
 
         <div class="d-flex align-items-center gap-2">
+            <div class="topbar-item d-none d-md-flex me-2 align-items-center">
+                ${chipDoPlano(estado)}
+            </div>
+
+            <div class="topbar-item">
+                <button class="topbar-link" type="button" id="trocar-tema" title="Modo escuro" aria-label="Alternar modo escuro">
+                    <i class="ti ti-moon topbar-link-icon"></i>
+                </button>
+            </div>
+
             <div class="topbar-item">
                 <button class="topbar-link" type="button" id="abrir-atena" title="Atena — apoio contextual" aria-label="Atena">
                     <i class="ti ti-message-chatbot topbar-link-icon"></i>
@@ -299,14 +432,8 @@ function topbar(estado, visao) {
                             <span class="fs-12 text-muted d-block">${quem.papel}</span>
                             ${quem.orgao ? `<span class="fs-12 text-muted">${quem.orgao}</span>` : ""}
                         </div>
-                        <button type="button" class="dropdown-item" id="trocar-perfil">
-                            <i class="ti ti-switch-horizontal me-1 fs-lg align-middle"></i>
-                            <span class="align-middle">Trocar perfil</span>
-                        </button>
-                        <button type="button" class="dropdown-item" id="reiniciar-prototipo">
-                            <i class="ti ti-refresh me-1 fs-lg align-middle"></i>
-                            <span class="align-middle">Reiniciar protótipo</span>
-                        </button>
+                        <div class="dropdown-header pb-1">Perfil</div>
+                        ${perfisDoMenu()}
                         <div class="dropdown-divider"></div>
                         <a href="${url("index.html")}" class="dropdown-item text-danger fw-semibold">
                             <i class="ti ti-logout me-1 fs-lg align-middle"></i>
@@ -320,20 +447,109 @@ function topbar(estado, visao) {
 </header>`;
 }
 
-function sidenav(visao) {
-    let menu = emConstrucao() ? [] : visao === "central" ? MENU_CENTRAL : MENU_SETORIAL;
+/** O menu de quem está olhando: o da visão, sem o que o perfil não administra. */
+function menuDoPerfil(visao) {
+    if (emConstrucao()) return [];
+    const menu = visao === "central" ? MENU_CENTRAL : MENU_SETORIAL;
 
     // A gestão de usuários é do Administrador central (RF3). A Alta gestão central
     // faz o mais que ele faz — cadastros, análise —, mas não administra acessos.
     if (perfilDaSessao() === "gestao-central") {
-        const corte = menu.findIndex((item) => item.grupo === "Administração");
-        if (corte >= 0) menu = menu.slice(0, corte);
+        return menu.map((item) =>
+            item.modulo ? { ...item, grupos: item.grupos.filter((g) => g.grupo !== "Gestão") } : item
+        );
     }
+    return menu;
+}
+
+/**
+ * O menu em módulos, no desenho aninhado do Inspinia.
+ *
+ * O módulo e o grupo que contêm a tela aberta nascem abertos: quem chega numa
+ * tela vê onde está sem precisar procurar. Os outros grupos ficam fechados.
+ */
+function modulo(item, atual) {
+    const dentro = (g) => g.itens.some((tela) => tela.href === atual);
+    const id = `menu-${item.modulo.toLowerCase().replace(/\s+/g, "-")}`;
+
+    const grupos = item.grupos
+        .map((g) => {
+            const gid = `${id}-${g.grupo.toLowerCase().replace(/\s+/g, "-")}`;
+            const aberto = dentro(g);
+            return `
+            <li class="side-nav-item">
+                <a data-bs-toggle="collapse" href="#${gid}" aria-expanded="${aberto}" aria-controls="${gid}" class="side-nav-link${aberto ? "" : " collapsed"}">
+                    <span class="menu-icon"><i class="ti ${g.icone}"></i></span>
+                    <span class="menu-text">${g.grupo}</span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <div class="collapse${aberto ? " show" : ""}" id="${gid}">
+                    <ul class="sub-menu">
+                        ${g.itens
+                            .map(
+                                (tela) => `
+                        <li class="side-nav-item">
+                            <a href="${url(tela.href)}" class="side-nav-link${tela.href === atual ? " active" : ""}">
+                                <span class="menu-icon"><i class="ti ${tela.icone}"></i></span>
+                                <span class="menu-text">${tela.rotulo}</span>
+                            </a>
+                        </li>`
+                            )
+                            .join("")}
+                    </ul>
+                </div>
+            </li>`;
+        })
+        .join("");
+
+    return `
+            <li class="side-nav-item">
+                <a data-bs-toggle="collapse" href="#${id}" aria-expanded="true" aria-controls="${id}" class="side-nav-link">
+                    <span class="menu-icon"><i class="ti ${item.icone}"></i></span>
+                    <span class="menu-text">${item.modulo}</span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <div class="collapse show" id="${id}">
+                    <ul class="sub-menu">${grupos}
+                    </ul>
+                </div>
+            </li>`;
+}
+
+/**
+ * Mantém a seta de cada grupo de acordo com o grupo.
+ *
+ * Ao carregar, o template tira o `show` de tudo e reabre os grupos da tela atual
+ * — o módulo e o grupo dentro dele, um aninhado no outro. Na corrida, o grupo de
+ * dentro termina aberto com `aria-expanded="false"`, e a seta (que gira por esse
+ * atributo) conta outra história. Cada vez que um grupo termina de abrir ou de
+ * fechar, o atributo é acertado pelo que ele realmente ficou.
+ */
+export function sincronizarSetasDoMenu() {
+    const menu = document.querySelector(".sidenav-menu");
+    if (!menu) return;
+
+    const acertar = (grupo) => {
+        const gatilho = menu.querySelector(`[data-bs-toggle="collapse"][href="#${grupo.id}"]`);
+        if (!gatilho) return;
+        const aberto = grupo.classList.contains("show");
+        gatilho.setAttribute("aria-expanded", String(aberto));
+        gatilho.classList.toggle("collapsed", !aberto);
+    };
+
+    menu.addEventListener("shown.bs.collapse", (e) => acertar(e.target));
+    menu.addEventListener("hidden.bs.collapse", (e) => acertar(e.target));
+    menu.querySelectorAll(".collapse").forEach(acertar);
+}
+
+function sidenav(visao) {
+    const menu = menuDoPerfil(visao);
     const atual = paginaAtual();
     const raiz = inicio(visao);
 
     const itens = menu
         .map((item) => {
+            if (item.modulo) return modulo(item, atual);
             if (item.grupo !== undefined) return `<li class="side-nav-title">${item.grupo}</li>`;
             const ativo = item.href === atual ? " active" : "";
             return `
@@ -374,7 +590,7 @@ function sidenav(visao) {
                     emConstrucao()
                         ? `<li class="side-nav-title">Em construção</li>
                            <li class="px-3 py-2 fs-12 text-muted">As telas deste perfil ainda não foram construídas.</li>`
-                        : `<li class="side-nav-title">${visao === "central" ? "Área Central" : "Meu órgão"}</li>
+                        : `${visao === "central" ? "" : '<li class="side-nav-title">Meu órgão</li>'}
                            ${itens}`
                 }
             </ul>
@@ -409,90 +625,25 @@ function telaInicialDoPerfil(id) {
 }
 
 /**
- * Troca de perfil sem sair da tela: um modal com os cinco, o atual marcado.
+ * Troca de perfil pelo menu do usuário, sem passar por outra tela.
  *
- * Antes isso levava a `perfil.html`, a mesma tela do primeiro acesso. Sair do
- * sistema para voltar a ele é caro quando a troca serve para conferir como uma
- * tela aparece para outro papel — que é o uso real disto num protótipo.
+ * Escolher o perfil que já está ativo não faz nada; escolher outro grava a
+ * sessão e leva à tela inicial dele — o menu e o que se pode fazer mudam com o perfil.
  */
 function instalarTrocaDePerfil() {
-    const gatilho = document.getElementById("trocar-perfil");
-    if (!gatilho) return;
-
     const atual = perfilDaSessao();
-    const opcoes = Object.entries(PERFIL)
-        .map(
-            ([id, p]) => `
-        <button type="button" class="list-group-item list-group-item-action d-flex align-items-start gap-2 ${
-            id === atual ? "active" : ""
-        }" data-perfil="${id}">
-            <i class="ti ${id === atual ? "ti-circle-check" : "ti-circle"} fs-lg mt-1"></i>
-            <span>
-                <span class="fw-medium d-block">${p.nome}</span>
-                <span class="fs-12 ${id === atual ? "" : "text-muted"}">${p.descricao}</span>
-            </span>
-        </button>`
-        )
-        .join("");
 
-    document.body.insertAdjacentHTML(
-        "beforeend",
-        `<div class="modal fade" id="modal-trocar-perfil" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fs-15">Trocar perfil</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="fs-13 text-muted mb-3">O perfil define a tela inicial, o menu e o que você pode fazer.</p>
-                    <div class="list-group">${opcoes}</div>
-                </div>
-            </div>
-        </div>
-    </div>`
-    );
-
-    const el = document.getElementById("modal-trocar-perfil");
-
-    gatilho.addEventListener("click", () => bootstrap.Modal.getOrCreateInstance(el).show());
-
-    el.addEventListener("click", (e) => {
-        const escolha = e.target.closest("[data-perfil]");
-        if (!escolha) return;
-        const id = escolha.dataset.perfil;
-        if (id === atual) return bootstrap.Modal.getInstance(el).hide();
-        try {
-            localStorage.setItem("siplam.perfilSessao", id);
-        } catch (erro) {
-            console.warn("SIPLAM: não foi possível guardar o perfil.", erro);
-        }
-        window.location.href = telaInicialDoPerfil(id);
-    });
-}
-
-/**
- * "Reiniciar protótipo": apaga tudo que o navegador guardou — a sessão e o
- * estado — e volta para a entrada com os dados de demonstração.
- *
- * Existe para ninguém precisar abrir o console do navegador para limpar o
- * `localStorage`, que era a única saída quando uma demonstração ficava suja.
- */
-function instalarReinicio() {
-    document.getElementById("reiniciar-prototipo")?.addEventListener("click", async () => {
-        const confirmou = await confirmarExclusao({
-            titulo: "Reiniciar protótipo",
-            texto: "Tudo o que foi cadastrado nesta sessão é apagado e os dados de demonstração voltam ao estado original. Não dá para desfazer.",
-            confirmar: "Reiniciar",
+    document.querySelectorAll(".dropdown-menu [data-perfil]").forEach((botao) => {
+        botao.addEventListener("click", () => {
+            const id = botao.dataset.perfil;
+            if (botao.disabled || id === atual) return;
+            try {
+                localStorage.setItem("siplam.perfilSessao", id);
+            } catch (erro) {
+                console.warn("SIPLAM: não foi possível guardar o perfil.", erro);
+            }
+            window.location.href = telaInicialDoPerfil(id);
         });
-        if (!confirmou) return;
-        try {
-            localStorage.clear();
-            sessionStorage.clear();
-        } catch (e) {
-            console.warn("SIPLAM: não foi possível limpar o armazenamento.", e);
-        }
-        window.location.href = url("index.html");
     });
 }
 
@@ -512,9 +663,10 @@ export function montarShell() {
     const ano = document.querySelector("[data-current-year]");
     if (ano) ano.textContent = new Date().getFullYear();
 
+    sincronizarSetasDoMenu();
     instalarTrocaDePerfil();
-    instalarTrocaDePlano();
-    instalarReinicio();
+    instalarTema();
+    instalarTrocaDePlano(estado);
     instalarBusca(estado, visao);
     instalarNotificacoes(estado, visao);
     instalarAtena(estado);
@@ -550,7 +702,7 @@ const TRILHAS = {
 };
 
 /** O menu da visão de quem está olhando. */
-const menuAtual = () => (visaoAtual() === "central" ? MENU_CENTRAL : MENU_SETORIAL);
+const menuAtual = () => telasDoMenu(visaoAtual() === "central" ? MENU_CENTRAL : MENU_SETORIAL);
 
 /**
  * A trilha da página, de onde se está até a raiz da visão.
@@ -565,21 +717,28 @@ export function trilha(elos = []) {
     const central = visaoAtual() === "central";
     const arquivo = paginaAtual();
 
-    const caminho = [
-        central ? { rotulo: "Área Central", href: "central.html" } : { rotulo: "Programas", href: "programas.html" },
-    ];
+    const telaDoMenu = menuAtual().find((i) => i.href === arquivo);
 
-    const doMenu = menuAtual().find((i) => i.href === arquivo)?.rotulo;
+    // O módulo e o grupo não são páginas: entram na trilha como texto, sem link.
+    // As telas soltas do menu — Home, Dashboard — não moram em módulo nenhum: a trilha é só o nome delas.
+    const solta = central && telaDoMenu && !telaDoMenu.modulo;
+    const caminho = solta
+        ? []
+        : central
+          ? [{ rotulo: telaDoMenu?.modulo ?? "Planejamento" }, ...(telaDoMenu ? [{ rotulo: telaDoMenu.grupo }] : [])]
+          : [{ rotulo: "Programas", href: "programas.html" }];
+
+    const doMenu = telaDoMenu?.rotulo;
     const proprio = TRILHAS[arquivo]?.rotulo;
 
     for (const acima of TRILHAS[arquivo]?.acima ?? []) {
         const rotulo = menuAtual().find((i) => i.href === acima)?.rotulo ?? TRILHAS[acima]?.rotulo ?? "";
-        if (rotulo && rotulo !== caminho[0].rotulo) caminho.push({ rotulo, href: acima });
+        if (rotulo && rotulo !== caminho[0]?.rotulo) caminho.push({ rotulo, href: acima });
     }
 
     // O nome de uma ficha é genérico — “Iniciativa” — e cede a vez ao registro
     // que a tela está mostrando. O nome de uma tela do menu nunca cede.
-    if (doMenu && doMenu !== caminho[0].rotulo) caminho.push({ rotulo: doMenu, href: arquivo });
+    if (doMenu && doMenu !== caminho[0]?.rotulo) caminho.push({ rotulo: doMenu, href: arquivo });
     else if (!doMenu && proprio && !elos.length) caminho.push({ rotulo: proprio, href: arquivo });
 
     caminho.push(...elos.map((e) => (typeof e === "string" ? { rotulo: e } : e)));
@@ -590,9 +749,10 @@ export function trilha(elos = []) {
             .map((e, i) => {
                 const ultimo = i === caminho.length - 1;
                 const texto = esc(e.rotulo);
-                return ultimo
-                    ? `<li class="breadcrumb-item active">${texto}</li>`
-                    : `<li class="breadcrumb-item"><a href="${url(e.href)}">${texto}</a></li>`;
+                if (ultimo) return `<li class="breadcrumb-item active">${texto}</li>`;
+                return e.href
+                    ? `<li class="breadcrumb-item"><a href="${url(e.href)}">${texto}</a></li>`
+                    : `<li class="breadcrumb-item">${texto}</li>`;
             })
             .join("")}
     </ol>`;

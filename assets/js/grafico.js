@@ -13,7 +13,8 @@ export const CORES = ["#1ab394", "#1c84c6", "#23c6c8", "#f8ac59", "#ed5565", "#8
 
 const FONTE = "IBM Plex Sans, sans-serif";
 const TINTA = "#9ba6b7";
-const GRADE = "#eef2f7";
+const escuro = () => document.documentElement.getAttribute("data-bs-theme") === "dark";
+const GRADE = escuro() ? "#2a343d" : "#eef2f7";
 
 /** Gráficos vivos por elemento, para não redesenhar por cima do anterior. */
 const vivos = new Map();
@@ -48,7 +49,7 @@ export function grafico(id, opcoes) {
             itemMargin: { horizontal: 8, vertical: 2 },
             ...opcoes.legend,
         },
-        tooltip: { style: { fontSize: "12px" }, ...opcoes.tooltip },
+        tooltip: { theme: escuro() ? "dark" : "light", style: { fontSize: "12px" }, ...opcoes.tooltip },
     };
 
     // Os eixos só ganham estilo quando a tela pede eixo: num donut, `xaxis`

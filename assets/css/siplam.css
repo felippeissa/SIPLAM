@@ -484,8 +484,8 @@
 /* Cinza levíssimo atrás dos cards, para que o branco deles marque onde há
    conteúdo. Experimento pedido em 25/09/2026 — se não convencer, apaga-se este
    bloco inteiro e nada mais muda. */
-.content-page,
-.wrapper {
+[data-bs-theme="light"] .content-page,
+[data-bs-theme="light"] .wrapper {
     background-color: #f1f2f7;
 }
 
@@ -548,4 +548,38 @@
 /* Linha de tabela que leva a outra tela ao ser clicada. */
 tr.linha-clicavel {
     cursor: pointer;
+}
+
+/* ---------- Menu lateral ---------- */
+
+/* Sem animação: o grupo da tela atual abre de uma vez ao carregar, e a seta não
+   gira para o lado errado no meio do caminho. */
+.sidenav-menu .collapsing {
+    transition: none !important;
+}
+
+.sidenav-menu .menu-arrow {
+    transition: none;
+}
+
+/* A página em que se está: o marcador verde de fundo e o texto em verde — o
+   suficiente para achá-la de relance entre dez irmãs. */
+.sidenav-menu .side-nav-link.active {
+    background-color: rgba(var(--theme-primary-rgb), 0.14);
+}
+
+/* O tema fixa cor e peso do link ativo com seletores mais específicos que
+   estes; sem o !important a página atual só ganharia o fundo. */
+.sidenav-menu .side-nav-link.active,
+.sidenav-menu .side-nav-link.active .menu-text,
+.sidenav-menu .side-nav-link.active .menu-icon {
+    color: var(--theme-primary) !important;
+    font-weight: 600 !important;
+}
+
+/* Cartão de plano: uma sombra bem leve ao passar o mouse e no escolhido. Sem
+   transição — o protótipo não anima. */
+.card[data-plano]:hover,
+.card[data-plano].border-primary {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }
