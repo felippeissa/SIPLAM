@@ -1,0 +1,265 @@
+{
+ "id": "f10",
+ "num": "10",
+ "nome": "Indicador",
+ "artigo": "o",
+ "titulo": "Indicadores",
+ "pasta": "central-indicador",
+ "arquivo_lista": "central-indicador.html",
+ "menu": "Planejamento › Cadastros › Indicadores",
+ "botao_novo": "Novo indicador",
+ "sub_lista": "Como a Área Central encontra um indicador, filtra por tipo, unidade, periodicidade e situação e vê quando nada corresponde.",
+ "sub_criar": "Como se cadastra um indicador com seus dezessete campos e as metas por referência temporal.",
+ "sub_editar": "Corrigir um indicador e suas metas e excluí-lo quando nenhum Programa depende dele.",
+ "entrega_lista": "A lista dos indicadores do plano. O indicador diz o que o plano mede e as metas dizem quanto se quer alcançar, em cada período. O Programa aponta para os indicadores de resultado. A lista serve para achar um indicador, filtrar e abrir criar e editar.",
+ "entrega_criar": "Cadastra um indicador com nome, descrição, tipo, vinculação, fórmula, unidade, polaridade, periodicidade, abrangência, fonte, linha de base, responsável, situação e data de criação, e mais a tabela de Metas, com uma linha por referência temporal.",
+ "entrega_editar": "Edita o indicador e suas metas e permite excluí-lo. Indicador com Programas vinculados não pode ser excluído.",
+ "ao_fim_lista": "Novo indicador abre o formulário de criação; Editar abre a edição.",
+ "busca": "Busca livre por nome e descrição, mais os filtros de Tipo, Unidade, Periodicidade e Situação, todos de escolha múltipla. O filtro só vale ao clicar em Buscar; Limpar tira tudo. Exportar gera CSV ou Excel das linhas visíveis.",
+ "colunas": [
+  [
+   "Nº",
+   "Texto",
+   "—",
+   "Código do indicador, derivado da ordem de cadastro."
+  ],
+  [
+   "Indicador",
+   "Texto",
+   "—",
+   "Nome do indicador; ordena a listagem."
+  ],
+  [
+   "Tipo",
+   "Texto",
+   "—",
+   "Estratégico, de programa ou de iniciativa, entre outros."
+  ],
+  [
+   "Unidade",
+   "Texto",
+   "—",
+   "Unidade de medida, por exemplo percentual."
+  ],
+  [
+   "Periodicidade",
+   "Texto",
+   "—",
+   "De quanto em quanto tempo é medido."
+  ],
+  [
+   "Situação",
+   "Etiqueta",
+   "—",
+   "Situação do indicador."
+  ],
+  [
+   "Ações",
+   "—",
+   "—",
+   "Editar abre a edição; quem só consulta vê Ver."
+  ]
+ ],
+ "estados_lista": [
+  "Com resultados — tabela preenchida",
+  "Busca aplicada — só os indicadores que casam",
+  "Filtro aberto — escolha múltipla",
+  "Sem resultado — linha única “Nenhum registro corresponde ao filtro”",
+  "Somente leitura — sem o botão Novo indicador"
+ ],
+ "telas_lista": [
+  [
+   "f10_01_lista",
+   "Listagem",
+   "a pessoa abre Planejamento › Cadastros › Indicadores"
+  ],
+  [
+   "f10_02_busca",
+   "Busca aplicada",
+   "digita parte do nome e clica em Buscar — só os indicadores que casam ficam"
+  ],
+  [
+   "f10_03_filtro",
+   "Filtro aberto",
+   "abre um dos filtros, de escolha múltipla"
+  ],
+  [
+   "f10_04_sem_resultado",
+   "Sem resultado",
+   "nenhum indicador corresponde — a tabela mostra uma linha única"
+  ]
+ ],
+ "larguras": [
+  150,
+  110,
+  60,
+  200
+ ],
+ "campos": [
+  [
+   "Nome do indicador",
+   "Texto",
+   "Sim",
+   "Identifica o indicador."
+  ],
+  [
+   "Descrição detalhada",
+   "Texto longo",
+   "Não",
+   "O que o indicador mede; mostra o contador de caracteres."
+  ],
+  [
+   "Tipo de indicador",
+   "Dropdown",
+   "Não",
+   "Define a vinculação hierárquica."
+  ],
+  [
+   "Vinculação hierárquica",
+   "Dropdown",
+   "Não",
+   "Depende do tipo escolhido."
+  ],
+  [
+   "Fórmula de cálculo",
+   "Texto longo",
+   "Não",
+   "Como o valor é calculado."
+  ],
+  [
+   "Unidade de medida",
+   "Dropdown",
+   "Não",
+   "Percentual, número absoluto, entre outras."
+  ],
+  [
+   "Polaridade",
+   "Dropdown",
+   "Não",
+   "Se maior é melhor ou menor é melhor."
+  ],
+  [
+   "Periodicidade",
+   "Dropdown",
+   "Não",
+   "Mensal, anual e as demais."
+  ],
+  [
+   "Abrangência geográfica",
+   "Dropdown",
+   "Não",
+   "Estadual, regional, municipal."
+  ],
+  [
+   "Fonte dos dados",
+   "Texto",
+   "Não",
+   "Origem do dado; a matriz marca lista, a confirmar com o negócio."
+  ],
+  [
+   "Site / link da fonte",
+   "Texto",
+   "Não",
+   "Endereço onde o dado é publicado."
+  ],
+  [
+   "Linha de base (valor)",
+   "Número",
+   "Não",
+   "Valor de partida do indicador."
+  ],
+  [
+   "Data da linha de base",
+   "Data",
+   "Não",
+   "Quando a linha de base foi medida."
+  ],
+  [
+   "Responsável técnico",
+   "Texto",
+   "Não",
+   "Quem responde pelo indicador."
+  ],
+  [
+   "Situação do indicador",
+   "Dropdown",
+   "Sim",
+   "Ativo ou inativo."
+  ],
+  [
+   "Data de criação",
+   "Data",
+   "Sim",
+   "Preenchida com o dia do cadastro."
+  ],
+  [
+   "Indicador vinculado",
+   "Texto bloqueado",
+   "Sim",
+   "O próprio indicador, para vincular as metas."
+  ]
+ ],
+ "comp_extra": [
+  [
+   "Contador de caracteres",
+   "small abaixo do campo de texto longo"
+  ],
+  [
+   "Tabela de metas",
+   "table.table-sm com Adicionar meta no cabeçalho — cada meta é uma linha editável, com botão de remover"
+  ]
+ ],
+ "estados_criar": [
+  "Formulário vazio — dezessete campos e a tabela de metas vazia",
+  "Obrigatórios — nome, situação, data e vinculado com mensagem",
+  "Meta adicionada — a tabela ganha uma linha editável",
+  "Preenchido — dropdowns escolhidos"
+ ],
+ "telas_criar": [
+  [
+   "f10_05_criar",
+   "Formulário vazio",
+   "clica em Novo indicador — os dezessete campos e a tabela de Metas"
+  ],
+  [
+   "f10_06_criar_erros",
+   "Campos obrigatórios",
+   "clica em Cadastrar sem preencher — a tela marca o que falta"
+  ],
+  [
+   "f10_07_criar_meta",
+   "Meta adicionada",
+   "clica em Adicionar meta — entra uma linha na tabela: referência temporal, valores, responsável, órgão e situação"
+  ],
+  [
+   "f10_09_criar_preenchido",
+   "Preenchido",
+   "preenche os campos e escolhe nos dropdowns — Cadastrar grava o indicador"
+  ]
+ ],
+ "regras_form": [
+  {
+   "titulo": "Metas por ano do ciclo",
+   "texto": "As metas são uma linha por referência temporal — um ano do ciclo — com valor da meta, valor de referência, responsável, órgão responsável e situação (por exemplo, Não iniciada). Adicionar meta acrescenta a linha; o botão da lixeira a remove. O ciclo não tem tamanho fixo, então a tabela funciona com um número variável de linhas."
+  }
+ ],
+ "telas_editar": [
+  [
+   "f10_10_editar",
+   "Editar indicador",
+   "clica em Editar numa linha — campos e metas vêm preenchidos"
+  ],
+  [
+   "f10_11_excluir",
+   "Excluir indicador",
+   "clica em Excluir — a janela pede confirmação"
+  ]
+ ],
+ "estados_editar": [
+  "Edição — campos e metas preenchidos, Excluir, Cancelar e Salvar no cabeçalho",
+  "Excluir — janela de confirmação",
+  "Com Programas vinculados — Excluir desabilitado, com o motivo"
+ ],
+ "exclusao": "Registro com vínculo não pode ser excluído; sem vínculo, pode. Um indicador com Programas vinculados mostra o botão Excluir visível e desabilitado, com o motivo. As metas vão junto com o indicador.",
+ "regras_editar": []
+}

@@ -1,5 +1,5 @@
 import { esc } from "../ui.js";
-import { obterEstado, updItem } from "../dados/store.js";
+import { obterEstado } from "../dados/store.js";
 import { campoErro } from "../validacao.js";
 
 /**
@@ -82,18 +82,5 @@ export const subcausa = {
                 valor: causas.length ? causas.map((c) => c.nome).join(" · ") : "Nenhuma.",
             },
         ];
-    },
-
-    /**
-     * Excluir a subcausa desfaz também os vínculos.
-     *
-     * Sem isso a causa ficaria apontando para um registro que não existe mais, e
-     * a linha da tabela dela sumiria sem explicação.
-     */
-    aoExcluir(item) {
-        const estado = obterEstado();
-        for (const c of causasQueUsam(item, estado)) {
-            updItem("causas", c.id, { subcausaIds: c.subcausaIds.filter((id) => id !== item.id) });
-        }
     },
 };

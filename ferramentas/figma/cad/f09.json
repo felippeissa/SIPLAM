@@ -1,0 +1,76 @@
+{
+  "id": "f09",
+  "num": "09",
+  "nome": "Causa",
+  "artigo": "a",
+  "titulo": "Causas",
+  "pasta": "central-causa",
+  "arquivo_lista": "central-causa.html",
+  "menu": "Planejamento › Cadastros › Causas",
+  "botao_novo": "Nova causa",
+  "sub_lista": "Como a Área Central encontra uma causa, filtra por subcausa e vê quando nada corresponde.",
+  "sub_criar": "Como se cadastra uma causa e se vinculam as subcausas, buscando as que existem ou cadastrando a que falta.",
+  "sub_editar": "Corrigir uma causa, trocar as subcausas e excluí-la quando nenhum problema depende dela.",
+  "entrega_lista": "A lista das causas do plano. A causa explica problemas e é enfrentada por Iniciativas; a mesma causa pode explicar mais de um problema. A subcausa não tem item próprio no menu: é cadastrada aqui, dentro da causa.",
+  "entrega_criar": "Cadastra uma causa com nome, justificativa e descrição, e vincula as subcausas. A subcausa é cadastro do sistema e a mesma costuma explicar mais de uma causa: por isso se busca a que existe, e a que falta se cadastra numa janela, sem sair do formulário.",
+  "entrega_editar": "Edita a causa e as subcausas vinculadas, e permite excluí-la. Causa com problemas vinculados não pode ser excluída.",
+  "ao_fim_lista": "Nova causa abre o formulário de criação; Editar abre a edição.",
+  "busca": "Busca livre por nome, justificativa e descrição, mais o filtro de Subcausas, de escolha múltipla. O filtro só vale ao clicar em Buscar; Limpar tira tudo. Exportar gera CSV ou Excel das linhas visíveis.",
+  "colunas": [
+    ["Causa", "Texto", "—", "Nome da causa; ordena a listagem."],
+    ["Subcausas", "Número", "—", "Quantas subcausas a causa tem, por exemplo “2 subcausas”."],
+    ["Justificativa", "Texto", "—", "Por que a causa origina os problemas; traço quando vazia."],
+    ["Ações", "—", "—", "Editar abre a edição; quem só consulta vê Ver."]
+  ],
+  "estados_lista": [
+    "Com resultados — tabela preenchida",
+    "Busca aplicada — só as causas que casam",
+    "Filtro de subcausa aberto — escolha múltipla",
+    "Sem resultado — linha única “Nenhum registro corresponde ao filtro”",
+    "Somente leitura — sem o botão Nova causa"
+  ],
+  "telas_lista": [
+    ["f09_01_lista", "Listagem", "a pessoa abre Planejamento › Cadastros › Causas"],
+    ["f09_02_busca", "Busca aplicada", "digita parte do nome e clica em Buscar — só as causas que casam ficam"],
+    ["f09_03_filtro", "Filtro de subcausa", "abre o filtro de Subcausas, de escolha múltipla"],
+    ["f09_04_sem_resultado", "Sem resultado", "nenhuma causa corresponde — a tabela mostra uma linha única"]
+  ],
+  "campos": [
+    ["Nome da causa", "Texto", "Sim", "Identifica a causa."],
+    ["Justificativa", "Texto longo", "Não", "Por que esta causa origina os problemas que explica."],
+    ["Descrição", "Texto longo", "Não", "O que caracteriza esta causa."],
+    ["Subcausas", "Busca e tabela", "Não", "Várias. Busca as que existem; o que não existe vira oferta “Cadastrar …” na lista e abre a janela já com o nome digitado."]
+  ],
+  "comp_extra": [
+    ["Busca e vincula", "input.form-control + lista de sugestões + tabela das escolhidas — padrão “buscar o que existe, criar o que falta”"],
+    ["Janela de cadastro", "div.modal — cadastra a subcausa sem perder o formulário de trás"]
+  ],
+  "estados_criar": [
+    "Formulário vazio",
+    "Obrigatório — o nome da causa mostra a mensagem",
+    "Busca de subcausa — sugestões do que já existe",
+    "Cadastrar subcausa — janela com o texto digitado já no nome",
+    "Preenchido — subcausa escolhida aparece na tabela"
+  ],
+  "telas_criar": [
+    ["f09_05_criar", "Formulário vazio", "clica em Nova causa — nome, justificativa, descrição e subcausas"],
+    ["f09_06_criar_erros", "Campo obrigatório", "clica em Cadastrar sem preencher — o nome da causa é obrigatório"],
+    ["f09_07_criar_busca_sub", "Busca de subcausa", "digita parte do nome — a lista mostra as subcausas que já existem"],
+    ["f09_08_criar_nova_sub", "Cadastrar subcausa", "digita uma subcausa que não existe e escolhe “Cadastrar” — a janela abre com o nome"],
+    ["f09_09_criar_preenchido", "Preenchido", "escolhe a subcausa — ela entra na tabela e o formulário de trás não se perde"]
+  ],
+  "regras_form": [
+    {"titulo": "Subcausa dentro da causa", "texto": "A subcausa é cadastro do sistema, com nome, justificativa e descrição, e a causa aponta para ela — a mesma subcausa costuma explicar mais de uma causa. Toda subcausa tem causa atrelada, por isso não há menu próprio para ela."}
+  ],
+  "telas_editar": [
+    ["f09_10_editar", "Editar causa", "clica em Editar numa linha — os campos e as subcausas vêm preenchidos"],
+    ["f09_11_excluir", "Excluir causa", "clica em Excluir — a janela pede confirmação"]
+  ],
+  "estados_editar": [
+    "Edição — campos preenchidos, Excluir, Cancelar e Salvar no cabeçalho",
+    "Excluir — janela de confirmação",
+    "Com problemas vinculados — Excluir desabilitado, com o motivo"
+  ],
+  "exclusao": "Registro com vínculo não pode ser excluído; sem vínculo, pode. Uma causa com problemas vinculados mostra o botão Excluir visível e desabilitado, com o motivo. As subcausas ligadas continuam no cadastro do sistema.",
+  "regras_editar": []
+}

@@ -7,13 +7,17 @@
  */
 import { situacaoPpa, ppaCorrente, updPpa } from "../dados/store.js";
 import { recursosDaIniciativa, moeda } from "../dados/regras.js";
-import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
+import { montarShell, barraTitulo, somenteLeitura, perfilAtual, visaoAtual, url } from "../shell.js";
 import { esc, chip } from "../ui.js";
+import { confirmarExclusao } from "../confirmar.js";
 import { tamanhoLegivel, nomeDoPerfil } from "../usuarios-decisao.js";
 
 const { estado } = montarShell();
 // Sem `?id=` — a Home aberta pelo menu — vale o plano escolhido.
-const leitura = somenteLeitura();
+// O órgão vê o plano, mas os cadastros estratégicos e o plano em si são da Área Central.
+const leitura = somenteLeitura() || visaoAtual() === "setorial";
+// Quem mexe nos documentos do plano é o Administrador central; os demais só baixam.
+const gerenciaDocumentos = perfilAtual() === "admin-central";
 const id = new URLSearchParams(location.search).get("id") ?? ppaCorrente(estado)?.id;
 const ppa = (estado.ppas ?? []).find((p) => p.id === id);
 const voltar = url("perfil.html");
@@ -178,7 +182,7 @@ function render() {
                             </ul>
                         </div>`
                         }
-                        <a href="${url(`central-ppa/editar.html?id=${encodeURIComponent(ppa.id)}`)}" class="btn btn-light"><i class="ti ti-pencil me-1"></i>Editar</a>
+                        ${leitura ? "" : `<a href="${url(`central-ppa/editar.html?id=${encodeURIComponent(ppa.id)}`)}" class="btn btn-light"><i class="ti ti-pencil me-1"></i>Editar</a>`}
                     </div>
                 </div>
                 <div class="card-body px-4">
@@ -229,7 +233,8 @@ function render() {
                                     ({ u, funcao }) => `
                         <div class="d-flex align-items-center gap-2 py-1">
                             <div class="avatar avatar-sm"><span class="avatar-title rounded-circle text-bg-primary">${esc(u.nome.charAt(0))}</span></div>
-                            <div><h5 class="mb-0 lh-base fs-13">${esc(u.nome)}</h5><p class="text-muted fs-xxs mb-0">${esc(funcao)}</p></div>
+                            <div class="flex-grow-1" style="min-width:0"><h5 class="mb-0 lh-base fs-13">${esc(u.nome)}</h5><p class="text-muted fs-xxs mb-0">${esc(funcao)}</p></div>
+                            <button type="button" class="btn btn-light btn-sm btn-icon rounded-circle flex-shrink-0" data-chat="${esc(u.id)}" title="Conversar com ${esc(u.nome)}" aria-label="Conversar com ${esc(u.nome)}"><i class="ti ti-message-circle"></i></button>
                         </div>`
                                 )
                                 .join("") || vazio("Ninguém na equipe.")
@@ -239,20 +244,22 @@ function render() {
                         <div class="d-flex mb-3 justify-content-between align-items-center">
                             <h5 class="mb-0">Documentos:</h5>
                             ${
-                                leitura
+                                !gerenciaDocumentos
                                     ? ""
                                     : `<button type="button" class="btn btn-light btn-sm btn-icon rounded-circle" id="add-documento" title="Adicionar documento" aria-label="Adicionar documento"><i class="ti ti-plus"></i></button>
                             <input type="file" id="arquivo-documento" class="d-none" multiple />`
                             }
                         </div>
                         ${[
-                            ...(ppa.processoSei ? [{ nome: "Processo SEI", detalhe: ppa.processoSei }] : []),
-                            ...(ppa.documentos ?? []).map((d) => ({ nome: d.nome, detalhe: `${tamanhoLegivel(d.tamanho)} · ${d.em}` })),
+                            ...(ppa.processoSei ? [{ nome: "Processo SEI", detalhe: ppa.processoSei, descricao: "Número do processo no SEI." }] : []),
+                            ...(ppa.documentos ?? []).map((d, i) => ({ nome: d.nome, detalhe: `${tamanhoLegivel(d.tamanho)} · ${d.em}`, descricao: d.descricao, indice: i, baixavel: !!d.dados })),
                         ]
                             .map(
-                                (d) => `<div class="d-flex align-items-center gap-2 border border-dashed rounded p-2 mb-2">
-                            <i class="ti ti-file-text fs-xl text-muted"></i>
-                            <div class="text-truncate"><div class="fs-13 fw-medium text-truncate">${esc(d.nome)}</div><div class="fs-xxs text-muted">${esc(d.detalhe)}</div></div></div>`
+                                (d) => `<div class="d-flex align-items-start gap-2 border border-dashed rounded p-2 mb-2">
+                            <i class="ti ti-file-text fs-xl text-muted mt-1"></i>
+                            <div class="flex-grow-1" style="min-width:0"><div class="fs-13 fw-medium text-truncate">${esc(d.nome)}</div><div class="fs-xxs text-muted">${esc(d.detalhe)}</div>${d.descricao ? `<div class="fs-12 mt-1">${esc(d.descricao)}</div>` : ""}</div>
+                            ${d.indice !== undefined && gerenciaDocumentos ? `<button type="button" class="btn btn-light btn-sm btn-icon rounded-circle flex-shrink-0 text-danger" data-remover="${d.indice}" title="Excluir da visão" aria-label="Excluir documento"><i class="ti ti-trash"></i></button>` : ""}
+                            ${d.indice !== undefined ? `<button type="button" class="btn btn-light btn-sm btn-icon rounded-circle flex-shrink-0" data-baixar="${d.indice}" ${d.baixavel ? "" : "disabled"} title="${d.baixavel ? "Baixar documento" : "Arquivo não guardado"}" aria-label="Baixar documento"><i class="ti ti-download"></i></button>` : ""}</div>`
                             )
                             .join("") || vazio("Nenhum documento.")}
                     </div>
@@ -261,14 +268,77 @@ function render() {
         </div>
     </div>`;
 
-    // Documentos do plano: guarda o nome e o tamanho; o arquivo em si não sai do navegador.
+    document.querySelectorAll("[data-chat]").forEach((b) =>
+        b.addEventListener("click", () => window.dispatchEvent(new CustomEvent("siplam:chat", { detail: { id: b.dataset.chat } })))
+    );
+
+    // Documentos do plano: o arquivo fica no navegador (até 1 MB cada), com uma descrição.
+    const LIMITE_ARQUIVO = 1024 * 1024;
     const seletor = document.getElementById("arquivo-documento");
     document.getElementById("add-documento")?.addEventListener("click", () => seletor.click());
-    seletor?.addEventListener("change", () => {
-        const novos = [...seletor.files].map((f) => ({ nome: f.name, tamanho: f.size, em: new Date().toLocaleDateString("pt-BR") }));
-        if (!novos.length) return;
-        updPpa(ppa.id, { documentos: [...(ppa.documentos ?? []), ...novos] });
-        render();
+    document.querySelectorAll("[data-baixar]").forEach((b) =>
+        b.addEventListener("click", () => {
+            const d = (ppa.documentos ?? [])[Number(b.dataset.baixar)];
+            if (!d?.dados) return;
+            const link = document.createElement("a");
+            link.href = d.dados;
+            link.download = d.nome;
+            link.click();
+        })
+    );
+    document.querySelectorAll("[data-remover]").forEach((b) =>
+        b.addEventListener("click", async () => {
+            const i = Number(b.dataset.remover);
+            const d = (ppa.documentos ?? [])[i];
+            if (!d) return;
+            const justificativa = await confirmarExclusao({
+                titulo: "Excluir documento",
+                texto: `“${d.nome}” deixa de aparecer para os usuários do plano.`,
+            });
+            if (!justificativa) return;
+            updPpa(ppa.id, { documentos: ppa.documentos.filter((_, k) => k !== i) }, justificativa);
+            render();
+        })
+    );
+    const lerArquivo = (f) =>
+        new Promise((ok) => {
+            if (f.size > LIMITE_ARQUIVO) return ok({ nome: f.name, tamanho: f.size });
+            const r = new FileReader();
+            r.onload = () => ok({ nome: f.name, tamanho: f.size, dados: r.result });
+            r.onerror = () => ok({ nome: f.name, tamanho: f.size });
+            r.readAsDataURL(f);
+        });
+    seletor?.addEventListener("change", async () => {
+        const arquivos = [...seletor.files];
+        seletor.value = "";
+        if (!arquivos.length) return;
+        const lidos = await Promise.all(arquivos.map(lerArquivo));
+        document.getElementById("modal-documento")?.remove();
+        document.body.insertAdjacentHTML(
+            "beforeend",
+            `<div class="modal fade" id="modal-documento" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title fs-15">Descrever o documento</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+                <div class="modal-body">${lidos
+                    .map(
+                        (d, i) => `<div class="mb-3"><label class="form-label" for="desc-${i}">${esc(d.nome)} <span class="text-muted fw-normal">· ${esc(tamanhoLegivel(d.tamanho))}</span></label>
+                        <textarea class="form-control" id="desc-${i}" rows="2" placeholder="O que é este documento?"></textarea>
+                        ${d.dados ? "" : '<div class="form-text text-warning">Passa de 1 MB: só o registro é guardado, sem o arquivo para baixar.</div>'}</div>`
+                    )
+                    .join("")}</div>
+                <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="salvar-documento">Adicionar</button></div>
+            </div></div></div>`
+        );
+        const el = document.getElementById("modal-documento");
+        const modal = new bootstrap.Modal(el);
+        el.addEventListener("hidden.bs.modal", () => el.remove(), { once: true });
+        document.getElementById("salvar-documento").addEventListener("click", () => {
+            const em = new Date().toLocaleDateString("pt-BR");
+            const novos = lidos.map((d, i) => ({ ...d, em, descricao: document.getElementById(`desc-${i}`).value.trim() }));
+            modal.hide();
+            updPpa(ppa.id, { documentos: [...(ppa.documentos ?? []), ...novos] });
+            render();
+        });
+        modal.show();
     });
 
     // Exporta o que a aba mostra agora — as linhas que passaram pelo filtro.
@@ -334,3 +404,4 @@ function render() {
         );
     });
 }
+

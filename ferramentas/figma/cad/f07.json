@@ -1,0 +1,64 @@
+{
+  "id": "f07",
+  "num": "07",
+  "nome": "Eixo",
+  "artigo": "o",
+  "titulo": "Eixos",
+  "pasta": "central-eixo",
+  "arquivo_lista": "central-eixo.html",
+  "menu": "Planejamento › Cadastros › Eixos",
+  "botao_novo": "Novo eixo",
+  "sub_lista": "Como a Área Central encontra um eixo já cadastrado e vê quando nada corresponde à busca.",
+  "sub_criar": "Como se cadastra um eixo: o nome e a descrição do que ele reúne.",
+  "sub_editar": "Corrigir um eixo e excluí-lo quando nenhum objetivo estratégico depende dele.",
+  "entrega_lista": "A lista dos eixos do plano. O eixo é o nível mais alto da estrutura estratégica: reúne objetivos estratégicos e, por eles, os Programas. A lista serve para achar um eixo, criar um novo e abrir a edição de cada um.",
+  "entrega_criar": "Cadastra um eixo no plano corrente. O eixo tem só nome e descrição; os objetivos estratégicos é que apontam para ele, no cadastro de Objetivos.",
+  "entrega_editar": "Edita o nome e a descrição de um eixo e permite excluí-lo. Eixo com objetivos estratégicos vinculados não pode ser excluído.",
+  "ao_fim_lista": "Novo eixo abre o formulário de criação; Editar abre a edição do eixo.",
+  "busca": "A barra tem uma busca livre por nome e descrição, sem diferenciar maiúsculas. O filtro só vale ao clicar em Buscar; Limpar tira o filtro. Exportar gera CSV ou Excel das linhas visíveis.",
+  "colunas": [
+    ["Eixo", "Texto", "—", "Nome do eixo; ordena a listagem."],
+    ["Descrição", "Texto", "—", "Truncada em uma linha, com reticências."],
+    ["Ações", "—", "—", "Editar abre a edição; quem só consulta vê Ver."]
+  ],
+  "estados_lista": [
+    "Com resultados — tabela preenchida",
+    "Busca aplicada — só os eixos que casam",
+    "Sem resultado — linha única “Nenhum registro corresponde ao filtro”",
+    "Nenhum eixo cadastrado — mesma linha, com o convite a criar",
+    "Somente leitura — sem o botão Novo eixo"
+  ],
+  "telas_lista": [
+    ["f07_01_lista", "Listagem", "a pessoa abre Planejamento › Cadastros › Eixos"],
+    ["f07_02_busca", "Busca aplicada", "digita “Educação” em Eixo e clica em Buscar — só o eixo que casa fica"],
+    ["f07_04_sem_resultado", "Sem resultado", "nenhum eixo corresponde — a tabela mostra uma linha única"]
+  ],
+  "campos": [
+    ["Nome do eixo", "Texto", "Sim", "Nome do eixo no plano; ordena a listagem."],
+    ["Descrição", "Texto longo", "Não", "O que o eixo reúne."]
+  ],
+  "estados_criar": [
+    "Formulário vazio",
+    "Obrigatório — o nome do eixo mostra a mensagem",
+    "Preenchido — pronto para cadastrar"
+  ],
+  "telas_criar": [
+    ["f07_05_criar", "Formulário vazio", "clica em Novo eixo — nome e descrição, vazios"],
+    ["f07_06_criar_erros", "Campo obrigatório", "clica em Cadastrar sem preencher — o nome do eixo é obrigatório"],
+    ["f07_09_criar_preenchido", "Preenchido", "escreve o nome e a descrição — Cadastrar grava no plano corrente"]
+  ],
+  "regras_form": [
+    {"titulo": "Vínculo com o plano", "texto": "Todo registro nasce com o plano corrente. Um eixo de um plano não aparece em outro."}
+  ],
+  "telas_editar": [
+    ["f07_10_editar", "Editar eixo", "clica em Editar numa linha — os campos vêm preenchidos"],
+    ["f07_11_excluir", "Excluir eixo", "clica em Excluir — a janela pede confirmação"]
+  ],
+  "estados_editar": [
+    "Edição — campos preenchidos, Excluir, Cancelar e Salvar no cabeçalho",
+    "Excluir — janela de confirmação",
+    "Com objetivos vinculados — Excluir desabilitado, com o motivo"
+  ],
+  "exclusao": "Registro com vínculo não pode ser excluído; sem vínculo, pode. Um eixo com objetivos estratégicos vinculados mostra o botão Excluir visível e desabilitado, com o motivo. Não é preciso digitar o nome para confirmar.",
+  "regras_editar": []
+}

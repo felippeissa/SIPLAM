@@ -1,0 +1,73 @@
+{
+  "id": "f08",
+  "num": "08",
+  "nome": "Objetivo estratégico",
+  "artigo": "o",
+  "titulo": "Objetivos Estratégicos",
+  "pasta": "central-objetivo",
+  "arquivo_lista": "central-objetivo.html",
+  "menu": "Planejamento › Cadastros › Objetivos Estratégicos",
+  "botao_novo": "Novo objetivo estratégico",
+  "sub_lista": "Como a Área Central encontra um objetivo estratégico, filtra por eixo e vê quando nada corresponde.",
+  "sub_criar": "Como se cadastra um objetivo estratégico e se escolhe o eixo a que ele pertence.",
+  "sub_editar": "Corrigir um objetivo estratégico e excluí-lo quando nenhum Programa depende dele.",
+  "entrega_lista": "A lista dos objetivos estratégicos do plano, cada um com o eixo a que pertence. O objetivo diz o que o eixo se propõe a alcançar, e é a ele que o Programa aponta. A lista serve para achar um objetivo, filtrar por eixo e abrir criar e editar.",
+  "entrega_criar": "Cadastra um objetivo estratégico no plano corrente. O eixo é obrigatório e se escolhe pela busca: digita-se, vê-se o que já existe e escolhe-se. O objetivo é que guarda o eixo; o eixo não lista seus objetivos.",
+  "entrega_editar": "Edita o nome, a descrição e o eixo de um objetivo e permite excluí-lo. Objetivo com Programas vinculados não pode ser excluído.",
+  "ao_fim_lista": "Novo objetivo estratégico abre o formulário de criação; Editar abre a edição.",
+  "busca": "Busca livre por nome e descrição, mais o filtro de Eixo, de escolha múltipla. O filtro só vale ao clicar em Buscar; Limpar tira tudo. Exportar gera CSV ou Excel das linhas visíveis.",
+  "colunas": [
+    ["Objetivo estratégico", "Texto", "—", "Nome do objetivo; ordena a listagem."],
+    ["Eixo", "Texto", "—", "Eixo a que o objetivo pertence."],
+    ["Descrição", "Texto", "—", "Truncada em uma linha, com reticências."],
+    ["Ações", "—", "—", "Editar abre a edição; quem só consulta vê Ver."]
+  ],
+  "estados_lista": [
+    "Com resultados — tabela preenchida",
+    "Busca aplicada — só os objetivos que casam",
+    "Filtro de eixo aberto — escolha múltipla",
+    "Sem resultado — linha única “Nenhum registro corresponde ao filtro”",
+    "Somente leitura — sem o botão de criar"
+  ],
+  "telas_lista": [
+    ["f08_01_lista", "Listagem", "a pessoa abre Planejamento › Cadastros › Objetivos Estratégicos"],
+    ["f08_02_busca", "Busca aplicada", "digita parte do nome e clica em Buscar — só os objetivos que casam ficam"],
+    ["f08_03_filtro", "Filtro de eixo", "abre o filtro de Eixo, de escolha múltipla"],
+    ["f08_04_sem_resultado", "Sem resultado", "nenhum objetivo corresponde — a tabela mostra uma linha única"]
+  ],
+  "campos": [
+    ["Nome do objetivo estratégico", "Texto", "Sim", "Identifica o objetivo."],
+    ["Descrição", "Texto longo", "Não", "Explica o objetivo; vem antes do eixo, porque descreve o registro e não o nível acima."],
+    ["Eixo", "Busca", "Sim", "Um só. Busca o que existe no plano; escolher mostra a linha com nome e descrição, e a busca some enquanto houver escolha."]
+  ],
+  "comp_extra": [
+    ["Busca e vincula", "input.form-control + lista de sugestões — padrão “buscar o que existe, criar o que falta”"]
+  ],
+  "estados_criar": [
+    "Formulário vazio",
+    "Obrigatórios — nome e eixo com mensagem",
+    "Busca do eixo — sugestões com nome e descrição",
+    "Preenchido — eixo escolhido aparece numa linha, com opção de trocar"
+  ],
+  "telas_criar": [
+    ["f08_05_criar", "Formulário vazio", "clica em Novo objetivo estratégico — nome, descrição e eixo"],
+    ["f08_06_criar_erros", "Campos obrigatórios", "clica em Cadastrar sem preencher — nome e eixo são obrigatórios"],
+    ["f08_07_criar_busca_eixo", "Busca do eixo", "digita parte do nome do eixo — a lista mostra o que já existe"],
+    ["f08_09_criar_preenchido", "Preenchido", "escolhe o eixo na lista — Cadastrar grava o objetivo"]
+  ],
+  "regras_form": [
+    {"titulo": "Quem guarda o vínculo", "texto": "O objetivo aponta para o eixo; o eixo não aponta para os objetivos. Por isso o eixo é obrigatório aqui e o cadastro de Eixos não tem campo de objetivos."}
+  ],
+  "telas_editar": [
+    ["f08_10_editar", "Editar objetivo", "clica em Editar numa linha — os campos vêm preenchidos"],
+    ["f08_11_excluir", "Excluir objetivo", "clica em Excluir — a janela pede confirmação"],
+    ["f08_12_bloqueado", "Exclusão bloqueada", "objetivo com Programas vinculados — Excluir fica desabilitado, com o motivo"]
+  ],
+  "estados_editar": [
+    "Edição — campos preenchidos, Excluir, Cancelar e Salvar no cabeçalho",
+    "Excluir — janela de confirmação",
+    "Com Programas vinculados — Excluir desabilitado, com o motivo"
+  ],
+  "exclusao": "Registro com vínculo não pode ser excluído; sem vínculo, pode. Um objetivo com Programas vinculados mostra o botão Excluir visível e desabilitado, com o motivo.",
+  "regras_editar": []
+}

@@ -9,12 +9,13 @@
  * fora do padrão, e ele disputa com o modal do Bootstrap o ajuste de scrollbar
  * no `body`, o que deslocava a caixa na tela.
  *
- * Para o que é pesado de perder — um plano inteiro — pede que a pessoa digite o
+ * Toda exclusão pede justificativa (no mínimo 20 caracteres), que vai para o histórico. Para o que é pesado de perder — um plano inteiro — pede que a pessoa digite o
  * nome exato, para a exclusão não acontecer por reflexo.
  */
 import { esc } from "./ui.js";
 
 const ID = "modal-confirmar-exclusao";
+const MIN_JUSTIFICATIVA = 20;
 
 /**
  * @param {object} opcoes
@@ -22,7 +23,7 @@ const ID = "modal-confirmar-exclusao";
  * @param {string} opcoes.texto         o que será removido
  * @param {string} [opcoes.confirmar]   rótulo do botão
  * @param {string} [opcoes.digitar]     texto exato que a pessoa precisa digitar
- * @returns {Promise<boolean>}
+ * @returns {Promise<string|false>}  a justificativa digitada, ou `false` se a pessoa desistiu
  */
 export function confirmarExclusao({ titulo, texto, confirmar = "Excluir", digitar = null }) {
     document.getElementById(ID)?.remove();
@@ -56,6 +57,13 @@ export function confirmarExclusao({ titulo, texto, confirmar = "Excluir", digita
                             </div>`
                                     : ""
                             }
+                            <div class="mt-3">
+                                <label class="form-label fs-13 d-block mb-2" for="${ID}-just">Justificativa <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="${ID}-just" rows="3"
+                                          placeholder="Explique por que está excluindo (mínimo de ${MIN_JUSTIFICATIVA} caracteres)"></textarea>
+                                <div class="invalid-feedback">Informe a justificativa, com ao menos ${MIN_JUSTIFICATIVA} caracteres.</div>
+                            </div>
+                            <p class="fs-12 text-muted mt-2 mb-0">A exclusão e a justificativa ficam registradas no histórico.</p>
                         </div>
                     </div>
                 </div>
@@ -70,10 +78,12 @@ export function confirmarExclusao({ titulo, texto, confirmar = "Excluir", digita
 
     const el = document.getElementById(ID);
     const campo = digitar ? document.getElementById(`${ID}-campo`) : null;
+    const justificativa = document.getElementById(`${ID}-just`);
+    justificativa.addEventListener("input", () => justificativa.classList.remove("is-invalid"));
     const modal = new bootstrap.Modal(el);
 
     return new Promise((resolve) => {
-        let confirmado = false;
+        let confirmado = false; // vira o texto da justificativa ao confirmar
 
         function tentar() {
             // O nome aparece em caixa alta no rótulo; quem copia o que vê digita
@@ -85,7 +95,13 @@ export function confirmarExclusao({ titulo, texto, confirmar = "Excluir", digita
                 campo.select();
                 return;
             }
-            confirmado = true;
+            const texto = justificativa.value.trim();
+            if (texto.length < MIN_JUSTIFICATIVA) {
+                justificativa.classList.add("is-invalid");
+                justificativa.focus();
+                return;
+            }
+            confirmado = texto;
             modal.hide();
         }
 

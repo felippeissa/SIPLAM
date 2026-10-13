@@ -606,6 +606,14 @@ function carregar() {
         if (!ppa.situacao) ppa.situacao = "elaboracao";
         if (ppa.processoSei === undefined) ppa.processoSei = "";
     }
+    // Histórico de ações nos cadastros (auditoria). Estado antigo nasce sem eventos.
+    if (!Array.isArray(base.auditoria)) base.auditoria = [];
+    // Protótipo: um histórico de exemplo, uma vez só, para a lista não nascer vazia.
+    if (!base.auditoriaSemeada) {
+        base.auditoriaSemeada = true;
+        if (!base.auditoria.length) base.auditoria = historicoDeExemplo(base);
+    }
+
     return base;
 }
 
@@ -866,6 +874,287 @@ export function reiniciar() {
  * identificação, descrição e o vínculo com o nível acima — então uma função
  * serve as quatro.
  */
+/* ---------- Histórico (auditoria) ---------- */
+
+/** Eventos de exemplo, montados sobre registros que existem, do mais novo para o mais antigo. */
+function historicoDeExemplo(base) {
+    const eventos = [];
+    const ppaCorr = base.ppas.find((p) => p.situacao === "elaboracao") ?? base.ppas[0];
+    const quando = (diasAtras, hora) => {
+        const d = new Date();
+        d.setDate(d.getDate() - diasAtras);
+        d.setHours(hora, 12, 0, 0);
+        return d;
+    };
+    const add = (dias, hora, ator, perfil, colecao, registro, acao, extra = {}) => {
+        const d = quando(dias, hora);
+        eventos.push({
+            id: `au-ex${eventos.length}`,
+            em: d.toISOString(),
+            dataHora: `${d.toLocaleDateString("pt-BR")} ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`,
+            colecao,
+            registroId: registro.id,
+            registroNome: nomeDoRegistro(registro),
+            acao,
+            acaoOriginal: "",
+            ator,
+            perfil,
+            ppaId: colecao === "ppas" ? registro.id : (registro.ppaId ?? ppaCorr?.id ?? null),
+            campos: [],
+            antes: null,
+            depois: null,
+            reverte: null,
+            justificativa: "",
+            revertidoPor: null,
+            ...extra,
+        });
+    };
+    const eixo = base.eixos.find((e) => e.ppaId === ppaCorr?.id) ?? base.eixos[0];
+    const objetivo = base.objetivos.find((o) => o.ppaId === ppaCorr?.id) ?? base.objetivos[0];
+    const programa = base.programas.find((p) => p.ppaId === ppaCorr?.id) ?? base.programas[0];
+    const causa = (base.causas ?? [])[0];
+
+    if (causa) add(0, 15, "João Peixoto", "admin-central", "causas", causa, "editou", { campos: ["descricao"], antes: { descricao: "Texto anterior da descrição." }, depois: { descricao: causa.descricao ?? "" } });
+    if (programa) add(1, 10, "Maria Fonseca", "admin-central", "programas", programa, "editou", { campos: ["eixo"], antes: { eixo: "Eixo anterior" }, depois: { eixo: programa.eixo ?? "" } });
+    if (objetivo) add(2, 16, "Maria Fonseca", "admin-central", "objetivos", objetivo, "criou", { campos: Object.keys(objetivo), depois: clone(objetivo) });
+    if (eixo) add(3, 9, "João Peixoto", "gestao-central", "eixos", eixo, "editou", { campos: ["descricao"], antes: { descricao: "Descrição revisada em reunião de alinhamento." }, depois: { descricao: eixo.descricao ?? "" } });
+    if (ppaCorr) add(4, 14, "João Peixoto", "admin-central", "ppas", ppaCorr, "editou", { campos: ["situacao"], antes: { situacao: "elaboracao" }, depois: { situacao: ppaCorr.situacao }, justificativa: "Plano devolvido para ajustes dos órgãos setoriais." });
+    add(6, 11, "Maria Fonseca", "admin-central", "eixos", { id: "eixo-duplicado", nome: "Eixo duplicado" }, "excluiu", {
+        campos: ["nome"],
+        antes: { id: "eixo-duplicado", nome: "Eixo duplicado", ppaId: ppaCorr?.id },
+        justificativa: "Cadastro duplicado, já existia um eixo com o mesmo nome.",
+    });
+    return eventos;
+}
+
+/*
+ * Toda criação, edição e exclusão nos cadastros deixa um evento aqui: quem, quando, o que era antes e o
+ * que ficou. O log só cresce — reverter uma ação não a apaga, acrescenta outro evento com a justificativa
+ * (RNF1 e RNF2 do documento de requisitos).
+ */
+
+const clone = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
+const igual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const LIMITE_AUDITORIA = 500;
+const ROTULO_ACAO = { criou: "Criou", editou: "Editou", excluiu: "Excluiu", reverteu: "Reverteu" };
+
+function atorAtual() {
+    let nome = null;
+    let perfil = "";
+    try {
+        nome = localStorage.getItem("siplam.usuario");
+        perfil = localStorage.getItem("siplam.perfilSessao") || localStorage.getItem("siplam.perfil") || "";
+    } catch (e) {
+        /* navegador sem armazenamento */
+    }
+    return { nome: nome || estado.analista || "Sistema", perfil };
+}
+
+const nomeDoRegistro = (r) => r?.nome ?? r?.titulo ?? r?.id ?? "—";
+
+/** O plano a que o registro pertence: o próprio PPA, ou o `ppaId` do registro. */
+const planoDoRegistro = (colecao, r) => (colecao === "ppas" ? r?.id : r?.ppaId) ?? "";
+
+function registrarAuditoria({ colecao, registro, acao, antes, depois, campos, reverte = null, justificativa = "", acaoOriginal = "" }) {
+    if (!estado.auditoria) estado.auditoria = [];
+    const ator = atorAtual();
+    const agora = new Date();
+    const evento = {
+        id: `au-${uid()}${uid()}`,
+        em: agora.toISOString(),
+        dataHora: `${agora.toLocaleDateString("pt-BR")} ${agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`,
+        colecao,
+        registroId: registro.id,
+        registroNome: nomeDoRegistro(registro),
+        acao,
+        acaoOriginal,
+        ator: ator.nome,
+        perfil: ator.perfil,
+        ppaId: planoDoRegistro(colecao, registro),
+        campos,
+        antes,
+        depois,
+        reverte,
+        justificativa,
+        revertidoPor: null,
+    };
+    estado.auditoria.unshift(evento);
+    if (estado.auditoria.length > LIMITE_AUDITORIA) estado.auditoria.length = LIMITE_AUDITORIA;
+    return evento;
+}
+
+/** Aplica o patch e registra só o que de fato mudou; patch sem mudança não deixa evento. */
+function editarComAuditoria(colecao, item, patch, justificativa = "") {
+    const campos = Object.keys(patch).filter((k) => !igual(item[k], patch[k]));
+    const antes = {};
+    const depois = {};
+    campos.forEach((k) => {
+        antes[k] = clone(item[k]);
+        depois[k] = clone(patch[k]);
+    });
+    Object.assign(item, patch);
+    if (campos.length) registrarAuditoria({ colecao, registro: item, acao: "editou", antes, depois, campos, justificativa });
+}
+
+export const eventosDeAuditoria = () => estado?.auditoria ?? [];
+
+export const ROTULO_CADASTRO = {
+    ppas: "PPA",
+    programas: "Programa",
+    eixos: "Eixo",
+    objetivos: "Objetivo estratégico",
+    causas: "Causa",
+    subcausas: "Subcausa",
+    problemas: "Problema",
+    populacoes: "População afetada",
+    indicadores: "Indicador",
+    usuarios: "Usuário",
+    iniciativas: "Iniciativa",
+    entregas: "Entrega",
+    diagnosticos: "Diagnóstico",
+    vinculos: "Vínculo de Projeto",
+    vinculosAcao: "Vínculo de Ação Orçamentária",
+};
+
+// O histórico do próprio registro (tramitação, comentários, auditoria) não é vínculo: some junto com ele.
+const SEM_VINCULO = new Set(["auditoria", "eventos", "comentarios"]);
+
+/**
+ * Quem aponta para o registro. Devolve `[{ colecao, rotulo, qtd }]`; vazio quer dizer que ele está livre.
+ *
+ * É a regra única de exclusão: algo que já está vinculado não se exclui, nem pela tela nem por aqui, e a
+ * reversão de uma criação também a respeita. A busca é pelo id em qualquer outro registro do estado, o que
+ * pega os vínculos de hoje e os de amanhã sem manter uma lista de quem aponta para quem.
+ */
+export function vinculosDe(colecao, id) {
+    const registro = (estado[colecao] ?? []).find((r) => r.id === id);
+    if (!registro) return [];
+    const contagem = new Map();
+    const soma = (c) => contagem.set(c, (contagem.get(c) ?? 0) + 1);
+    for (const [nomeColecao, lista] of Object.entries(estado)) {
+        if (!Array.isArray(lista) || SEM_VINCULO.has(nomeColecao)) continue;
+        // usuário carrega o `ppaId` do plano em que se cadastrou, mas não está “dentro” dele
+        if (colecao === "ppas" && nomeColecao === "usuarios") continue;
+        for (const r of lista) {
+            if (nomeColecao === colecao && r.id === id) continue;
+            if (JSON.stringify(r).includes(`"${id}"`)) soma(nomeColecao);
+        }
+    }
+    // Eixo e objetivo estratégico são apontados pelo nome nos Programas.
+    if (colecao === "eixos") estado.programas.filter((p) => p.eixo === registro.nome).forEach(() => soma("programas"));
+    if (colecao === "objetivos") estado.programas.filter((p) => p.objetivoEstrategico === registro.nome).forEach(() => soma("programas"));
+    return [...contagem].map(([c, qtd]) => ({ colecao: c, rotulo: ROTULO_CADASTRO[c] ?? c, qtd }));
+}
+
+export const descreverVinculos = (v) => v.map((x) => `${x.rotulo} (${x.qtd})`).join(", ");
+
+/** Excluir exige justificativa e registro livre de vínculos. */
+function podeExcluir(colecao, registro, justificativa) {
+    const texto = String(justificativa ?? "").trim();
+    if (texto.length < 20) return { ok: false, motivo: "Justifique a exclusão com ao menos 20 caracteres." };
+    const v = vinculosDe(colecao, registro.id);
+    if (v.length) return { ok: false, motivo: `Não pode ser excluído: está vinculado a ${descreverVinculos(v)}.`, vinculos: v };
+    return { ok: true, texto };
+}
+
+/**
+ * Dá para reverter este evento? Devolve `{ ok: true }` ou `{ ok: false, motivo }`.
+ *
+ * As travas existem para não sobrescrever trabalho de outra pessoa: só o Administrador central reverte;
+ * um evento só se reverte uma vez; se o registro mudou depois, reverte-se primeiro o mais recente;
+ * criação não se reverte se algo já aponta para o registro; e registros de um plano fora da elaboração
+ * só mudam pelo fluxo de alteração.
+ */
+export function avaliarReversao(evento) {
+    const { perfil } = atorAtual();
+    if (perfil !== "admin-central") return { ok: false, motivo: "Só o Administrador central reverte ações." };
+    if (!evento) return { ok: false, motivo: "Evento não encontrado." };
+    if ((evento.colecao === "iniciativas" || evento.colecao === "entregas") && evento.acao === "excluiu") {
+        return { ok: false, motivo: "Excluir Iniciativa ou Entrega leva junto vínculos e histórico, e não se reverte por aqui." };
+    }
+    if (evento.revertidoPor) return { ok: false, motivo: `Este evento já foi revertido por ${evento.revertidoPor.por} em ${evento.revertidoPor.em}.` };
+
+    const doRegistro = (estado.auditoria ?? []).filter((e) => e.colecao === evento.colecao && e.registroId === evento.registroId);
+    const instante = new Date(evento.em).getTime();
+    const posteriores = doRegistro.filter((e) => {
+        if (e.id === evento.id || new Date(e.em).getTime() <= instante || e.revertidoPor) return false;
+        // reversão de um evento ainda mais novo devolve o registro ao estado anterior: não conta como mudança
+        if (e.reverte) {
+            const original = doRegistro.find((x) => x.id === e.reverte);
+            if (original && new Date(original.em).getTime() > instante) return false;
+        }
+        return true;
+    });
+    if (posteriores.length) {
+        const m = posteriores[0];
+        return { ok: false, motivo: `O registro mudou depois (${ROTULO_ACAO[m.acao] ?? m.acao} em ${m.dataHora}, por ${m.ator}). Reverta primeiro a ação mais recente.` };
+    }
+
+    if (evento.colecao !== "usuarios" && evento.ppaId) {
+        const plano = estado.ppas.find((p) => p.id === evento.ppaId);
+        if (plano && plano.situacao !== "elaboracao") {
+            return { ok: false, motivo: "O plano não está em elaboração. Mudar um plano já fechado é o fluxo de alteração, que ainda não existe." };
+        }
+    }
+
+    const lista = estado[evento.colecao] ?? [];
+    const atual = lista.find((r) => r.id === evento.registroId);
+    if (evento.antes === null) {
+        if (!atual) return { ok: false, motivo: "O registro criado por este evento já não existe." };
+        const quem = vinculosDe(evento.colecao, atual.id);
+        if (quem.length) return { ok: false, motivo: `Há registros que apontam para ele (${descreverVinculos(quem)}). Remova esses vínculos antes.` };
+    } else if (evento.depois === null) {
+        if (atual) return { ok: false, motivo: "O registro excluído por este evento já foi recriado." };
+    } else {
+        if (!atual) return { ok: false, motivo: "O registro já não existe." };
+        const mudou = evento.campos.filter((k) => !igual(atual[k], evento.depois[k]));
+        if (mudou.length) return { ok: false, motivo: "O valor atual não é mais o que este evento gravou." };
+    }
+    return { ok: true };
+}
+
+/** Reverte um evento, com justificativa. Devolve `{ ok }` ou `{ ok: false, motivo }`. */
+export function reverterEvento(eventoId, justificativa) {
+    const ev = (estado.auditoria ?? []).find((e) => e.id === eventoId);
+    const aval = avaliarReversao(ev);
+    if (!aval.ok) return aval;
+    const texto = String(justificativa ?? "").trim();
+    if (texto.length < 20) return { ok: false, motivo: "Justifique a reversão com ao menos 20 caracteres." };
+
+    let registro;
+    let antes;
+    let depois;
+    if (ev.antes === null) {
+        // criação revertida: o registro sai
+        registro = estado[ev.colecao].find((r) => r.id === ev.registroId);
+        antes = clone(registro);
+        depois = null;
+        estado[ev.colecao] = estado[ev.colecao].filter((r) => r.id !== ev.registroId);
+    } else if (ev.depois === null) {
+        // exclusão revertida: o registro volta, com o mesmo id
+        registro = clone(ev.antes);
+        estado[ev.colecao].push(registro);
+        antes = null;
+        depois = clone(registro);
+    } else {
+        // edição revertida: os campos voltam ao que eram
+        registro = estado[ev.colecao].find((r) => r.id === ev.registroId);
+        antes = {};
+        depois = {};
+        ev.campos.forEach((k) => {
+            antes[k] = clone(registro[k]);
+            if (ev.antes[k] === undefined) delete registro[k];
+            else registro[k] = clone(ev.antes[k]);
+            depois[k] = clone(registro[k]);
+        });
+    }
+    const novo = registrarAuditoria({ colecao: ev.colecao, registro, acao: "reverteu", acaoOriginal: ev.acao, antes, depois, campos: ev.campos, reverte: ev.id, justificativa: texto });
+    ev.revertidoPor = { eventoId: novo.id, em: novo.dataHora, por: novo.ator, justificativa: texto };
+    gravar();
+    return { ok: true };
+}
+
+
 export function addItem(colecao, item) {
     // O PPA é o vínculo de tudo que se cadastra dentro dele.
     const novo = {
@@ -875,39 +1164,55 @@ export function addItem(colecao, item) {
         criadoEm: hoje(),
     };
     estado[colecao].push(novo);
+    registrarAuditoria({ colecao, registro: novo, acao: "criou", antes: null, depois: clone(novo), campos: Object.keys(novo) });
     gravar();
     return novo;
 }
 
-export function updItem(colecao, id, patch) {
+export function updItem(colecao, id, patch, justificativa = "") {
     const item = estado[colecao].find((x) => x.id === id);
     if (!item) return;
-    Object.assign(item, patch);
+    editarComAuditoria(colecao, item, patch, justificativa);
     gravar();
 }
 
-export function removeItem(colecao, id) {
+/** Exclui um registro. Exige justificativa e que nada aponte para ele; devolve `{ ok }` ou `{ ok: false, motivo }`. */
+export function removeItem(colecao, id, justificativa) {
+    const item = estado[colecao].find((x) => x.id === id);
+    if (!item) return { ok: false, motivo: "Registro não encontrado." };
+    const aval = podeExcluir(colecao, item, justificativa);
+    if (!aval.ok) return aval;
     estado[colecao] = estado[colecao].filter((x) => x.id !== id);
+    registrarAuditoria({ colecao, registro: item, acao: "excluiu", antes: clone(item), depois: null, campos: Object.keys(item), justificativa: aval.texto });
     gravar();
+    return { ok: true };
 }
 
 /* ---------- PPA ---------- */
 
 export function addPpa(ppa) {
-    estado.ppas.push({ ...ppa, id: ppa.id || `ppa-${uid()}` });
+    const novo = { ...ppa, id: ppa.id || `ppa-${uid()}` };
+    estado.ppas.push(novo);
+    registrarAuditoria({ colecao: "ppas", registro: novo, acao: "criou", antes: null, depois: clone(novo), campos: Object.keys(novo) });
     gravar();
 }
 
-export function updPpa(id, patch) {
+export function updPpa(id, patch, justificativa = "") {
     const ppa = estado.ppas.find((p) => p.id === id);
     if (!ppa) return;
-    Object.assign(ppa, patch);
+    editarComAuditoria("ppas", ppa, patch, justificativa);
     gravar();
 }
 
-export function removePpa(id) {
+export function removePpa(id, justificativa) {
+    const ppa = estado.ppas.find((p) => p.id === id);
+    if (!ppa) return { ok: false, motivo: "Plano não encontrado." };
+    const aval = podeExcluir("ppas", ppa, justificativa);
+    if (!aval.ok) return aval;
     estado.ppas = estado.ppas.filter((p) => p.id !== id);
+    registrarAuditoria({ colecao: "ppas", registro: ppa, acao: "excluiu", antes: clone(ppa), depois: null, campos: Object.keys(ppa), justificativa: aval.texto });
     gravar();
+    return { ok: true };
 }
 
 /** Modelo de um plano novo, já com o período seguinte ao último cadastrado. */
@@ -968,13 +1273,15 @@ export function updIniciativa(id, patch) {
     gravar();
 }
 
-export function removeIniciativa(id) {
-    const entregas = estado.entregas.filter((e) => e.iniciativaId === id).map((e) => e.id);
+export function removeIniciativa(id, justificativa) {
+    const ini = estado.iniciativas.find((i) => i.id === id);
+    if (!ini) return { ok: false, motivo: "Iniciativa não encontrada." };
+    const aval = podeExcluir("iniciativas", ini, justificativa);
+    if (!aval.ok) return aval;
     estado.iniciativas = estado.iniciativas.filter((i) => i.id !== id);
-    estado.entregas = estado.entregas.filter((e) => e.iniciativaId !== id);
-    estado.vinculos = estado.vinculos.filter((v) => !entregas.includes(v.entregaId));
-    estado.vinculosAcao = estado.vinculosAcao.filter((v) => !entregas.includes(v.entregaId));
+    registrarAuditoria({ colecao: "iniciativas", registro: ini, acao: "excluiu", antes: clone(ini), depois: null, campos: Object.keys(ini), justificativa: aval.texto });
     gravar();
+    return { ok: true };
 }
 
 /* ---------- Fluxo da Iniciativa ---------- */
@@ -1070,11 +1377,15 @@ export function updEntrega(id, patch) {
     gravar();
 }
 
-export function removeEntrega(id) {
+export function removeEntrega(id, justificativa) {
+    const entrega = estado.entregas.find((e) => e.id === id);
+    if (!entrega) return { ok: false, motivo: "Entrega não encontrada." };
+    const aval = podeExcluir("entregas", entrega, justificativa);
+    if (!aval.ok) return aval;
     estado.entregas = estado.entregas.filter((e) => e.id !== id);
-    estado.vinculos = estado.vinculos.filter((v) => v.entregaId !== id);
-    estado.vinculosAcao = estado.vinculosAcao.filter((v) => v.entregaId !== id);
+    registrarAuditoria({ colecao: "entregas", registro: entrega, acao: "excluiu", antes: clone(entrega), depois: null, campos: Object.keys(entrega), justificativa: aval.texto });
     gravar();
+    return { ok: true };
 }
 
 /* ---------- Vínculos ---------- */
@@ -1109,13 +1420,14 @@ export function toggleAcao(entregaId, acaoId) {
 
 export function addPrograma(programa) {
     estado.programas.push(programa);
+    registrarAuditoria({ colecao: "programas", registro: programa, acao: "criou", antes: null, depois: clone(programa), campos: Object.keys(programa) });
     gravar();
 }
 
 export function updPrograma(id, patch) {
     const programa = estado.programas.find((p) => p.id === id);
     if (!programa) return;
-    Object.assign(programa, patch);
+    editarComAuditoria("programas", programa, patch);
     gravar();
 }
 

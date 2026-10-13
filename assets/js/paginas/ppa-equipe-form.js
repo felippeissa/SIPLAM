@@ -129,7 +129,7 @@ function montar() {
             confirmar: "Remover",
         });
         if (!ok) return;
-        salvarEquipe(ppa, vinculosDaEquipe(estado, ppa).filter((m) => m.id !== membroId));
+        salvarEquipe(ppa, vinculosDaEquipe(estado, ppa).filter((m) => m.id !== membroId), ok);
         avisar("Membro removido da equipe.");
         window.location.href = voltar;
     });

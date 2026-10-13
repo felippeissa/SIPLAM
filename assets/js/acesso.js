@@ -41,7 +41,7 @@
             id: "setorial",
             nome: "Planejamento setorial",
             visao: "setorial",
-            inicio: "programas.html",
+            inicio: "ppa-detalhe.html",
             leitura: false,
             descricao: "Elabora e envia as contribuições do órgão",
         },
@@ -60,7 +60,7 @@
             // Acumulativo: faz tudo que o Setorial faz, mais aprovar. A matriz de
             // mapeamento o põe entre quem usa as telas do setorial, e por isso ele
             // entra pela mesma porta.
-            inicio: "programas.html",
+            inicio: "ppa-detalhe.html",
             leitura: false,
             descricao: "Faz tudo que o Planejamento setorial faz e aprova a proposta do órgão",
         },

@@ -5,7 +5,9 @@
  * Corrige T6.1.7: a ordenação por prioridade aplicava uma regra implícita que a
  * interface nunca explicava.
  */
-import { obterEstado, marcarSemContribuicao, reconsiderarParticipacao, removeIniciativa, noPlano } from "../dados/store.js";
+import { obterEstado, marcarSemContribuicao, reconsiderarParticipacao, removeIniciativa, noPlano, vinculosDe, descreverVinculos } from "../dados/store.js";
+import { confirmarExclusao } from "../confirmar.js";
+import { avisar } from "../toast.js";
 import {
     eixos,
     objetivos,
@@ -295,10 +297,20 @@ document.addEventListener("click", (e) => {
     const excluir = e.target.closest("[data-excluir]");
     if (excluir) {
         const ini = estado.iniciativas.find((i) => i.id === excluir.dataset.excluir);
-        if (confirm(`Excluir a Iniciativa “${ini.nome}”? As Entregas e os vínculos vão junto.`)) {
-            removeIniciativa(ini.id);
-            render();
+        const vinculos = vinculosDe("iniciativas", ini.id);
+        if (vinculos.length) {
+            avisar(`A Iniciativa está vinculada a ${descreverVinculos(vinculos)}. Desfaça os vínculos antes de excluir.`, "erro");
+            return;
         }
+        confirmarExclusao({
+            titulo: "Excluir Iniciativa",
+            texto: `A Iniciativa “${ini.nome}” será removida. A exclusão fica registrada no histórico.`,
+        }).then((justificativa) => {
+            if (!justificativa) return;
+            const r = removeIniciativa(ini.id, justificativa);
+            if (!r.ok) return avisar(r.motivo, "erro");
+            render();
+        });
         return;
     }
 });

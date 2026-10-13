@@ -1,0 +1,207 @@
+{
+ "id": "f06",
+ "nome": "PPA",
+ "artigo": "o",
+ "titulo": "Plano Plurianual",
+ "pasta": "central-ppa",
+ "arquivo_lista": "central-ppa.html",
+ "menu": "Planejamento › Cadastros › PPA",
+ "botao_novo": "Novo PPA",
+ "sub_lista": "Como a Área Central encontra um plano já cadastrado, aplica filtros e vê quando nada corresponde.",
+ "sub_criar": "Como o Administrador central abre um plano novo: vigência, situação e janelas de aprovação.",
+ "sub_editar": "Corrigir um plano em elaboração, ver um plano já fechado e excluir um plano.",
+ "entrega_lista": "A porta de entrada do cadastro. Lista os planos plurianuais existentes, permite localizar um deles por filtros e leva à criação de um novo e à edição de cada um. O sistema trabalha com um plano por vez, mas guarda todos os ciclos.",
+ "entrega_criar": "Abre um plano novo. O ciclo não tem tamanho fixo — pode ter menos de quatro anos — e dois planos não ocupam o mesmo ano. O plano nasce no ano anterior ao início da vigência. O valor previsto nunca é digitado: é a soma das Ações Orçamentárias das Entregas.",
+ "entrega_editar": "Edita um plano em elaboração e mostra um plano fechado. Os campos do plano travam quando ele sai da elaboração; a situação não, porque é ela que leva o plano adiante. Só um plano pode estar em elaboração e só um pode estar vigente por vez.",
+ "ao_fim_lista": "Novo PPA abre o formulário de criação; Editar abre a edição do plano.",
+ "busca": "Filtros da matriz de mapeamento: Plano (texto livre), Vigência (texto), Processo SEI (número do processo, texto), Situação (escolha múltipla) e Descrição (texto). O filtro só vale ao clicar em Buscar; Limpar tira todos. Exportar gera CSV ou Excel com as linhas visíveis.",
+ "colunas": [
+  [
+   "Plano",
+   "Texto",
+   "—",
+   "Nome do plano; ordena a listagem."
+  ],
+  [
+   "Vigência",
+   "Texto",
+   "—",
+   "Derivada dos anos do plano, por exemplo 2028–2031."
+  ],
+  [
+   "Processo SEI",
+   "Texto",
+   "—",
+   "Número do processo no SEI; vazio mostra traço."
+  ],
+  [
+   "Situação",
+   "Etiqueta",
+   "—",
+   "Em elaboração, Submetido, Aprovado, Reprovado, Vigente ou Encerrado."
+  ],
+  [
+   "Descrição",
+   "Texto",
+   "—",
+   "Truncada em uma linha, com reticências."
+  ],
+  [
+   "Ações",
+   "—",
+   "—",
+   "Editar abre a edição; quem só consulta vê o botão Ver."
+  ]
+ ],
+ "estados_lista": [
+  "Com resultados — tabela preenchida",
+  "Busca aplicada — só os planos que casam",
+  "Filtro de situação aberto — escolha múltipla",
+  "Sem resultado — linha única “Nenhum registro corresponde ao filtro”",
+  "Nenhum plano cadastrado — mesma linha, com o convite a criar",
+  "Somente leitura — sem o botão Novo PPA"
+ ],
+ "telas_lista": [
+  [
+   "f06_01_lista",
+   "Listagem",
+   "a pessoa abre Planejamento › Cadastros › PPA"
+  ],
+  [
+   "f06_02_busca",
+   "Busca aplicada",
+   "digita “2028” em Plano e clica em Buscar — a tabela mostra só o plano que casa"
+  ],
+  [
+   "f06_03_situacao",
+   "Filtro de situação",
+   "abre o filtro de Situação, de escolha múltipla"
+  ],
+  [
+   "f06_04_sem_resultado",
+   "Sem resultado",
+   "nenhum plano corresponde — a tabela mostra uma linha única"
+  ]
+ ],
+ "campos": [
+  [
+   "Nome do plano",
+   "Texto",
+   "Sim",
+   "Identifica o plano; único por ciclo."
+  ],
+  [
+   "Processo SEI",
+   "Texto",
+   "—",
+   "Vem do SEI, não daqui: o campo é bloqueado."
+  ],
+  [
+   "Vigência — primeiro ano",
+   "Ano",
+   "Sim",
+   "Seletor de ano. Basta um ano em comum com outro plano para haver conflito."
+  ],
+  [
+   "Vigência — último ano",
+   "Ano",
+   "Sim",
+   "Não pode ser menor que o primeiro. O ciclo pode ter menos de quatro anos."
+  ],
+  [
+   "Situação",
+   "Texto com lista",
+   "Sim",
+   "Em elaboração, Submetido, Aprovado, Reprovado, Vigente ou Encerrado. Só um em elaboração e só um vigente."
+  ],
+  [
+   "Descrição",
+   "Texto longo",
+   "Não",
+   "Contexto do plano."
+  ],
+  [
+   "Janela de aprovações",
+   "Linhas",
+   "Não",
+   "Nome, data de início e data de fim; cada linha é uma janela."
+  ],
+  [
+   "Valor previsto",
+   "Derivado",
+   "—",
+   "Nunca digitado: soma das Ações Orçamentárias das Entregas do plano."
+  ]
+ ],
+ "estados_criar": [
+  "Formulário vazio",
+  "Obrigatórios — nome, vigência e situação com mensagem",
+  "Seletor de ano aberto — só anos, sem dia nem mês",
+  "Conflito de vigência — outro plano já ocupa um dos anos"
+ ],
+ "telas_criar": [
+  [
+   "f06_05_criar",
+   "Formulário vazio",
+   "clica em Novo PPA — nome, vigência, situação e janelas"
+  ],
+  [
+   "f06_06_criar_erros",
+   "Campos obrigatórios",
+   "clica em Cadastrar sem preencher — a tela marca o que falta"
+  ],
+  [
+   "f06_07_criar_ano",
+   "Seletor de ano",
+   "clica no primeiro ano — o seletor mostra só os anos"
+  ],
+  [
+   "f06_08_criar_conflito",
+   "Conflito de vigência",
+   "digita anos que outro plano já ocupa — o sistema recusa"
+  ]
+ ],
+ "regras_form": [
+  {
+   "titulo": "Regras do plano",
+   "texto": "Dois planos não ocupam o mesmo ano. O plano é elaborado no ano anterior ao início da vigência: criar antes disso a interface impede; criar depois é atraso, e atraso ela não impede. O cadastro é exclusivo do Administrador central e da Alta gestão central."
+  }
+ ],
+ "telas_editar": [
+  [
+   "f06_09_editar",
+   "Editar plano",
+   "clica em Editar num plano em elaboração — todos os campos abertos"
+  ],
+  [
+   "f06_10_editar_vigente",
+   "Plano vigente",
+   "abre um plano vigente — os campos travam, só a situação anda"
+  ],
+  [
+   "f06_11_excluir",
+   "Excluir plano",
+   "clica em Excluir — a janela pede o nome do plano para confirmar"
+  ],
+  [
+   "f06_12_excluir_bloqueado",
+   "Exclusão bloqueada",
+   "plano com diagnósticos vinculados — Excluir fica desabilitado, com o motivo"
+  ]
+ ],
+ "estados_editar": [
+  "Em elaboração — campos editáveis e Excluir plano no cabeçalho",
+  "Vigente ou fechado — campos bloqueados, só a situação muda",
+  "Excluir — janela pede digitar o nome do plano",
+  "Com Programas vinculados — Excluir desabilitado, com o motivo"
+ ],
+ "digitar": true,
+ "exclusao": "Só o PPA exige digitar o nome para confirmar a exclusão, porque tudo o que se cadastra dentro dele leva o plano como vínculo. Plano com diagnósticos vinculados não pode ser excluído: o botão fica visível e desabilitado, com o motivo.",
+ "regras_editar": [
+  {
+   "titulo": "O PPA sobrevive à troca de governo",
+   "texto": "O plano não é refeito quando entra um governo novo: a base permanece e o novo governo pede alterações no plano vigente. Mexer num plano já aprovado é outro fluxo, ainda por desenhar; enquanto isso, nenhuma tela sugere que um plano fechado é editável."
+  }
+ ],
+ "num": "06"
+}

@@ -10,6 +10,8 @@ import {
     updIniciativa,
     addEntrega,
     removeEntrega,
+    vinculosDe,
+    descreverVinculos,
     enviar,
     reportarDivergencia,
     retomarPreenchimento,
@@ -28,6 +30,8 @@ import {
 import { linhasDaIniciativa } from "../dados/financeiro.js";
 import { ANOS } from "../dados/seed.js";
 import { montarShell, barraTitulo, somenteLeitura } from "../shell.js";
+import { confirmarExclusao } from "../confirmar.js";
+import { avisar } from "../toast.js";
 import { chip, statusChip, esc, secao, faixaIndicadores } from "../ui.js";
 import { quadroFinanceiro, listaPendencias, chipsPendencias } from "../ui-financeiro.js";
 import { camposDaIniciativa, idDoStatus, podeIr } from "../iniciativa-campos.js";
@@ -322,10 +326,20 @@ document.addEventListener("click", (e) => {
     const excluir = e.target.closest("[data-excluir-entrega]");
     if (excluir) {
         const entrega = estado.entregas.find((x) => x.id === excluir.dataset.excluirEntrega);
-        if (confirm(`Excluir a Entrega “${entrega.nome || "sem nome"}”? Os vínculos de Projeto e Ação vão junto.`)) {
-            removeEntrega(entrega.id);
-            render();
+        const vinculos = vinculosDe("entregas", entrega.id);
+        if (vinculos.length) {
+            avisar(`A Entrega está vinculada a ${descreverVinculos(vinculos)}. Desfaça os vínculos antes de excluir.`, "erro");
+            return;
         }
+        confirmarExclusao({
+            titulo: "Excluir Entrega",
+            texto: `A Entrega “${entrega.nome || "sem nome"}” será removida. A exclusão fica registrada no histórico.`,
+        }).then((justificativa) => {
+            if (!justificativa) return;
+            const r = removeEntrega(entrega.id, justificativa);
+            if (!r.ok) return avisar(r.motivo, "erro");
+            render();
+        });
         return;
     }
 

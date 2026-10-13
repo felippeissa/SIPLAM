@@ -1,0 +1,78 @@
+{
+  "id": "f11",
+  "num": "11",
+  "nome": "Problema",
+  "artigo": "o",
+  "titulo": "Problemas",
+  "pasta": "central-problema",
+  "arquivo_lista": "central-problema.html",
+  "menu": "Planejamento › Cadastros › Problemas",
+  "botao_novo": "Novo problema",
+  "sub_lista": "Como a Área Central encontra um problema, filtra por população e causa e vê quando nada corresponde.",
+  "sub_criar": "Como se cadastra um problema: quem ele atinge, o que o explica e o que acontece se ele não for enfrentado.",
+  "sub_editar": "Corrigir um problema, trocar população e causas e excluí-lo quando nenhum Programa depende dele.",
+  "entrega_lista": "A lista dos problemas do plano. O problema é o que o plano enfrenta: aponta para a população que atinge e para as causas que o explicam; o Programa aponta para o problema. A lista serve para achar um problema, filtrar e abrir criar e editar.",
+  "entrega_criar": "Cadastra um problema com nome, descrição, população afetada, causa e subcausa, e as consequências de não enfrentá-lo. Os três vínculos seguem o padrão “buscar o que existe, criar o que falta”: a pessoa busca, e o que não existe se cadastra numa janela sem perder o formulário.",
+  "entrega_editar": "Edita o problema e seus vínculos e permite excluí-lo. Problema com Programas vinculados não pode ser excluído.",
+  "ao_fim_lista": "Novo problema abre o formulário de criação; Editar abre a edição.",
+  "busca": "Busca livre por nome e descrição, mais os filtros de População afetada e de Causas, de escolha múltipla. O filtro só vale ao clicar em Buscar; Limpar tira tudo. Exportar gera CSV ou Excel das linhas visíveis.",
+  "colunas": [
+    ["Problema", "Texto", "—", "Nome do problema; ordena a listagem."],
+    ["População afetada", "Número", "—", "Quantas populações o problema atinge."],
+    ["Causas", "Número", "—", "Quantas causas o explicam."],
+    ["Descrição", "Texto", "—", "Truncada em uma linha, com reticências."],
+    ["Ações", "—", "—", "Editar abre a edição; quem só consulta vê Ver."]
+  ],
+  "estados_lista": [
+    "Com resultados — tabela preenchida",
+    "Busca aplicada — só os problemas que casam",
+    "Filtro de população aberto — escolha múltipla",
+    "Sem resultado — linha única “Nenhum registro corresponde ao filtro”",
+    "Somente leitura — sem o botão Novo problema"
+  ],
+  "telas_lista": [
+    ["f11_01_lista", "Listagem", "a pessoa abre Planejamento › Cadastros › Problemas"],
+    ["f11_02_busca", "Busca aplicada", "digita parte do nome e clica em Buscar — só os problemas que casam ficam"],
+    ["f11_03_filtro", "Filtro de população", "abre o primeiro filtro, de escolha múltipla"],
+    ["f11_04_sem_resultado", "Sem resultado", "nenhum problema corresponde — a tabela mostra uma linha única"]
+  ],
+  "campos": [
+    ["Nome do problema", "Texto", "Sim", "Identifica o problema."],
+    ["Descrição", "Texto longo", "Não", "O que caracteriza o problema."],
+    ["População afetada", "Busca e tabela", "Sim", "Várias. Quem o problema atinge; cadastro do sistema com nome e descrição."],
+    ["Causa e subcausa", "Busca e tabela", "Sim", "Várias. A mesma causa explica mais de um problema; a tabela mostra a causa e suas subcausas."],
+    ["Consequências", "Texto longo", "Sim", "O que acontece se o problema não for enfrentado."]
+  ],
+  "comp_extra": [
+    ["Busca e vincula", "input.form-control + lista de sugestões + tabela das escolhidas — padrão “buscar o que existe, criar o que falta”"],
+    ["Janela de cadastro", "div.modal — cadastra o registro que falta sem sair do formulário"]
+  ],
+  "estados_criar": [
+    "Formulário vazio",
+    "Obrigatórios — nome, população, causa e consequências com mensagem",
+    "Busca de população — sugestões do que já existe",
+    "Busca de causa — sugestões com nome e justificativa",
+    "Preenchido — vínculos escolhidos aparecem nas tabelas"
+  ],
+  "telas_criar": [
+    ["f11_05_criar", "Formulário vazio", "clica em Novo problema — nome, descrição, população, causa e consequências"],
+    ["f11_06_criar_erros", "Campos obrigatórios", "clica em Cadastrar sem preencher — a tela marca o que falta"],
+    ["f11_07_criar_busca_pop", "Busca de população", "digita parte do nome — a lista mostra as populações que já existem"],
+    ["f11_08_criar_busca_causa", "Busca de causa", "digita parte do nome — a lista mostra as causas que já existem"],
+    ["f11_09_criar_preenchido", "Preenchido", "escolhe população e causa — entram nas tabelas, e Cadastrar grava o problema"]
+  ],
+  "regras_form": [
+    {"titulo": "O diagnóstico não é uma árvore", "texto": "Cada nível aponta para o seguinte, de muitos para muitos: Problema → Causas → Iniciativas. Uma mesma causa explica mais de um problema e é enfrentada por mais de uma Iniciativa."}
+  ],
+  "telas_editar": [
+    ["f11_10_editar", "Editar problema", "clica em Editar numa linha — campos e vínculos vêm preenchidos"],
+    ["f11_11_excluir", "Excluir problema", "clica em Excluir — a janela pede confirmação"]
+  ],
+  "estados_editar": [
+    "Edição — campos preenchidos, Excluir, Cancelar e Salvar no cabeçalho",
+    "Excluir — janela de confirmação",
+    "Com Programas vinculados — Excluir desabilitado, com o motivo"
+  ],
+  "exclusao": "Registro com vínculo não pode ser excluído; sem vínculo, pode. Um problema com Programas vinculados mostra o botão Excluir visível e desabilitado, com o motivo.",
+  "regras_editar": []
+}

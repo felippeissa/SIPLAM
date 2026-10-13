@@ -16,10 +16,12 @@ import { cartaoPlano } from "./cartao-plano.js";
 import { esc } from "./ui.js";
 import { instalarBusca } from "./busca.js";
 import { instalarAtena } from "./atena.js";
+import { instalarChat } from "./chat.js";
 import { instalarNotificacoes } from "./notificacoes.js";
 
 /** Menu da visão setorial — o órgão preenche e envia. */
 const MENU_SETORIAL = [
+    { href: "ppa-detalhe.html", rotulo: "Home", icone: "ti-home" },
     { href: "programas.html", rotulo: "Programas", icone: "ti-layout-grid" },
     { href: "iniciativas.html", rotulo: "Iniciativas", icone: "ti-list-check" },
     { href: "entregas.html", rotulo: "Entregas", icone: "ti-box" },
@@ -59,7 +61,10 @@ const MENU_CENTRAL = [
             {
                 grupo: "Gestão",
                 icone: "ti-adjustments",
-                itens: [{ href: "central-usuarios.html", rotulo: "Usuários", icone: "ti-users" }],
+                itens: [
+                    { href: "central-usuarios.html", rotulo: "Usuários", icone: "ti-users" },
+                    { href: "central-historico.html", rotulo: "Histórico", icone: "ti-history" },
+                ],
             },
             {
                 grupo: "Relatórios",
@@ -98,9 +103,15 @@ function telasDoMenu(menu) {
  * `leitura: true` é só dos órgãos de controle. A alta gestão preenche e ainda
  * aprova — ela só está em construção porque a tela inicial dela não existe.
  */
+/**
+ * Fora do computador de quem desenvolve, só o Administrador central se escolhe: os outros perfis ainda
+ * não têm todas as telas. No endereço local (localhost) todos ficam liberados, para testar.
+ */
+const LOCAL = ["localhost", "127.0.0.1", "[::1]", "::1"].includes(location.hostname);
+
 const PERFIL = {
     setorial: {
-        selecionavel: false,
+        selecionavel: LOCAL,
         nome: "Planejamento setorial",
         visao: "setorial",
         leitura: false,
@@ -116,7 +127,7 @@ const PERFIL = {
         descricao: "Analisa, valida e administra os Programas",
     },
     "gestao-setorial": {
-        selecionavel: false,
+        selecionavel: LOCAL,
         nome: "Alta gestão setorial",
         visao: "setorial",
         leitura: false,
@@ -124,7 +135,7 @@ const PERFIL = {
         descricao: "Faz tudo do Planejamento setorial e aprova a proposta do órgão",
     },
     "gestao-central": {
-        selecionavel: false,
+        selecionavel: LOCAL,
         nome: "Alta gestão central",
         visao: "central",
         leitura: false,
@@ -132,7 +143,7 @@ const PERFIL = {
         descricao: "Faz tudo do Administrador central e aprova a consolidação",
     },
     controle: {
-        selecionavel: false,
+        selecionavel: LOCAL,
         nome: "Consulta",
         visao: "central",
         leitura: true,
@@ -211,7 +222,7 @@ function paginaAtual() {
 
 function inicio(visao) {
     // A Visão Geral saiu do menu: a Central começa pelo primeiro cadastro.
-    return url(visao === "central" ? "ppa-detalhe.html" : "programas.html");
+    return url("ppa-detalhe.html");
 }
 
 /**
@@ -670,6 +681,7 @@ export function montarShell() {
     instalarBusca(estado, visao);
     instalarNotificacoes(estado, visao);
     instalarAtena(estado);
+    instalarChat(estado);
 
     return { estado, visao };
 }

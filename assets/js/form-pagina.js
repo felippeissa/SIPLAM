@@ -17,7 +17,7 @@
  * A configuração é a mesma que a listagem usa, para os dois lados nunca
  * discordarem sobre o que o cadastro tem.
  */
-import { obterEstado, addItem, updItem, removeItem } from "./dados/store.js";
+import { obterEstado, addItem, updItem, removeItem, vinculosDe, descreverVinculos } from "./dados/store.js";
 import { montarShell, barraTitulo, somenteLeitura, url } from "./shell.js";
 import { esc } from "./ui.js";
 import { confirmarExclusao } from "./confirmar.js";
@@ -59,14 +59,9 @@ export function montarFormulario(cfg) {
 
     const opcoesPai = () => (cfg.pai ? (estado[cfg.pai.colecao] ?? []) : []);
 
-    /** Quantos registros de outras coleções dependem deste. */
-    const dependentes = (item) =>
-        (cfg.filhos ?? []).reduce(
-            (total, filho) => total + (estado[filho.colecao] ?? []).filter((f) => f[filho.campo] === item.id).length,
-            0
-        );
-
-    const usos = novo ? 0 : dependentes(edicao);
+    /** Quem aponta para este registro: enquanto houver, ele não se exclui. */
+    const vinculos = novo ? [] : vinculosDe(cfg.colecao, edicao.id);
+    const usos = vinculos.length;
     // O campo do nome chama-se como o cadastro — "Eixo", "Causa" — porque ali o
     // nome *é* o registro. Onde o cadastro tem muitos campos, e o nome é só mais
     // um deles, a configuração troca o rótulo por "Nome".
@@ -79,6 +74,11 @@ export function montarFormulario(cfg) {
     function camposPrincipais() {
         return `
         <div class="row">
+            ${
+                usos
+                    ? `<div class="col-12"><div class="alert alert-light border fs-13"><i class="ti ti-lock me-1"></i>Não pode ser excluíd${fim}: está vinculad${fim} a <strong>${esc(descreverVinculos(vinculos))}</strong>. Desfaça esses vínculos antes.</div></div>`
+                    : ""
+            }
             ${cfg.antes ? `<div class="col-12">${cfg.antes(edicao, estado)}</div>` : ""}
             <div class="col-12">
                 <div class="mb-3">
@@ -159,7 +159,7 @@ export function montarFormulario(cfg) {
             novo || !cfg.podeExcluir
                 ? ""
                 : `<button type="button" class="btn btn-danger" id="excluir"
-                    ${usos ? `disabled title="${esc(cfg.filhos[0].rotulo)} vinculados impedem a exclusão"` : ""}>
+                    ${usos ? `disabled title="Não pode ser excluído: está vinculado a ${esc(descreverVinculos(vinculos))}"` : ""}>
                     Excluir
                 </button>`;
         return `
@@ -232,15 +232,19 @@ export function montarFormulario(cfg) {
 
         document.getElementById("excluir")?.addEventListener("click", async () => {
             if (usos > 0) return;
-            const confirmou = await confirmarExclusao({
+            const justificativa = await confirmarExclusao({
                 titulo: `Excluir ${cfg.singular.toLowerCase()}`,
-                texto: `“${esc(edicao.nome)}” será removid${fim} do cadastro. Não dá para desfazer.`,
+                texto: `“${esc(edicao.nome)}” será removid${fim} do cadastro. A exclusão pode ser revertida depois, no Histórico, por quem administra.`,
                 confirmar: "Excluir",
             });
-            if (!confirmou) return;
-            // O cadastro pode ter vínculos a desfazer antes de sumir.
+            if (!justificativa) return;
+            const r = removeItem(cfg.colecao, edicao.id, justificativa);
+            if (!r.ok) {
+                avisar(r.motivo, "erro");
+                return;
+            }
+            // O cadastro pode ter vínculos seus a desfazer depois que sai.
             cfg.aoExcluir?.(edicao, estado);
-            removeItem(cfg.colecao, edicao.id);
             avisar(`${cfg.singular} excluíd${fim} com sucesso.`);
             window.location.href = voltar;
         });

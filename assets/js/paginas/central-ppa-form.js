@@ -30,6 +30,8 @@ import {
     situacaoPpa,
     anoDeElaboracao,
     ppaQueColide,
+    vinculosDe,
+    descreverVinculos,
 } from "../dados/store.js";
 import { montarShell, barraTitulo, somenteLeitura, perfilAtual, url } from "../shell.js";
 import { esc, chip } from "../ui.js";
@@ -142,7 +144,8 @@ export function montarFormularioPpa({ novo }) {
         return SITUACOES_PPA.find((s) => normaliza(s.rotulo) === n || normaliza(s.id) === n)?.id ?? "";
     }
 
-    const diagnosticos = novo ? 0 : (estado.diagnosticos ?? []).filter((d) => d.ppaId === p.id).length;
+    /** Quem aponta para este plano: enquanto houver, ele não se exclui. */
+    const vinculos = novo ? [] : vinculosDe("ppas", p.id);
 
     function render() {
         document.getElementById("conteudo").innerHTML = `
@@ -173,7 +176,7 @@ export function montarFormularioPpa({ novo }) {
                 novo || leitura
                     ? ""
                     : `<button type="button" class="btn btn-danger" id="excluir"
-                    ${diagnosticos ? 'disabled title="Diagnósticos vinculados impedem a exclusão"' : ""}>
+                    ${vinculos.length ? `disabled title="Não pode ser excluído: está vinculado a ${esc(descreverVinculos(vinculos))}"` : ""}>
                     Excluir plano
                 </button>`
             }
@@ -182,6 +185,11 @@ export function montarFormularioPpa({ novo }) {
             }</div>
                     </div>
                     <div class="card-body" id="formulario">
+                    ${
+                        vinculos.length
+                            ? `<div class="alert alert-light border fs-13"><i class="ti ti-lock me-1"></i>Não pode ser excluído: está vinculado a <strong>${esc(descreverVinculos(vinculos))}</strong>. Desfaça esses vínculos antes.</div>`
+                            : ""
+                    }
                         <div class="row">
                             <div class="col-12">
                                 <div class="mb-3">
@@ -371,15 +379,19 @@ export function montarFormularioPpa({ novo }) {
         });
 
         document.getElementById("excluir")?.addEventListener("click", async () => {
-            if (diagnosticos > 0) return;
-            const confirmou = await confirmarExclusao({
+            if (vinculos.length) return;
+            const justificativa = await confirmarExclusao({
                 titulo: "Excluir plano plurianual",
-                texto: "Tudo o que foi cadastrado dentro dele deixa de ter a que se vincular.",
+                texto: "O plano não tem nada vinculado a ele. A exclusão pode ser revertida depois, no Histórico, por quem administra.",
                 confirmar: "Excluir",
                 digitar: p.nome,
             });
-            if (!confirmou) return;
-            removePpa(p.id);
+            if (!justificativa) return;
+            const r = removePpa(p.id, justificativa);
+            if (!r.ok) {
+                avisar(r.motivo, "erro");
+                return;
+            }
             avisar("Plano plurianual excluído com sucesso.");
             window.location.href = voltar;
         });

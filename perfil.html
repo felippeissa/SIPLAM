@@ -114,7 +114,9 @@
 
             // ----- perfil e órgão -----
             import("./assets/js/usuarios-decisao.js").then(({ PERFIS }) => {
-                const habilitados = new Set(["admin-central"]); // os demais perfis ainda não têm tela
+                // Fora do endereço local só o Administrador central se escolhe; os demais ainda não têm todas as telas.
+                const local = ["localhost", "127.0.0.1", "[::1]", "::1"].includes(location.hostname);
+                const habilitados = new Set(local ? PERFIS.map((p) => p.id) : ["admin-central"]);
                 const orgaos = [...new Set([...(estado.iniciativas ?? []).map((i) => i.orgao), estado.orgaoAtual].filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
                 const sp = document.getElementById("sel-perfil");
                 const so = document.getElementById("sel-orgao");

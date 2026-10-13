@@ -1,0 +1,248 @@
+{
+ "id": "f12",
+ "num": "12",
+ "nome": "Programa",
+ "artigo": "o",
+ "titulo": "Programas",
+ "pasta": "central-programas",
+ "arquivo_lista": "central-programas.html",
+ "menu": "Planejamento › Cadastros › Programa",
+ "botao_novo": "Novo Programa",
+ "sub_lista": "Como a Área Central encontra um Programa e filtra por eixo, objetivo, aptidão e disponibilização.",
+ "sub_criar": "Como se cadastra um Programa: identidade, vínculos com o diagnóstico, indicadores e Iniciativas.",
+ "sub_editar": "Corrigir um Programa, ver as pendências antes de torná-lo vigente e abrir um Programa só para consulta.",
+ "sem_excluir": true,
+ "entrega_lista": "A lista dos Programas do plano. O Programa é o que o governo entrega à sociedade e enfrenta um problema do diagnóstico; recebe a contribuição dos órgãos em Iniciativas, cada uma com suas Entregas. A lista serve para achar um Programa, filtrar e abrir criar e editar.",
+ "entrega_criar": "Cadastra um Programa com nome, status, descrição, objetivo, resultado esperado, eixo, objetivo estratégico, problema, população afetada, causa e subcausa, indicadores de resultado e Iniciativas. O código é gerado pelo sistema. Escolher o problema traz a população e as causas dele como ponto de partida.",
+ "entrega_editar": "Edita o Programa: os mesmos campos e vínculos da criação, já preenchidos. A tela de edição não exclui Programa.",
+ "ao_fim_lista": "Novo Programa abre o formulário de criação; Editar abre a edição.",
+ "busca": "Busca livre por código, nome e descrição, mais os filtros de Eixo, Objetivo estratégico, Aptidão e Disponibilização. O filtro só vale ao clicar em Buscar; Limpar tira tudo. Exportar gera CSV ou Excel das linhas visíveis.",
+ "colunas": [
+  [
+   "Código",
+   "Texto",
+   "—",
+   "Gerado pelo sistema; não se digita."
+  ],
+  [
+   "Programa",
+   "Texto",
+   "—",
+   "Nome do Programa; ordena a listagem."
+  ],
+  [
+   "Causas",
+   "Número",
+   "—",
+   "Quantas causas o Programa enfrenta."
+  ],
+  [
+   "Iniciativas",
+   "Número",
+   "—",
+   "Contribuições dos órgãos ao Programa."
+  ],
+  [
+   "Aptidão",
+   "Etiqueta",
+   "—",
+   "Se o Programa já pode ir para a lei: tem problema, objetivo, causas e indicadores."
+  ],
+  [
+   "Disponibilização",
+   "Etiqueta",
+   "—",
+   "Se o Programa já está aberto aos órgãos para contribuir."
+  ],
+  [
+   "Ações",
+   "—",
+   "—",
+   "Editar abre a edição; quem só consulta vê Ver."
+  ]
+ ],
+ "estados_lista": [
+  "Com resultados — tabela preenchida",
+  "Busca aplicada — só os Programas que casam",
+  "Filtro aberto — escolha múltipla",
+  "Sem resultado — linha única “Nenhum registro corresponde ao filtro”",
+  "Somente leitura — sem o botão Novo Programa"
+ ],
+ "telas_lista": [
+  [
+   "f12_01_lista",
+   "Listagem",
+   "a pessoa abre Planejamento › Cadastros › Programa"
+  ],
+  [
+   "f12_02_busca",
+   "Busca aplicada",
+   "digita parte do nome e clica em Buscar — só os Programas que casam ficam"
+  ],
+  [
+   "f12_03_filtro",
+   "Filtro aberto",
+   "abre um dos filtros, de escolha múltipla"
+  ],
+  [
+   "f12_04_sem_resultado",
+   "Sem resultado",
+   "nenhum Programa corresponde — a tabela mostra uma linha única"
+  ]
+ ],
+ "larguras": [
+  150,
+  110,
+  60,
+  200
+ ],
+ "campos": [
+  [
+   "Nome do programa",
+   "Texto",
+   "Sim",
+   "Identifica o Programa."
+  ],
+  [
+   "Status",
+   "Texto com lista",
+   "Sim",
+   "Rascunho, em elaboração, vigente e as demais. Vigente exige problema e indicadores."
+  ],
+  [
+   "Descrição do programa",
+   "Texto longo",
+   "Sim",
+   "O que o Programa é."
+  ],
+  [
+   "Objetivo do programa",
+   "Texto longo",
+   "Não",
+   "O que o Programa quer alcançar."
+  ],
+  [
+   "Resultado esperado",
+   "Texto longo",
+   "Não",
+   "O que muda para a sociedade."
+  ],
+  [
+   "Eixo",
+   "Busca",
+   "Não",
+   "Um só."
+  ],
+  [
+   "Objetivo estratégico",
+   "Busca",
+   "Não",
+   "Um só."
+  ],
+  [
+   "Problema",
+   "Busca",
+   "Não",
+   "Um só. Escolher traz população e causas do problema como ponto de partida."
+  ],
+  [
+   "População afetada",
+   "Busca e tabela",
+   "Não",
+   "Várias; vem do problema e pode ser editada."
+  ],
+  [
+   "Causa e subcausa",
+   "Busca e tabela",
+   "Não",
+   "Várias; vem do problema e pode ser editada."
+  ],
+  [
+   "Indicadores de resultado",
+   "Busca e tabela",
+   "Não",
+   "Vários, do cadastro de Indicadores."
+  ],
+  [
+   "Iniciativas",
+   "Busca e tabela",
+   "Não",
+   "Várias, das contribuições dos órgãos."
+  ]
+ ],
+ "comp_extra": [
+  [
+   "Busca e vincula",
+   "input.form-control + lista de sugestões + tabela das escolhidas — padrão “buscar o que existe, criar o que falta”"
+  ]
+ ],
+ "estados_criar": [
+  "Formulário vazio",
+  "Obrigatórios — nome, status e descrição com mensagem",
+  "Busca do problema — sugestões do que já existe",
+  "Busca de indicador — sugestões com nome",
+  "Preenchido — problema escolhido traz população e causas",
+  "Status vigente sem problema e indicadores — aviso “Um Programa só fica vigente com problema e indicadores vinculados”"
+ ],
+ "telas_criar": [
+  [
+   "f12_05_criar",
+   "Formulário vazio",
+   "clica em Novo Programa — doze campos, com os vínculos em buscas"
+  ],
+  [
+   "f12_06_criar_erros",
+   "Campos obrigatórios",
+   "clica em Cadastrar Programa sem preencher — a tela marca o que falta"
+  ],
+  [
+   "f12_07_criar_busca_problema",
+   "Busca do problema",
+   "digita parte do nome — a lista mostra os problemas que já existem"
+  ],
+  [
+   "f12_08_criar_busca_indicador",
+   "Busca de indicador",
+   "digita parte do nome — a lista mostra os indicadores que já existem"
+  ],
+  [
+   "f12_09_criar_preenchido",
+   "Preenchido",
+   "escolhe o problema e um indicador — população e causas entram nas tabelas"
+  ],
+  [
+   "f12_13_criar_vigente",
+   "Vigente sem vínculos",
+   "escolhe o status “vigente” sem problema nem indicadores — a tela recusa e diz o que falta"
+  ]
+ ],
+ "regras_form": [
+  {
+   "titulo": "Programa e Iniciativa",
+   "texto": "Programa → Iniciativa (contribuição de um órgão) → Entrega (produto concreto, com metas por ano do ciclo). Entrega é resultado para a sociedade, não obra: “Construção de X” é nome de Projeto, não de Entrega. O valor financeiro do Programa é sempre derivado das Ações Orçamentárias, nunca digitado."
+  }
+ ],
+ "telas_editar": [
+  [
+   "f12_10_editar",
+   "Editar Programa",
+   "clica em Editar numa linha — campos e vínculos vêm preenchidos"
+  ],
+  [
+   "f12_11_editar_erros",
+   "Salvar com pendência",
+   "apaga o nome e salva — a tela mostra o que falta"
+  ]
+ ],
+ "estados_editar": [
+  "Edição — campos e vínculos preenchidos, Cancelar e Salvar Programa no cabeçalho",
+  "Salvar com pendência — mensagens nos campos obrigatórios"
+ ],
+ "exclusao": "",
+ "regras_editar": [
+  {
+   "titulo": "Quando o Programa é vigente",
+   "texto": "O status “vigente” só vale com problema e indicadores cadastrados; sem eles a tela recusa e mostra o que falta. A tela de edição não exclui Programa."
+  }
+ ]
+}

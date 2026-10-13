@@ -29,7 +29,9 @@ export function equipeDoPlano(estado, ppa) {
     });
 }
 
-export const salvarEquipe = (ppa, vinculos) => updPpa(ppa.id, { equipe: vinculos.map((m) => ({ id: m.id, funcao: m.funcao })) });
+/** Grava a equipe. Tirar alguém exige justificativa, que vai para o histórico do plano. */
+export const salvarEquipe = (ppa, vinculos, justificativa = "") =>
+    updPpa(ppa.id, { equipe: vinculos.map((m) => ({ id: m.id, funcao: m.funcao })) }, justificativa);
 
 /** Quem ainda pode entrar: aprovado e fora da equipe. */
 export function livresParaEquipe(estado, ppa) {

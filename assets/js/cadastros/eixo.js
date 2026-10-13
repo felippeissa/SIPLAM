@@ -1,4 +1,3 @@
-import { updItem } from "../dados/store.js";
 import { esc } from "../ui.js";
 
 /**
@@ -39,12 +38,5 @@ export const eixo = {
                 },
             },
         ],
-    },
-
-    /** Excluir o eixo deixa os objetivos sem eixo, em vez de apagá-los junto. */
-    aoExcluir(item, estado) {
-        for (const o of (estado.objetivos ?? []).filter((o) => o.eixoId === item.id)) {
-            updItem("objetivos", o.id, { eixoId: "" });
-        }
     },
 };
