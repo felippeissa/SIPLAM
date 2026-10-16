@@ -382,7 +382,7 @@ export function montarFormularioPpa({ novo }) {
             if (vinculos.length) return;
             const justificativa = await confirmarExclusao({
                 titulo: "Excluir plano plurianual",
-                texto: "O plano não tem nada vinculado a ele. A exclusão pode ser revertida depois, no Histórico, por quem administra.",
+                texto: "O plano não tem nada vinculado a ele.",
                 confirmar: "Excluir",
                 digitar: p.nome,
             });

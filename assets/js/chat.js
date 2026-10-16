@@ -79,16 +79,16 @@ function destacar(seletor) {
 }
 
 const CSS_CHAT = `
-.chat-fab{position:fixed;right:20px;bottom:20px;z-index:1050;width:52px;height:52px;border-radius:50%;border:0;background:var(--bs-primary);color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:24px}
+.chat-fab{position:fixed;right:20px;bottom:20px;z-index:1050;width:52px;height:52px;border-radius:50%;border:0;background:var(--theme-primary,#1ab394);color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:24px}
 .chat-fab .chat-nao-lidas{position:absolute;top:-2px;right:-2px}
-.chat-janela{position:fixed;right:20px;bottom:84px;z-index:1050;width:360px;max-width:calc(100vw - 24px);height:480px;max-height:calc(100vh - 110px);background:#fff;color:#4c4c5c;border:1px solid var(--bs-border-color);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28);display:flex;flex-direction:column;overflow:hidden}
+.chat-janela{position:fixed;right:20px;bottom:84px;z-index:1050;width:360px;max-width:calc(100vw - 24px);height:480px;max-height:calc(100vh - 110px);background:#fff;color:#4c4c5c;border:1px solid var(--theme-border-color,#edf2f9);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28);display:flex;flex-direction:column;overflow:hidden}
 .chat-janela[hidden]{display:none}
 [data-bs-theme=dark] .chat-janela{background:#1f2227;color:#dee2e6}
 .chat-cab{background:#f6f7f9}
 [data-bs-theme=dark] .chat-cab{background:#272b31}
-.chat-cab{padding:10px 12px;border-bottom:1px solid var(--bs-border-color);display:flex;align-items:center;gap:8px}
-.chat-lista button.item{width:100%;text-align:left;background:none;border:0;border-bottom:1px dashed var(--bs-border-color);padding:10px 12px;display:flex;gap:10px;align-items:center;color:inherit}
-.chat-lista button.item:hover{background:var(--bs-tertiary-bg)}
+.chat-cab{padding:10px 12px;border-bottom:1px solid var(--theme-border-color,#edf2f9);display:flex;align-items:center;gap:8px}
+.chat-lista button.item{width:100%;text-align:left;background:none;border:0;border-bottom:1px dashed var(--theme-border-color,#edf2f9);padding:10px 12px;display:flex;gap:10px;align-items:center;color:inherit}
+.chat-lista button.item:hover{background:var(--theme-tertiary-bg,#f6f7fb)}
 .chat-msgs{flex:1;overflow:auto;padding:12px}
 .chat-bolha{max-width:88%;white-space:pre-wrap;word-break:break-word}
 .chat-trecho{display:block;width:100%;text-align:left;border:1px dashed currentColor;border-radius:6px;background:rgba(255,255,255,.12);color:inherit;padding:6px 8px;margin-bottom:6px;font-size:12px}

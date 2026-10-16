@@ -15,6 +15,7 @@ protótipo rodando no navegador, com posições, cores, textos e ícones reais, 
 | `lib/construtor.js` | Roda no plugin do Figma. Desenha a árvore capturada (frames, textos, ícones, SVG). |
 | `lib/fluxo.js` | Monta a seção de cada fluxo (handoff, faixa, passos), o índice “00” e organiza a página. |
 | `lib/requisitos.js` + `extrair_requisitos.py` | Desenham o documento de requisitos (.docx) em páginas A4 na página “Documento de requisitos” do Figma: capa, tabelas verdes, figuras e rodapé. |
+| `lib/receitas1.js`, `receitas2.js`, `receitas3.js` | As receitas de captura, tela a tela: Home, Equipe, Usuários, Relatórios e Menu (1); editar e excluir dos cadastros (2); Histórico, chat e documentos (3). Carregam-se no navegador do protótipo depois de `captura.js` e `cadastro.js`. |
 | `gerar.py` + `cad/*.json` | Geram os documentos de handoff dos cadastros a partir de um bloco de dados por cadastro. |
 
 ## Como atualizar o Figma
@@ -26,7 +27,17 @@ protótipo rodando no navegador, com posições, cores, textos e ícones reais, 
    para trocar uma tela, ou `siplamFila([...specs])` para montar fluxos inteiros.
 5. Guarde e restaure o `localStorage` do protótipo: as capturas mexem em perfil, tema e plano.
 
+## Entrega 01 e Entrega 02
+
+O Figma tem duas páginas: **Entrega 01** (tudo, menos Cadastros) e **Entrega 02 · Cadastros** (fluxos 06 a 12). Cada uma tem a sua capa “00”,
+com o índice dos fluxos dela.
+
 ## Cuidados que custaram caro
+
+- **Variáveis de cor**: o template usa `--theme-*`, não `--bs-*`. Um CSS com `var(--bs-primary)` sai transparente.
+- **Abas (`.tab-pane.fade`)**: a transição não roda fora da tela; `captura.js` força a opacidade.
+- **Chat**: a janela abre pelo `sessionStorage`; limpe `siplam.chatAberto` entre as capturas.
+- **Exclusão**: no seed quase todo registro tem vínculo, então a tela “Excluir” precisa de um registro novo, sem vínculo.
 
 - **Janelas modais**: a animação de entrada não roda fora da tela, então `captura.js` força o estado final.
 - **`z-index`**: quem tem `z-index` positivo sobe só até o seu próprio contexto de empilhamento. Sem isso o

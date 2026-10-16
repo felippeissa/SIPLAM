@@ -234,7 +234,7 @@ export function montarFormulario(cfg) {
             if (usos > 0) return;
             const justificativa = await confirmarExclusao({
                 titulo: `Excluir ${cfg.singular.toLowerCase()}`,
-                texto: `“${esc(edicao.nome)}” será removid${fim} do cadastro. A exclusão pode ser revertida depois, no Histórico, por quem administra.`,
+                texto: `“${esc(edicao.nome)}” será removid${fim} do cadastro.`,
                 confirmar: "Excluir",
             });
             if (!justificativa) return;

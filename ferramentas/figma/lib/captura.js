@@ -30,6 +30,13 @@
             if (dl) { dl.style.setProperty("transition", "none", "important"); dl.style.setProperty("transform", "none", "important"); dl.style.setProperty("opacity", "1", "important"); }
         });
         f.contentDocument.querySelectorAll(".modal-backdrop").forEach((b) => { b.style.setProperty("transition", "none", "important"); b.style.setProperty("opacity", "0.5", "important"); });
+        // abas e blocos com `fade`: a transição não roda fora da tela e deixaria o conteúdo transparente
+        f.contentDocument.querySelectorAll(".tab-pane.show, .tab-pane.active").forEach((e) => { e.style.setProperty("transition", "none", "important"); e.style.setProperty("opacity", "1", "important"); });
+        // o botão e a janela do chat são fixos na tela: ficam na primeira tela (900px), onde a pessoa os vê
+        const fab = f.contentDocument.getElementById("chat-fab");
+        if (fab) { fab.style.setProperty("position", "absolute", "important"); fab.style.setProperty("top", "828px", "important"); fab.style.setProperty("bottom", "auto", "important"); }
+        const jan = f.contentDocument.getElementById("chat-janela");
+        if (jan && !jan.hidden) { jan.style.setProperty("position", "absolute", "important"); jan.style.setProperty("top", "336px", "important"); jan.style.setProperty("bottom", "auto", "important"); }
         const h = fixo ? 900 : Math.max(900, f.contentDocument.documentElement.scrollHeight);
         f.style.height = h + "px";
         await esp(600);
