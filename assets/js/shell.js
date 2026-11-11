@@ -26,6 +26,7 @@ const MENU_SETORIAL = [
     { href: "iniciativas.html", rotulo: "Iniciativas", icone: "ti-list-check" },
     { href: "entregas.html", rotulo: "Entregas", icone: "ti-box" },
     { href: "indicadores.html", rotulo: "Indicadores", icone: "ti-target" },
+    { href: "central-marcador.html", rotulo: "Marcadores", icone: "ti-tag" },
 ];
 
 /**
@@ -63,7 +64,9 @@ const MENU_CENTRAL = [
                 icone: "ti-adjustments",
                 itens: [
                     { href: "central-usuarios.html", rotulo: "Usuários", icone: "ti-users" },
-                    { href: "central-historico.html", rotulo: "Histórico", icone: "ti-history" },
+                    { href: "central-marcador.html", rotulo: "Marcadores", icone: "ti-tag" },
+                    // Histórico fica fora do menu: não entra nesta etapa. A tela central-historico.html continua no projeto.
+                    // { href: "central-historico.html", rotulo: "Histórico", icone: "ti-history" },
                 ],
             },
             {
@@ -464,10 +467,18 @@ function menuDoPerfil(visao) {
     const menu = visao === "central" ? MENU_CENTRAL : MENU_SETORIAL;
 
     // A gestão de usuários é do Administrador central (RF3). A Alta gestão central
-    // faz o mais que ele faz — cadastros, análise —, mas não administra acessos.
+    // faz o mais que ele faz — cadastros, análise —, mas não administra acessos:
+    // em Gestão ela fica com os Marcadores, que são de todos.
     if (perfilDaSessao() === "gestao-central") {
         return menu.map((item) =>
-            item.modulo ? { ...item, grupos: item.grupos.filter((g) => g.grupo !== "Gestão") } : item
+            item.modulo
+                ? {
+                      ...item,
+                      grupos: item.grupos.map((g) =>
+                          g.grupo === "Gestão" ? { ...g, itens: g.itens.filter((i) => i.href !== "central-usuarios.html") } : g
+                      ),
+                  }
+                : item
         );
     }
     return menu;

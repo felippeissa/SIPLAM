@@ -4,11 +4,13 @@
  * Lista os Programas e leva às telas de criar e editar, que vivem em
  * `central-programas/criar.html` e `central-programas/editar.html`.
  */
-import { obterEstado, ppaCorrente } from "../dados/store.js";
+import { obterEstado, ppaCorrente, updPrograma } from "../dados/store.js";
+import { avisar } from "../toast.js";
 import { APTIDAO_LABEL, DISPONIBILIZACAO_LABEL } from "../dados/regras.js";
 import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { chip, esc, faixaIndicadores } from "../ui.js";
 import { criarFiltros, opcoesDe } from "../filtros.js";
+import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro, abrirJanelaDeMarcadores } from "../cadastros/marcador.js";
 
 const { estado } = montarShell();
 const leitura = somenteLeitura();
@@ -42,6 +44,13 @@ function contribuicoes(programaId) {
 const filtros = criarFiltros({
     livre: { rotulo: "Programa", texto: (p) => `${p.codigo} ${p.nome} ${p.eixo ?? ""} ${p.objetivoEstrategico ?? ""}` },
     campos: [
+        {
+            // Os que a pessoa pode usar e os que já estão postos nos Programas: o selo que ela vê ela também filtra.
+            id: "marcador",
+            rotulo: "Marcador",
+            opcoes: () => marcadoresParaFiltro(programasDoPlano(), estado).map((m) => ({ valor: m.id, rotulo: m.nome })),
+            valorDe: (p) => p.marcadorIds ?? [],
+        },
         {
             id: "eixo",
             rotulo: "Eixo",
@@ -108,13 +117,14 @@ function faixa() {
 function corpo() {
     const ls = linhas();
     if (ls.length === 0) {
-        return '<tr><td colspan="7" class="text-center text-muted py-4 fs-12">Nenhum Programa corresponde ao filtro.</td></tr>';
+        return '<tr><td colspan="8" class="text-center text-muted py-4 fs-12">Nenhum Programa corresponde ao filtro.</td></tr>';
     }
     return ls
         .map((p) => {
             const falta = faltaParaDisponibilizar(p);
             return `
         <tr>
+            <td>${selosDeMarcadores(p.marcadorIds, estado, p.marcadorObs)}</td>
             <td class="codigo text-muted">${esc(p.codigo)}</td>
             <td>
                 <a href="${url(`programa.html?id=${p.id}`)}" class="fw-medium">${esc(p.nome)}</a>
@@ -131,7 +141,11 @@ function corpo() {
             <td class="text-end coluna-acoes">${
                 leitura
                     ? `<a href="${url(`programa.html?id=${p.id}`)}" class="btn btn-sm btn-light">Ver</a>`
-                    : `<a href="${url(`central-programas/editar.html?id=${p.id}`)}" class="btn btn-sm btn-outline-primary">Editar</a>`
+                    : `<div class="d-inline-flex gap-1">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-marcar="${esc(p.id)}"
+                                title="Adicionar marcadores" aria-label="Adicionar marcadores a ${esc(p.nome)}"><i class="ti ti-tag-plus"></i></button>
+                        <a href="${url(`central-programas/editar.html?id=${p.id}`)}" class="btn btn-sm btn-outline-primary">Editar</a>
+                    </div>`
             }</td>
         </tr>`;
         })
@@ -148,13 +162,14 @@ function render() {
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
+                        <th style="width:6rem">Marcador</th>
                         <th style="width:5rem">Código</th>
                         <th>Programa</th>
                         <th class="num" style="width:6rem">Causas</th>
                         <th class="num" style="width:7rem">Iniciativas</th>
                         <th style="width:11rem">Aptidão</th>
                         <th style="width:14rem">Disponibilização</th>
-                        <th class="text-end coluna-acoes" style="width:7rem">Ações</th>
+                        <th class="text-end coluna-acoes" style="width:9rem">Ações</th>
                     </tr>
                 </thead>
                 <tbody id="corpo-lista">${corpo()}</tbody>
@@ -162,9 +177,34 @@ function render() {
         </div>
     </div>`;
 
-    filtros.ligar(() => {
+    const pintarCorpo = () => {
+        document.querySelectorAll(".tooltip").forEach((d) => d.remove());
         document.getElementById("corpo-lista").innerHTML = corpo();
+        iniciarDicasDeMarcador(document.getElementById("corpo-lista"));
+    };
+    iniciarDicasDeMarcador(document.getElementById("corpo-lista"));
+    filtros.ligar(() => {
+        pintarCorpo();
         document.getElementById("faixa").innerHTML = faixa();
+    });
+
+    // "Adicionar marcadores": pôr ou tirar marcadores de um Programa sem abrir o formulário dele.
+    document.getElementById("corpo-lista").addEventListener("click", (e) => {
+        const botao = e.target.closest("[data-marcar]");
+        if (!botao) return;
+        const programa = estado.programas.find((p) => p.id === botao.dataset.marcar);
+        if (!programa) return;
+        abrirJanelaDeMarcadores({
+            titulo: `Marcadores — ${programa.nome}`,
+            selecionados: programa.marcadorIds ?? [],
+            observacoes: programa.marcadorObs ?? {},
+            estado,
+            aoSalvar: (ids, observacoes) => {
+                updPrograma(programa.id, { marcadorIds: ids, marcadorObs: observacoes });
+                pintarCorpo();
+                avisar("Marcadores do Programa atualizados.");
+            },
+        });
     });
 }
 

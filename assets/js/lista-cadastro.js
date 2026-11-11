@@ -22,7 +22,8 @@ export function montarLista(cfg) {
     const plano = ppaCorrente(estado);
     const doPlano = (i) => !i.ppaId || !plano || i.ppaId === plano.id;
 
-    const itens = () => (estado[cfg.colecao] ?? []).filter(doPlano);
+    // `visivel`: o que cada pessoa enxerga (os marcadores, por exemplo, são dela ou do perfil dela).
+    const itens = () => (estado[cfg.colecao] ?? []).filter(doPlano).filter((i) => !cfg.visivel || cfg.visivel(i, estado));
     const opcoesPai = () => (cfg.pai ? (estado[cfg.pai.colecao] ?? []).filter(doPlano) : []);
 
     const nomeDoPai = (item) => {
@@ -112,6 +113,8 @@ export function montarLista(cfg) {
     const criar = url(`${cfg.pasta}/criar.html`);
     const editar = (id) => url(`${cfg.pasta}/editar.html?id=${encodeURIComponent(id)}`);
 
+    const soVer = (i) => leitura || !!cfg.leituraDoItem?.(i, estado);
+
     /** Corpo da tabela — é só ele que se refaz quando um filtro muda. */
     function linhas() {
         const lista = itens().filter((i) => filtros.passa(i));
@@ -134,8 +137,8 @@ export function montarLista(cfg) {
                 ${extras.map((c) => `<td class="fs-13 text-muted">${c.valor(i, estado)}</td>`).join("")}
                 ${cfg.semDescricao ? "" : `<td class="fs-13 text-muted">${esc(i.descricao || "—")}</td>`}
                 <td class="text-end coluna-acoes">
-                    <a href="${editar(i.id)}" class="btn btn-sm ${leitura ? "btn-light" : "btn-outline-primary"}">
-                        ${leitura ? "Ver" : "Editar"}
+                    <a href="${editar(i.id)}" class="btn btn-sm ${soVer(i) ? "btn-light" : "btn-outline-primary"}">
+                        ${soVer(i) ? "Ver" : "Editar"}
                     </a>
                 </td>
             </tr>`

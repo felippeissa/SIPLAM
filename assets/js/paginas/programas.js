@@ -27,6 +27,7 @@ import {
 import { montarShell, cabecalhoPagina , somenteLeitura } from "../shell.js";
 import { chip, statusChip, esc, faixaIndicadores } from "../ui.js";
 import { chipsPendencias } from "../ui-financeiro.js";
+import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro } from "../cadastros/marcador.js";
 
 const { estado } = montarShell();
 const orgao = estado.orgaoAtual;
@@ -35,6 +36,7 @@ let busca = "";
 let filtro = "todos";
 let eixo = "todos";
 let objetivo = "todos";
+let marcador = "todos";
 let ordem = "prioridade";
 const abertos = new Set();
 
@@ -53,6 +55,8 @@ function linhas() {
         .filter((p) => !q || p.nome.toLowerCase().includes(q) || p.codigo.includes(q))
         .filter((p) => eixo === "todos" || p.eixo === eixo)
         .filter((p) => objetivo === "todos" || p.objetivoEstrategico === objetivo)
+        // Marcadores: aqui não se marca, só se consulta. Filtra por qualquer marcador posto nos Programas.
+        .filter((p) => marcador === "todos" || (p.marcadorIds ?? []).includes(marcador))
         .map((p) => {
             const inis = iniciativasDoOrgao(estado, p.id, orgao);
             const pend = inis.flatMap((i) => pendenciasIniciativa(estado, i));
@@ -117,6 +121,10 @@ function filtros() {
         <option value="todos">Todos os Objetivos</option>
         ${objetivos(noPlano(estado).programas, eixo).map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join("")}
     </select>
+    <select class="form-select form-select-sm" id="marcador">
+        <option value="todos">Todos os Marcadores</option>
+        ${marcadoresParaFiltro(noPlano(estado).programas, estado).map((m) => `<option value="${esc(m.id)}">${esc(m.nome)}</option>`).join("")}
+    </select>
     <select class="form-select form-select-sm" id="ordem" title="A ordenação por prioridade traz primeiro o que depende de você">
         <option value="prioridade">Ordenar por prioridade</option>
         <option value="codigo">Ordenar por código</option>
@@ -141,6 +149,7 @@ function linhaPrograma(l) {
                     : ""
             }
         </td>
+        <td>${selosDeMarcadores(p.marcadorIds, estado, p.marcadorObs)}</td>
         <td class="codigo text-muted">${esc(p.codigo)}</td>
         <td>
             <a href="programa.html?id=${p.id}" class="fw-medium">${esc(p.nome)}</a>
@@ -176,7 +185,7 @@ function linhaPrograma(l) {
     </tr>
     ${
         aberto
-            ? `<tr class="linha-filha"><td></td><td colspan="9" class="py-3">
+            ? `<tr class="linha-filha"><td></td><td colspan="10" class="py-3">
         <table class="table table-sm tabela-aninhada mb-0">
             <thead><tr>
                 <th>Iniciativa</th><th style="width:11rem">Status</th><th class="num" style="width:6rem">Entregas</th>
@@ -238,6 +247,7 @@ function render() {
                 <thead>
                     <tr>
                         <th></th>
+                        <th style="width:6rem">Marcador</th>
                         <th style="width:5rem">Código</th>
                         <th>Programa</th>
                         <th style="width:12rem">Participação</th>
@@ -252,7 +262,7 @@ function render() {
                 <tbody>
                 ${
                     ls.length === 0
-                        ? '<tr><td colspan="10" class="text-center text-muted py-4 fs-12">Nenhum Programa corresponde ao filtro.</td></tr>'
+                        ? '<tr><td colspan="11" class="text-center text-muted py-4 fs-12">Nenhum Programa corresponde ao filtro.</td></tr>'
                         : ls.map(linhaPrograma).join("")
                 }
                 </tbody>
@@ -264,7 +274,12 @@ function render() {
     document.getElementById("filtro").value = filtro;
     document.getElementById("eixo").value = eixo;
     document.getElementById("objetivo").value = objetivo;
+    document.getElementById("marcador").value = marcador;
     document.getElementById("ordem").value = ordem;
+
+    // A dica dos selos (nome, descrição e observação). O conteúdo é refeito a cada render: some a dica que ficou solta.
+    document.querySelectorAll(".tooltip").forEach((d) => d.remove());
+    iniciarDicasDeMarcador(document.getElementById("conteudo"));
 }
 
 document.addEventListener("click", (e) => {
@@ -334,6 +349,7 @@ document.addEventListener("change", (e) => {
         eixo = e.target.value;
         objetivo = "todos";
     } else if (id === "objetivo") objetivo = e.target.value;
+    else if (id === "marcador") marcador = e.target.value;
     else if (id === "ordem") ordem = e.target.value;
     else return;
     render();

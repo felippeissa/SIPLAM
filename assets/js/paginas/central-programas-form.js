@@ -30,6 +30,7 @@ import { addPrograma, updPrograma, updIniciativa, ppaCorrente } from "../dados/s
 import { DISPONIBILIZACAO_LABEL } from "../dados/regras.js";
 import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { catalogo } from "../catalogo.js";
+import { campoDeMarcadores, ligarCampoDeMarcadores, lerCampoDeMarcadores, marcadoresVisiveis } from "../cadastros/marcador.js";
 import { esc, chip } from "../ui.js";
 import { avisar } from "../toast.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
@@ -285,6 +286,11 @@ export function montarFormularioPrograma({ novo }) {
             objetivo: v("f-objetivo").trim(),
             resultadoEsperado: v("f-resultadoEsperado").trim(),
             disponibilizacao: v("f-status"),
+            // O que a pessoa não enxerga (marcador privado de outro) fica como estava: salvar não o tira.
+            marcadorIds: [
+                ...(edicao.marcadorIds ?? []).filter((id) => !marcadoresVisiveis(estado).some((m) => m.id === id)),
+                ...lerCampoDeMarcadores(),
+            ],
 
             // O texto do problema acompanha o vínculo: as telas de análise o leem.
             problemaId,
@@ -301,6 +307,9 @@ export function montarFormularioPrograma({ novo }) {
                 .map((i) => ({ nome: i.nome, unidade: i.unidade ?? "", linhaBase: i.linhaBase ?? "", meta: "" })),
         });
 
+        // A observação acompanha o marcador: tirou o marcador, sai a observação dele.
+        edicao.marcadorObs = Object.fromEntries(Object.entries(edicao.marcadorObs ?? {}).filter(([id]) => edicao.marcadorIds.includes(id)));
+
         // A aptidão não se escolhe: é o que o Programa tem ou não tem.
         edicao.aptidao = faltaParaOperar({ problemaId, indicadorIds }).length ? "incompleto" : "apto";
     }
@@ -310,8 +319,9 @@ export function montarFormularioPrograma({ novo }) {
     function corpo() {
         return `
         <div class="row g-3">
-            <div class="col-md-8">${campoTexto("f-nome", "Nome do programa", edicao.nome, { obrigatorio: true })}</div>
-            <div class="col-md-4">
+            <div class="col-md-5">${campoTexto("f-nome", "Nome do programa", edicao.nome, { obrigatorio: true })}</div>
+            <div class="col-md-4">${campoDeMarcadores(edicao.marcadorIds, estado, leitura)}</div>
+            <div class="col-md-3">
                 <div class="mb-3">
                     <label class="form-label" for="f-status">Status <span class="text-danger">*</span></label>
                     <select class="form-select" id="f-status" ${leitura ? "disabled" : ""}>
@@ -338,6 +348,7 @@ export function montarFormularioPrograma({ novo }) {
     }
 
     function ligarCatalogos(escopo) {
+        ligarCampoDeMarcadores(escopo, estado);
         catalogoEixo.ligar(escopo);
         catalogoObjetivo.ligar(escopo);
         catalogoProblema.ligar(escopo);

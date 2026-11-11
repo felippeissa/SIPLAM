@@ -608,6 +608,15 @@ function carregar() {
     }
     // Histórico de ações nos cadastros (auditoria). Estado antigo nasce sem eventos.
     if (!Array.isArray(base.auditoria)) base.auditoria = [];
+    // Marcadores (Gestão): cada pessoa marca para si, e o administrador também marca para todo um perfil.
+    if (!Array.isArray(base.marcadores)) base.marcadores = [];
+    // Protótipo: marcadores de exemplo, uma vez só, para a lista e os filtros não nascerem vazios.
+    if (!base.marcadoresSemeados) {
+        base.marcadoresSemeados = true;
+        if (!base.marcadores.length) base.marcadores = marcadoresDeExemplo(base);
+    }
+    // Os de exemplo gravados antes vinham presos a um plano: soltos, aparecem em qualquer um.
+    for (const m of base.marcadores) if (/^marcadores-ex\d+$/.test(m.id) && m.ppaId) m.ppaId = "";
     // Protótipo: um histórico de exemplo, uma vez só, para a lista não nascer vazia.
     if (!base.auditoriaSemeada) {
         base.auditoriaSemeada = true;
@@ -874,6 +883,69 @@ export function reiniciar() {
  * identificação, descrição e o vínculo com o nível acima — então uma função
  * serve as quatro.
  */
+/* ---------- Marcadores de exemplo ---------- */
+
+/** 40 marcadores para o protótipo: de prioridade, de situação, de fonte de recurso e de área de governo. */
+function marcadoresDeExemplo(base) {
+    const cores = ["#1AB394", "#1C84C6", "#E08E1B", "#ED5565", "#7266BA", "#23A6A8", "#6C757D", "#E0559A", "#8B5E3C", "#343A40"];
+    // Quem enxerga: a maioria é do perfil, e alguns são só do administrador.
+    const areas = ["perfil:setorial", "perfil:admin-central", "eu", "perfil:gestao-central", "perfil:gestao-setorial", "perfil:controle"];
+    const lista = [
+        ["Prioridade do governador", "Programas e entregas que o governador acompanha de perto."],
+        ["Compromisso de campanha", "Ações assumidas publicamente e que precisam constar no plano."],
+        ["Alta prioridade", "Vai na frente quando o recurso ou o prazo apertar."],
+        ["Baixa prioridade", "Pode esperar o próximo ciclo sem prejuízo ao plano."],
+        ["Em análise", "A Área Central está avaliando o que o órgão enviou."],
+        ["Aguardando o órgão", "A resposta é do órgão setorial; a Central espera."],
+        ["Aguardando a Área Central", "O órgão já enviou e espera retorno da Central."],
+        ["Pendência de documento", "Falta anexar portaria, ofício ou o processo no SEI."],
+        ["Risco de atraso", "O cronograma indica que a entrega pode não sair no prazo."],
+        ["Risco orçamentário", "O valor previsto pode não caber na LOA."],
+        ["Depende de convênio", "Só acontece com a assinatura de um convênio."],
+        ["Recurso federal", "Financiada, no todo ou em parte, por transferência da União."],
+        ["Recurso estadual", "Financiada com recurso do Tesouro estadual."],
+        ["Parceria com municípios", "Executada em conjunto com as prefeituras."],
+        ["Entrega do ano", "Resultado esperado para o exercício corrente."],
+        ["Meta revisada", "A meta mudou depois do envio original."],
+        ["Indicador sem linha de base", "Falta o valor de referência para medir o resultado."],
+        ["Revisar texto", "Nome, descrição ou objetivo pedem ajuste de redação."],
+        ["Validar com a Procuradoria", "Passa por análise jurídica antes de seguir."],
+        ["Validar com o Controle", "Passa pela Controladoria antes de seguir."],
+        ["Ajuste solicitado", "A Central pediu correção e o órgão ainda não respondeu."],
+        ["Aprovado pela alta gestão", "Já teve o aval da alta gestão do órgão."],
+        ["Para a audiência pública", "Entra na apresentação à sociedade."],
+        ["Para a mensagem à Assembleia", "Compõe o texto do projeto de lei do plano."],
+        ["Saúde", "Ações da área de saúde."],
+        ["Educação", "Ações da área de educação."],
+        ["Segurança pública", "Ações de segurança e defesa social."],
+        ["Infraestrutura", "Obras, saneamento, mobilidade e energia."],
+        ["Desenvolvimento social", "Proteção social, habitação e combate à fome."],
+        ["Meio ambiente", "Gestão ambiental e recursos hídricos."],
+        ["Agro e desenvolvimento rural", "Produção agropecuária e vida no campo."],
+        ["Cultura e esporte", "Equipamentos culturais, eventos e esporte."],
+        ["Inovação e tecnologia", "Transformação digital e ciência."],
+        ["Gestão e transparência", "Controle, planejamento e atendimento ao cidadão."],
+        ["Ação em andamento", "Já está sendo executada no ciclo atual."],
+        ["Nova no plano", "Não existia no ciclo anterior."],
+        ["Herdada do plano anterior", "Continua o que vinha do ciclo anterior."],
+        ["Ação conjunta entre órgãos", "Mais de um órgão responde pela execução."],
+        ["Acompanhamento mensal", "Entra na reunião de acompanhamento todo mês."],
+        ["Cadastro incompleto", "Faltam campos obrigatórios para fechar o registro."],
+    ];
+    const criadoEm = new Date().toLocaleDateString("pt-BR");
+    return lista.map(([nome, descricao], i) => ({
+        id: `marcadores-ex${String(i + 1).padStart(2, "0")}`,
+        nome,
+        descricao,
+        cor: cores[i % cores.length],
+        area: areas[i % areas.length],
+        dono: "admin-central",
+        // Sem `ppaId` de propósito: o exemplo aparece em qualquer plano escolhido. Os que a pessoa cria nascem com o plano.
+        ppaId: "",
+        criadoEm,
+    }));
+}
+
 /* ---------- Histórico (auditoria) ---------- */
 
 /** Eventos de exemplo, montados sobre registros que existem, do mais novo para o mais antigo. */
@@ -1012,6 +1084,7 @@ export const ROTULO_CADASTRO = {
     iniciativas: "Iniciativa",
     entregas: "Entrega",
     diagnosticos: "Diagnóstico",
+    marcadores: "Marcador",
     vinculos: "Vínculo de Projeto",
     vinculosAcao: "Vínculo de Ação Orçamentária",
 };

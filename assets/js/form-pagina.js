@@ -30,7 +30,7 @@ import { campoErro, validar, limparAoDigitar } from "./validacao.js";
  */
 export function montarFormulario(cfg) {
     const { estado } = montarShell();
-    const leitura = somenteLeitura() || cfg.somenteAdminCentral === true;
+    let leitura = somenteLeitura() || cfg.somenteAdminCentral === true;
     const novo = cfg.novo === true;
     const voltar = url(cfg.listagem);
 
@@ -38,7 +38,8 @@ export function montarFormulario(cfg) {
     const itens = () => estado[cfg.colecao] ?? [];
     const original = novo ? null : itens().find((i) => i.id === id);
 
-    if (!novo && !original) {
+    // `visivel` esconde o que não é desta pessoa (os marcadores de outros): para ela, o registro não existe.
+    if (!novo && (!original || (cfg.visivel && !cfg.visivel(original, estado)))) {
         document.getElementById("conteudo").innerHTML = `
         <div class="my-4">
             <div class="alert alert-warning py-3 px-3">
@@ -48,6 +49,9 @@ export function montarFormulario(cfg) {
         </div>`;
         return;
     }
+
+    // `leituraDoItem`: o registro é visível, mas não é desta pessoa editar (o marcador que o administrador pôs no perfil).
+    if (!novo && cfg.leituraDoItem?.(original, estado)) leitura = true;
 
     const edicao = novo ? vazio() : structuredClone(original);
 

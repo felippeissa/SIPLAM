@@ -5,11 +5,13 @@
  * Programas, Eixos e Objetivos estratégicos. A lateral traz a situação, a
  * equipe e os documentos. Só leitura: editar o plano é no cadastro.
  */
-import { situacaoPpa, ppaCorrente, updPpa } from "../dados/store.js";
+import { situacaoPpa, ppaCorrente, updPpa, updPrograma } from "../dados/store.js";
 import { recursosDaIniciativa, moeda } from "../dados/regras.js";
 import { montarShell, barraTitulo, somenteLeitura, perfilAtual, visaoAtual, url } from "../shell.js";
 import { esc, chip } from "../ui.js";
 import { confirmarExclusao } from "../confirmar.js";
+import { avisar } from "../toast.js";
+import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro, abrirJanelaDeMarcadores } from "../cadastros/marcador.js";
 import { tamanhoLegivel, nomeDoPerfil } from "../usuarios-decisao.js";
 
 const { estado } = montarShell();
@@ -56,20 +58,31 @@ function render() {
         leitura
             ? ""
             : `<td class="text-end coluna-acoes"><a href="${url(`${pasta}/editar.html?id=${encodeURIComponent(rid)}`)}" class="btn btn-sm btn-icon btn-default" title="Editar" aria-label="Editar"><i class="ti ti-pencil text-muted fs-lg"></i></a></td>`;
-    const tabela = (cab, linhas, semDados) =>
+    const tabela = (cab, linhas, semDados, { esquerda = 1, acoes = "4rem" } = {}) =>
         linhas.length
             ? `<div class="table-responsive"><table class="table table-sm align-middle mb-0">
-                <thead><tr>${cab.map((c, i) => `<th${i ? ' class="text-end"' : ""}>${c}</th>`).join("")}${leitura ? "" : '<th class="text-end coluna-acoes" style="width:4rem">Ações</th>'}</tr></thead>
+                <thead><tr>${cab.map((c, i) => `<th${i >= esquerda ? ' class="text-end"' : ""}>${c}</th>`).join("")}${leitura ? "" : `<th class="text-end coluna-acoes" style="width:${acoes}">Ações</th>`}</tr></thead>
                 <tbody>${linhas.join("")}</tbody></table></div>`
             : vazio(semDados);
 
+    // Na aba Programas, ao lado do lápis, o botão que abre a janela de marcadores — a mesma do Cadastro de Programa.
+    const acoesDoPrograma = (p) =>
+        leitura
+            ? ""
+            : `<td class="text-end coluna-acoes"><div class="d-inline-flex gap-1">
+                <button type="button" class="btn btn-sm btn-icon btn-default" data-marcar="${esc(p.id)}" title="Adicionar marcadores" aria-label="Adicionar marcadores a ${esc(p.nome)}"><i class="ti ti-tag-plus text-muted fs-lg"></i></button>
+                <a href="${url(`central-programas/editar.html?id=${encodeURIComponent(p.id)}`)}" class="btn btn-sm btn-icon btn-default" title="Editar" aria-label="Editar"><i class="ti ti-pencil text-muted fs-lg"></i></a>
+            </div></td>`;
     const abaProgramas = tabela(
-        ["Programa", "Eixo", "Iniciativas", "Previsto"],
+        ["Marcador", "Programa", "Eixo", "Iniciativas", "Previsto"],
         programas.map(
-            (p) => `<tr><td><span class="fw-medium">${esc(p.nome)}</span><span class="d-block fs-12 text-muted">${esc(p.codigo ?? "")}</span></td>
-            <td class="text-end">${esc(p.eixo || "—")}</td><td class="text-end">${iniciativasDo(p.id).length}</td><td class="text-end">${moeda(previstoDo(p.id))}</td>${editar("central-programas", p.id)}</tr>`
+            (p) => `<tr data-eixo="${esc(p.eixo ?? "")}" data-marcadores="${esc((p.marcadorIds ?? []).join(","))}">
+            <td>${selosDeMarcadores(p.marcadorIds, estado, p.marcadorObs)}</td>
+            <td><span class="fw-medium">${esc(p.nome)}</span><span class="d-block fs-12 text-muted">${esc(p.codigo ?? "")}</span></td>
+            <td class="text-end">${esc(p.eixo || "—")}</td><td class="text-end">${iniciativasDo(p.id).length}</td><td class="text-end">${moeda(previstoDo(p.id))}</td>${acoesDoPrograma(p)}</tr>`
         ),
-        "Este plano ainda não tem Programas."
+        "Este plano ainda não tem Programas.",
+        { esquerda: 2, acoes: "6rem" }
     );
     const abaEixos = tabela(
         ["Eixo", "Programas"],
@@ -123,6 +136,17 @@ function render() {
                             ${eixosDosProgramas.map((e) => `<option value="${esc(e)}">${esc(e)}</option>`).join("")}
                         </select>
                         <i class="ti ti-layout-grid app-search-icon text-muted"></i>
+                    </div>
+                </div>
+                <div class="filtro-campo">
+                    <div class="app-search">
+                        <select class="form-select form-control" data-marcador aria-label="Filtrar por marcador">
+                            <option value="">Marcador</option>
+                            ${marcadoresParaFiltro(programas, estado)
+                                .map((m) => `<option value="${esc(m.id)}">${esc(m.nome)}</option>`)
+                                .join("")}
+                        </select>
+                        <i class="ti ti-tag app-search-icon text-muted"></i>
                     </div>
                 </div>`
                         : ""
@@ -272,6 +296,26 @@ function render() {
         b.addEventListener("click", () => window.dispatchEvent(new CustomEvent("siplam:chat", { detail: { id: b.dataset.chat } })))
     );
 
+    // Marcadores dos Programas: a dica dos selos e a janela de "Adicionar marcadores".
+    iniciarDicasDeMarcador(document.getElementById("conteudo"));
+    document.querySelectorAll("[data-marcar]").forEach((b) =>
+        b.addEventListener("click", () => {
+            const programa = estado.programas.find((p) => p.id === b.dataset.marcar);
+            if (!programa) return;
+            abrirJanelaDeMarcadores({
+                titulo: `Marcadores — ${programa.nome}`,
+                selecionados: programa.marcadorIds ?? [],
+                observacoes: programa.marcadorObs ?? {},
+                estado,
+                aoSalvar: (ids, observacoes) => {
+                    updPrograma(programa.id, { marcadorIds: ids, marcadorObs: observacoes });
+                    avisar("Marcadores do Programa atualizados.");
+                    render();
+                },
+            });
+        })
+    );
+
     // Documentos do plano: o arquivo fica no navegador (até 1 MB cada), com uma descrição.
     const LIMITE_ARQUIVO = 1024 * 1024;
     const seletor = document.getElementById("arquivo-documento");
@@ -345,7 +389,13 @@ function render() {
     function exportarAba(painel, idAba, formato) {
         const tabela = painel.querySelector("table");
         if (!tabela) return;
-        const texto = (cs) => [...cs].filter((c) => !c.classList.contains("coluna-acoes")).map((c) => c.textContent.replace(/\s+/g, " ").trim());
+        const texto = (cs) =>
+            [...cs]
+                .filter((c) => !c.classList.contains("coluna-acoes"))
+                .map((c) => {
+                    const selos = [...c.querySelectorAll("[data-marcador-nome]")];
+                    return selos.length ? selos.map((s) => s.dataset.marcadorNome).join("; ") : c.textContent.replace(/\s+/g, " ").trim();
+                });
         const cabecalho = texto(tabela.querySelectorAll("thead th"));
         const linhas = [...tabela.querySelectorAll("tbody tr:not(.d-none):not([data-vazio])")].map((tr) => texto(tr.querySelectorAll("td")));
         const nome = `ppa-${ppa.primeiroAno}-${ppa.ultimoAno}-${idAba.replace("t-", "")}-${new Date().toISOString().slice(0, 10)}`;
@@ -376,10 +426,11 @@ function render() {
         const aplicar = () => {
             const termo = norm(barra.querySelector("[data-busca]").value).trim();
             const eixo = barra.querySelector("[data-eixo]")?.value ?? "";
+            const marcador = barra.querySelector("[data-marcador]")?.value ?? "";
             let visiveis = 0;
             painel.querySelectorAll("tbody tr").forEach((tr) => {
                 if (tr.dataset.vazio) return;
-                const ok = (!termo || norm(tr.textContent).includes(termo)) && (!eixo || tr.cells[1]?.textContent.trim() === eixo);
+                const ok = (!termo || norm(tr.textContent).includes(termo)) && (!eixo || tr.dataset.eixo === eixo) && (!marcador || (tr.dataset.marcadores ?? "").split(",").includes(marcador));
                 tr.classList.toggle("d-none", !ok);
                 if (ok) visiveis++;
             });
@@ -397,6 +448,8 @@ function render() {
             barra.querySelector("[data-busca]").value = "";
             const eixo = barra.querySelector("[data-eixo]");
             if (eixo) eixo.value = "";
+            const marcador = barra.querySelector("[data-marcador]");
+            if (marcador) marcador.value = "";
             aplicar();
         });
         barra.querySelectorAll("[data-exportar]").forEach((b) =>
