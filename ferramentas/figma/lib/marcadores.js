@@ -135,45 +135,42 @@
     };
 
     /* ---------- fluxo de modificações ---------- */
-    function marcacao(tela, a, ocupados) {
+    function marcacao(tela, a, ocupados, n) {
         const t = TIPO[a.tipo];
+        // o retângulo acompanha o elemento, com 3px de folga; a borda fica por dentro para a etiqueta encostar certinho
+        const P = 3;
+        const rx = a.x - P, ry = a.y - P, rw = Math.max(8, a.w + 2 * P), rh = Math.max(8, a.h + 2 * P);
         const r = figma.createFrame();
-        r.name = `Marcação · ${t.rotulo}`;
-        r.x = a.x; r.y = a.y;
-        r.resize(Math.max(4, a.w), Math.max(4, a.h));
-        r.fills = cor(t.cor, a.fantasma ? 0.1 : 0.16);
+        r.name = `Marcação ${n} · ${t.rotulo}`;
+        tela.appendChild(r);
+        r.resize(rw, rh);
+        r.x = rx; r.y = ry;
+        r.fills = cor(t.cor, a.fantasma ? 0.1 : 0.14);
         r.strokes = cor(t.cor);
         r.strokeWeight = 2;
-        r.strokeAlign = "OUTSIDE";
+        r.strokeAlign = "INSIDE";
         r.cornerRadius = 4;
         if (a.fantasma) r.dashPattern = [6, 4];
         r.clipsContent = false;
-        tela.appendChild(r);
-        r.x = a.x; r.y = a.y;
-        // etiqueta: em cima do retângulo; se encostar numa outra, sobe; se não couber, vai embaixo
-        const chip = F(`Etiqueta · ${t.rotulo}`, { dir: "HORIZONTAL", gap: 6, fill: t.cor, px: 8, py: 4, r: 4, alinha: "CENTER" });
-        chip.appendChild(T(`${t.sinal} ${t.rotulo}`, { fs: 10, fw: "Bold", c: "#ffffff", ls: 0.6 }));
-        chip.appendChild(T(a.texto, { fs: 11.5, fw: "Medium", c: "#ffffff" }));
+
+        // etiqueta numerada, colada no canto do retângulo; o texto da explicação fica no cartão ao lado
+        const chip = F(`Etiqueta ${n} · ${t.rotulo}`, { dir: "HORIZONTAL", gap: 5, fill: t.cor, px: 7, py: 3, alinha: "CENTER" });
+        chip.appendChild(T(String(n), { fs: 10, fw: "Bold", c: "#ffffff" }));
+        chip.appendChild(T(t.rotulo, { fs: 9, fw: "Bold", c: "#ffffff", ls: 0.6 }));
         tela.appendChild(chip);
         const cw = chip.width, ch = chip.height;
-        // item do menu lateral: a etiqueta vai para a direita dele, sobre a área de conteúdo, e não cobre o menu
         if (a.x + a.w < 260) {
-            chip.x = a.x + a.w + 10;
-            chip.y = a.y + (a.h - ch) / 2;
-            ocupados.push({ x: chip.x, y: chip.y, w: cw, h: ch });
-            return { nome: t.rotulo, texto: a.texto };
+            // item do menu lateral: a etiqueta fica à direita do retângulo, sobre a área de conteúdo
+            chip.topLeftRadius = 0; chip.bottomLeftRadius = 0; chip.topRightRadius = 4; chip.bottomRightRadius = 4;
+            chip.x = rx + rw; chip.y = ry + (rh - ch) / 2;
+        } else {
+            // em cima do retângulo, alinhada à esquerda; se passar da borda da tela, alinha à direita
+            chip.topLeftRadius = 4; chip.topRightRadius = 4; chip.bottomLeftRadius = 0; chip.bottomRightRadius = 0;
+            chip.x = Math.min(rx, 1440 - cw - 4); chip.y = ry - ch;
+            if (chip.y < 0) { chip.y = ry + rh; chip.topLeftRadius = 0; chip.topRightRadius = 0; chip.bottomLeftRadius = 4; chip.bottomRightRadius = 4; }
         }
-        let x = Math.max(4, Math.min(a.x, 1440 - cw - 4)), y = a.y - ch - 3;
-        const bate = (bx, by) => ocupados.some((o) => bx < o.x + o.w + 4 && bx + cw + 4 > o.x && by < o.y + o.h + 3 && by + ch + 3 > o.y);
-        let tentativas = 0;
-        while ((y < 2 || bate(x, y)) && tentativas < 8) {
-            if (y < 2) { y = a.y + a.h + 3; if (bate(x, y)) y += ch + 4; }
-            else y -= ch + 4;
-            tentativas++;
-        }
-        chip.x = x; chip.y = y;
-        ocupados.push({ x, y, w: cw, h: ch });
-        return { nome: t.rotulo, texto: a.texto };
+        ocupados.push({ x: chip.x, y: chip.y, w: cw, h: ch });
+        return { n, nome: t.rotulo, texto: a.texto };
     }
 
     G.__modif = { estado: "parado" };
@@ -234,7 +231,7 @@
                     const tela = sec.children.find((n) => n.name === c.nomeTela);
                     if (!tela) { G.__modif.feitos.push("sem tela: " + c.nomeTela); continue; }
                     const ocupados = [];
-                    const resumos = c.marcas.filter((m) => !m.falta).map((m) => marcacao(tela, m, ocupados));
+                    const resumos = c.marcas.filter((m) => !m.falta).map((m, k) => marcacao(tela, m, ocupados, k + 1));
                     // título do passo
                     const passo = T(c.nomeTela, { fs: 15, fw: "SemiBold", c: C.titulo });
                     sec.appendChild(passo); passo.x = 72; passo.y = tela.y - 34;
@@ -248,9 +245,15 @@
                     for (const r of resumos) {
                         const tp = Object.values(TIPO).find((t) => t.rotulo === r.nome);
                         const l = F("Linha", { dir: "HORIZONTAL", gap: 10, stretch: true, alinha: "MIN", w: 512 });
-                        const ch = F("chip", { fill: tp.cor, px: 7, py: 3, r: 4 }); ch.appendChild(T(tp.rotulo, { fs: 9, fw: "Bold", c: "#ffffff", ls: 0.6 }));
-                        const w = F("wrap", { pt: 1 }); w.appendChild(ch); l.appendChild(w);
-                        const tx = T(r.texto, { fs: 12.5, lh: 18, fill: true }); tx.layoutGrow = 1; l.appendChild(tx);
+                        const bola = F("numero", { fill: tp.cor, r: 11, alinha: "CENTER" });
+                        bola.primaryAxisSizingMode = "FIXED"; bola.counterAxisSizingMode = "FIXED"; bola.resize(22, 22);
+                        bola.primaryAxisAlignItems = "CENTER"; bola.counterAxisAlignItems = "CENTER";
+                        bola.appendChild(T(String(r.n), { fs: 11, fw: "Bold", c: "#ffffff" }));
+                        l.appendChild(bola);
+                        const col = F("col", { gap: 1 }); col.layoutGrow = 1;
+                        col.appendChild(T(tp.rotulo, { fs: 9.5, fw: "Bold", c: tp.cor === C.amarelo ? "#b88700" : tp.cor, ls: 0.8 }));
+                        col.appendChild(T(r.texto, { fs: 12.5, lh: 18, fill: true }));
+                        l.appendChild(col);
                         card.appendChild(l);
                     }
                     sec.appendChild(card); card.x = XCARD; card.y = tela.y;
