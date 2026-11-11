@@ -70,6 +70,29 @@ export function esc(valor) {
     );
 }
 
+/**
+ * Lista curta para célula de tabela: o primeiro nome e, havendo mais, um
+ * “+N” que mostra os demais ao passar o mouse. As linhas são redesenhadas a
+ * cada filtro, então o tooltip é delegado do `body` e criado uma vez só.
+ */
+let tooltipDelegado = false;
+export function listaResumida(nomes, vazio = '<span class="text-muted">—</span>') {
+    if (!nomes.length) return vazio;
+    if (!tooltipDelegado && window.bootstrap?.Tooltip) {
+        new bootstrap.Tooltip(document.body, { selector: "[data-lista-mais]", html: true });
+        tooltipDelegado = true;
+    }
+    const [primeiro, ...resto] = nomes;
+    if (!resto.length) return esc(primeiro);
+    // O selo fica à direita do nome e não quebra de linha separado dele.
+    return `<span class="d-inline-flex align-items-start gap-1">
+        <span>${esc(primeiro)}</span>
+        <span class="badge bg-light text-body border flex-shrink-0" tabindex="0" data-lista-mais
+              data-bs-placement="top" data-bs-title="${esc(resto.map(esc).join("<br>"))}"
+              aria-label="Mais ${resto.length}: ${esc(resto.join(", "))}">+${resto.length}</span>
+    </span>`;
+}
+
 /** Trilha de contexto com separador "›". */
 /* ---------- micro-gráficos ----------
    Uma matiz só e o número sempre ao lado: o verde da marca fica abaixo de 3:1
@@ -100,4 +123,129 @@ export function faisca(valores, rotulo) {
             )
             .join("")}
     </span>`;
+}
+
+/* ---------- paginação das listagens ---------- */
+
+/** Quantos registros por página a pessoa pode escolher. */
+export const TAMANHOS_PAGINA = [10, 25, 50, 100];
+
+/**
+ * Paginação de uma listagem: no rodapé do card, à direita, o tamanho da página,
+ * "X-Y de Z" e as setas. Não é o `custom-table.js` do template porque ele
+ * pagina linhas que já estão no DOM, e aqui o corpo da tabela se refaz a cada
+ * filtro.
+ *
+ * Quem lista filtra e ordena; a paginação só corta. O fluxo é:
+ *
+ *   const pag = criarPaginacao(refazer);
+ *   linhas()  → pag.fatia(listaFiltradaEOrdenada)
+ *   render()  → ...</table></div>${pag.html()} ... pag.ligar()
+ *   refazer() → corpo.innerHTML = linhas(); pag.atualizar();
+ *   filtro    → pag.inicio(); refazer();
+ *
+ * @param {() => void} aoMudar Redesenha o corpo da tabela e chama `atualizar()`.
+ */
+let paginacoes = 0;
+export function criarPaginacao(aoMudar, { porPagina = TAMANHOS_PAGINA[0] } = {}) {
+    const id = `paginacao-${++paginacoes}`;
+    let pagina = 1;
+    let tamanho = porPagina;
+    let total = 0;
+    let semCorte = false;
+
+    const paginas = () => Math.max(1, Math.ceil(total / tamanho));
+
+    /** A página da vez. Guarda o total, que o rodapé mostra. */
+    function fatia(lista) {
+        total = lista.length;
+        if (semCorte) return lista;
+        // O filtro pode ter encolhido a lista: a página não passa da última.
+        pagina = Math.min(pagina, paginas());
+        const de = (pagina - 1) * tamanho;
+        return lista.slice(de, de + tamanho);
+    }
+
+    function seta(icone, destino, desabilitado, rotulo) {
+        return `<button type="button" class="btn btn-sm btn-link p-0 lh-1" data-pag-ir="${destino}"
+                    aria-label="${rotulo}" ${desabilitado ? "disabled" : ""}><i class="ti ${icone} fs-16"></i></button>`;
+    }
+
+    /**
+     * Uma linha só, discreta e à direita: "Mostrar: 10 ▾   1-10 de 68   ‹ ›".
+     * Sem números de página — com centenas de registros eles viram ruído, e
+     * quem quer ver mais aumenta o tamanho da página.
+     */
+    function miolo() {
+        // Lista vazia já diz o que tem a dizer no corpo da tabela.
+        if (total === 0) return "";
+        const de = (pagina - 1) * tamanho + 1;
+        const ate = Math.min(pagina * tamanho, total);
+        return `<div class="paginacao-lista text-muted">
+            <label class="d-flex align-items-center gap-1 mb-0">
+                <span>Mostrar:</span>
+                <select class="form-select form-select-sm" data-pag-tamanho aria-label="Registros por página">
+                    ${TAMANHOS_PAGINA.map((t) => `<option value="${t}" ${t === tamanho ? "selected" : ""}>${t}</option>`).join("")}
+                </select>
+            </label>
+            <span>${de}-${ate} de ${total.toLocaleString("pt-BR")}</span>
+            <span class="d-flex align-items-center gap-2">
+                ${seta("ti-chevron-left", pagina - 1, pagina === 1, "Página anterior")}
+                ${seta("ti-chevron-right", pagina + 1, pagina === paginas(), "Próxima página")}
+            </span>
+        </div>`;
+    }
+
+    /** O rodapé do card, para ir logo depois do `.table-responsive`. */
+    const html = () => `<div class="card-footer border-0" id="${id}">${miolo()}</div>`;
+
+    /** Refaz o rodapé; chame depois de `fatia()`. */
+    function atualizar() {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = miolo();
+    }
+
+    /** Liga o rodapé já desenhado. Delegado: o miolo se refaz, o rodapé fica. */
+    function ligar() {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener("click", (e) => {
+            const link = e.target.closest("[data-pag-ir]");
+            if (!link) return;
+            const destino = Number(link.dataset.pagIr);
+            if (link.disabled || destino === pagina || destino < 1 || destino > paginas()) return;
+            pagina = destino;
+            aoMudar();
+        });
+        el.addEventListener("change", (e) => {
+            if (!e.target.matches("[data-pag-tamanho]")) return;
+            // Mantém à vista o primeiro registro que estava na tela.
+            const primeiro = (pagina - 1) * tamanho;
+            tamanho = Number(e.target.value);
+            pagina = Math.floor(primeiro / tamanho) + 1;
+            aoMudar();
+        });
+    }
+
+    /** Volta à primeira página — um filtro novo é uma lista nova. */
+    const inicio = () => {
+        pagina = 1;
+    };
+
+    /**
+     * Roda `fn` com a lista inteira na tabela. É o que a exportação usa: o
+     * arquivo leva todas as linhas do filtro, e não só a página da vez.
+     */
+    function todas(fn) {
+        semCorte = true;
+        aoMudar();
+        try {
+            fn();
+        } finally {
+            semCorte = false;
+            aoMudar();
+        }
+    }
+
+    return { fatia, html, atualizar, ligar, inicio, todas };
 }

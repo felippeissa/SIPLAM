@@ -10,7 +10,7 @@
  */
 import { obterEstado, ppaCorrente } from "./dados/store.js";
 import { montarShell, barraTitulo, somenteLeitura, url } from "./shell.js";
-import { esc } from "./ui.js";
+import { esc, criarPaginacao } from "./ui.js";
 import { criarFiltros, opcoesDe } from "./filtros.js";
 
 export function montarLista(cfg) {
@@ -83,7 +83,15 @@ export function montarLista(cfg) {
         };
     }
 
+    // A tabela mostra uma página por vez; filtro e paginação se refazem juntos.
+    const refazer = () => {
+        document.getElementById("corpo-lista").innerHTML = linhas();
+        paginacao.atualizar();
+    };
+    const paginacao = criarPaginacao(refazer);
+
     const filtros = criarFiltros({
+        paginacao,
         livre: {
             rotulo: cfg.singular,
             // O campo livre varre todo texto do registro: procurar pela
@@ -127,7 +135,8 @@ export function montarLista(cfg) {
             </td></tr>`;
         }
 
-        return lista
+        return paginacao
+            .fatia(lista)
             .map(
                 (i) => `
             <tr>
@@ -177,10 +186,13 @@ export function montarLista(cfg) {
                     <tbody id="corpo-lista">${linhas()}</tbody>
                 </table>
             </div>
+            ${paginacao.html()}
         </div>`;
 
+        paginacao.ligar();
         filtros.ligar(() => {
-            document.getElementById("corpo-lista").innerHTML = linhas();
+            paginacao.inicio();
+            refazer();
         });
     }
 

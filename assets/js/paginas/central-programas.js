@@ -8,7 +8,7 @@ import { obterEstado, ppaCorrente, updPrograma } from "../dados/store.js";
 import { avisar } from "../toast.js";
 import { APTIDAO_LABEL, DISPONIBILIZACAO_LABEL } from "../dados/regras.js";
 import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
-import { chip, esc, faixaIndicadores } from "../ui.js";
+import { chip, esc, faixaIndicadores, criarPaginacao, listaResumida } from "../ui.js";
 import { criarFiltros, opcoesDe } from "../filtros.js";
 import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro, abrirJanelaDeMarcadores } from "../cadastros/marcador.js";
 
@@ -33,15 +33,35 @@ function faltaParaDisponibilizar(p) {
     return falta;
 }
 
-function contribuicoes(programaId) {
-    return estado.iniciativas.filter((i) => i.programaId === programaId).length;
+/** Nomes das Iniciativas que os órgãos vincularam ao Programa. */
+function iniciativasDe(programaId) {
+    return estado.iniciativas.filter((i) => i.programaId === programaId).map((i) => i.nome).filter(Boolean);
+}
+
+/**
+ * Nomes das causas do Programa. O cadastro novo guarda `causaIds`, que apontam
+ * para o catálogo; o Programa anterior a ele ainda traz `causas` com o texto.
+ */
+function causasDe(p) {
+    const doCatalogo = (p.causaIds ?? [])
+        .map((id) => (estado.causas ?? []).find((c) => c.id === id)?.nome)
+        .filter(Boolean);
+    return doCatalogo.length ? doCatalogo : (p.causas ?? []).map((c) => c.texto).filter(Boolean);
 }
 
 /**
  * O filtro espelha a tabela: código e nome no campo livre, e um multisselect
  * para cada coluna que classifica o Programa.
  */
+// A tabela mostra uma página por vez. A faixa de números conta o filtro
+// inteiro, não a página: ela não se refaz quando só a página muda.
+const paginacao = criarPaginacao(() => {
+    document.getElementById("corpo-lista").innerHTML = corpo();
+    paginacao.atualizar();
+});
+
 const filtros = criarFiltros({
+    paginacao,
     livre: { rotulo: "Programa", texto: (p) => `${p.codigo} ${p.nome} ${p.eixo ?? ""} ${p.objetivoEstrategico ?? ""}` },
     campos: [
         {
@@ -113,13 +133,18 @@ function faixa() {
     );
 }
 
-/** Corpo da tabela — ele e a faixa são o que se refaz quando um filtro muda. */
+/**
+ * Corpo da tabela — ele e a faixa são o que se refaz quando um filtro muda.
+ * Causas e Iniciativas mostram os nomes, e não a contagem: com mais de um, o
+ * primeiro fica à vista e os demais no selo "+N", como na grid de problemas.
+ */
 function corpo() {
     const ls = linhas();
     if (ls.length === 0) {
         return '<tr><td colspan="8" class="text-center text-muted py-4 fs-12">Nenhum Programa corresponde ao filtro.</td></tr>';
     }
-    return ls
+    return paginacao
+        .fatia(ls)
         .map((p) => {
             const falta = faltaParaDisponibilizar(p);
             return `
@@ -131,8 +156,8 @@ function corpo() {
                 <div class="fs-12 text-muted">${esc(p.eixo)}</div>
                 ${falta.length ? `<div class="fs-12 text-warning mt-1">Falta: ${esc(falta.join(", "))}</div>` : ""}
             </td>
-            <td class="num">${(p.causas ?? []).length || chip("0", "alerta")}</td>
-            <td class="num">${contribuicoes(p.id) || "—"}</td>
+            <td class="fs-13">${listaResumida(causasDe(p), chip("Nenhuma", "alerta"))}</td>
+            <td class="fs-13">${listaResumida(iniciativasDe(p.id))}</td>
             <td>${chip(APTIDAO_LABEL[p.aptidao ?? "incompleto"], p.aptidao === "apto" ? "ok" : "alerta")}</td>
             <td>${chip(
                 DISPONIBILIZACAO_LABEL[p.disponibilizacao ?? "em_estruturacao"],
@@ -165,8 +190,8 @@ function render() {
                         <th style="width:6rem">Marcador</th>
                         <th style="width:5rem">Código</th>
                         <th>Programa</th>
-                        <th class="num" style="width:6rem">Causas</th>
-                        <th class="num" style="width:7rem">Iniciativas</th>
+                        <th style="width:16rem">Causas</th>
+                        <th style="width:14rem">Iniciativas</th>
                         <th style="width:11rem">Aptidão</th>
                         <th style="width:14rem">Disponibilização</th>
                         <th class="text-end coluna-acoes" style="width:9rem">Ações</th>
@@ -175,15 +200,19 @@ function render() {
                 <tbody id="corpo-lista">${corpo()}</tbody>
             </table>
         </div>
+        ${paginacao.html()}
     </div>`;
 
+    paginacao.ligar();
     const pintarCorpo = () => {
         document.querySelectorAll(".tooltip").forEach((d) => d.remove());
         document.getElementById("corpo-lista").innerHTML = corpo();
+        paginacao.atualizar();
         iniciarDicasDeMarcador(document.getElementById("corpo-lista"));
     };
     iniciarDicasDeMarcador(document.getElementById("corpo-lista"));
     filtros.ligar(() => {
+        paginacao.inicio();
         pintarCorpo();
         document.getElementById("faixa").innerHTML = faixa();
     });
