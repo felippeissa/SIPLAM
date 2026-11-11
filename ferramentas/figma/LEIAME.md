@@ -16,6 +16,7 @@ protótipo rodando no navegador, com posições, cores, textos e ícones reais, 
 | `lib/fluxo.js` | Monta a seção de cada fluxo (handoff, faixa, passos), o índice “00” e organiza a página. |
 | `lib/requisitos.js` + `extrair_requisitos.py` | Desenham o documento de requisitos (.docx) em páginas A4 na página “Documento de requisitos” do Figma: capa, tabelas verdes, figuras e rodapé. |
 | `lib/receitas1.js`, `receitas2.js`, `receitas3.js` | As receitas de captura, tela a tela: Home, Equipe, Usuários, Relatórios e Menu (1); editar e excluir dos cadastros (2); Histórico, chat e documentos (3). Carregam-se no navegador do protótipo depois de `captura.js` e `cadastro.js`. |
+| `lib/receitas4.js`, `lib/marcadores.js`, `specs_marcadores.py` | A página **Entrega 02 - Marcadores**: receitas das telas novas e das modificadas (com os retângulos de anotação), a capa e o fluxo de modificações em verde (adicionado), amarelo (alterado) e vermelho (excluído). `specs_marcadores.py` escreve os documentos de handoff dos quatro fluxos. |
 | `gerar.py` + `cad/*.json` | Geram os documentos de handoff dos cadastros a partir de um bloco de dados por cadastro. |
 
 ## Como atualizar o Figma
