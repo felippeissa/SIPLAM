@@ -4,13 +4,15 @@
  */
 import { STATUS_CURTO } from "./dados/regras.js";
 
+// Tag no padrão do Inspinia: badge com fundo suave.
 const TOM = {
-    ok: "chip-ok",
-    alerta: "chip-alerta",
-    impeditivo: "chip-impeditivo",
-    info: "chip-info",
-    neutro: "chip-neutro",
+    ok: "badge-soft-success",
+    alerta: "badge-soft-warning",
+    impeditivo: "badge-soft-danger",
+    info: "badge-soft-info",
+    neutro: "badge-soft-secondary",
 };
+export const classeDoTom = (tom) => `badge badge-label fs-xxs ${TOM[tom] || TOM.neutro}`;
 
 const STATUS_TOM = {
     em_preenchimento: "neutro",
@@ -23,7 +25,7 @@ const STATUS_TOM = {
 
 /** Pílula semântica em cinco tons. */
 export function chip(texto, tom = "neutro") {
-    return `<span class="chip ${TOM[tom] || TOM.neutro}">${texto}</span>`;
+    return `<span class="${classeDoTom(tom)}">${texto}</span>`;
 }
 
 /** Chip do status da Iniciativa. */

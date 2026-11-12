@@ -6,7 +6,7 @@
  * existentes. Ela observa, identifica e sugere — nunca altera dado.
  */
 import { sugestoesAtena, responderAtena } from "./dados/atena.js";
-import { esc } from "./ui.js";
+import { esc, classeDoTom } from "./ui.js";
 
 /**
  * As regras da Atena esperam as rotas do protótipo; aqui traduzimos o arquivo
@@ -46,7 +46,7 @@ export function instalarAtena(estado) {
                   const ir = destino(s);
                   return `
         <li class="list-group-item px-0 py-3">
-            <span class="chip chip-${TOM_NIVEL[s.nivel]}">${ROTULO_NIVEL[s.nivel]}</span>
+            <span class="${classeDoTom(TOM_NIVEL[s.nivel])}">${ROTULO_NIVEL[s.nivel]}</span>
             <p class="fs-13 mt-2 mb-1">${s.texto}</p>
             ${ir ? `<a href="${ir}" class="fs-12">${esc(s.rotuloAcao ?? "Abrir")}</a>` : ""}
         </li>`;

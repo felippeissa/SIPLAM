@@ -209,9 +209,10 @@ function render() {
 
     document.getElementById("conteudo").innerHTML = `
     ${barraTitulo("Home", [])}
-    <div class="row g-0">
+    <div class="row g-2">
         <div class="col-xl-9">
-            <div class="card card-h-100 rounded-0 rounded-start">
+            <div class="ilhas">
+                <div class="ilha">
                 <div class="card-header align-items-start p-4">
                     <div class="avatar-xxl me-3"><span class="avatar-title text-bg-light rounded fs-2 fw-semibold">${esc(ppa.primeiroAno)}</span></div>
                     <div>
@@ -267,8 +268,7 @@ function render() {
                                 ([icone, n, rotuloN, aba, tom]) => `
                         <div class="col-6 col-md-4 col-xl-2">
                             <!-- Cartão de estatística tracejado do Inspinia (widgets.html); o escolhido ganha a cor do tom -->
-                            <a href="#${aba}" class="card border border-dashed shadow-none rounded-0 mb-0 h-100 numero-plano${aba === "t-programas" ? " active" : ""}"
-                               role="tab" data-bs-toggle="tab" aria-selected="${aba === "t-programas"}" aria-controls="${aba}" title="Mostrar ${esc(rotuloN)}"
+                            <div class="card border border-dashed shadow-none rounded-0 mb-0 h-100 numero-plano pe-none"
                                style="--np: var(--theme-${tom}); --np-rgb: var(--theme-${tom}-rgb)">
                                 <div class="card-body p-3">
                                     <div class="mb-2 d-flex justify-content-between align-items-center">
@@ -277,11 +277,26 @@ function render() {
                                     </div>
                                     <p class="text-muted mb-0 numero-plano-rotulo">${esc(rotuloN)}</p>
                                 </div>
-                            </a>
+                            </div>
                         </div>`
                             )
                             .join("")}
                     </div>
+                </div>
+                </div>
+                <div class="card-body p-4 ilha">
+                    <ul class="nav nav-tabs nav-bordered mb-3" role="tablist">
+                        ${[
+                            ["t-programas", "ti-stack-2", "Programas", programas.length],
+                            ["t-eixos", "ti-layout-grid", "Eixos", eixos.length],
+                            ["t-objetivos", "ti-target", "Objetivos estratégicos", objetivos.length],
+                            ["t-causas", "ti-git-branch", "Causas", causas.length],
+                            ["t-indicadores", "ti-chart-line", "Indicadores", indicadores.length],
+                            ["t-problemas", "ti-alert-triangle", "Problemas", problemas.length],
+                        ]
+                            .map(([aba, icone, r, n]) => `<li class="nav-item"><a class="nav-link${aba === "t-programas" ? " active" : ""}" data-bs-toggle="tab" href="#${aba}" role="tab"><i class="ti ${icone} fs-lg me-md-1 align-middle"></i><span class="d-none d-md-inline-block align-middle">${r} (${n})</span></a></li>`)
+                            .join("")}
+                    </ul>
                     <div class="tab-content">
                         <div class="tab-pane fade active show" id="t-programas" role="tabpanel">${filtroDaAba("t-programas")}${abaProgramas}</div>
                         <div class="tab-pane fade" id="t-eixos" role="tabpanel">${filtroDaAba("t-eixos")}${abaEixos}</div>
@@ -294,13 +309,13 @@ function render() {
             </div>
         </div>
         <div class="col-xl-3">
-            <div class="card card-h-100 rounded-0 rounded-end">
-                <div class="card-body p-0">
-                    <div class="p-3 border-bottom border-dashed">
+            <div>
+                <div class="ilhas">
+                    <div class="card p-3 mb-0">
                         <h5 class="mb-3">Situação</h5>
                         ${linhaDoTempoDaSituacao(ppa.situacao)}
                     </div>
-                    <div class="p-3 border-bottom border-dashed">
+                    <div class="card p-3 mb-0">
                         <h5 class="mb-3">Informações Institucionais</h5>
                         ${[
                             ["ti-calendar-event", "Vigência", `${ppa.primeiroAno}–${ppa.ultimoAno}`],
@@ -316,7 +331,7 @@ function render() {
                             )
                             .join("")}
                     </div>
-                    <div class="p-3 border-bottom border-dashed">
+                    <div class="card p-3 mb-0">
                         <div class="d-flex mb-3 justify-content-between align-items-center">
                             <h5 class="mb-0">Equipe:</h5>
                             ${leitura ? "" : `<a href="${url(`ppa-equipe.html?id=${encodeURIComponent(ppa.id)}`)}" class="btn btn-light btn-sm btn-icon rounded-circle" title="Editar equipe" aria-label="Editar equipe"><i class="ti ti-pencil"></i></a>`}
@@ -334,7 +349,7 @@ function render() {
                                 .join("") || vazio("Ninguém na equipe.")
                         }
                     </div>
-                    <div class="p-3">
+                    <div class="card p-3 mb-0">
                         <div class="d-flex mb-3 justify-content-between align-items-center">
                             <h5 class="mb-0">Documentos:</h5>
                             ${

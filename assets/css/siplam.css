@@ -689,3 +689,14 @@ html[data-skin][data-bs-theme="light"][data-menu-color="light"] { --theme-sidena
 .icone-opcao:hover { border-color: var(--theme-primary); color: var(--theme-primary); }
 .icone-opcao.ativo { background: var(--theme-primary); border-color: var(--theme-primary); color: #fff; }
 .icone-programa-grande { width: 3rem; height: 3rem; font-size: 1.6rem; border-radius: .6rem; }
+
+/* Distância entre ilhas: 8px em todo o sistema — entre cards empilhados e entre colunas. */
+.card { margin-bottom: 8px; }
+.row, .row[class*="g-"] { --theme-gutter-x: 8px; --theme-gutter-y: 8px; --bs-gutter-y: 8px; }
+.ilhas { display: flex; flex-direction: column; gap: 8px; }
+.ilha { background: var(--bs-card-bg, #fff); border-radius: var(--bs-card-border-radius, .5rem); }
+.card:not(.numero-plano), .ilha { border: 1px solid #d9dce3; }
+/* Big numbers: cada cartão com o tom do seu número, em fundo translúcido. */
+.numero-plano { background-color: rgba(var(--np-rgb), .1); border-color: rgba(var(--np-rgb), .35) !important; }
+.numero-plano .numero-plano-icone .avatar-title { background: var(--np); color: #fff; }
+.numero-plano .numero-plano-rotulo { color: var(--np) !important; font-weight: 600; }

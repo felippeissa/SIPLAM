@@ -5,43 +5,44 @@ def S(n, o): json.dump(o, open(f"{D}/{n}.json", "w", encoding="utf-8"), ensure_a
 S("spec_u1", {
     "nome": "Fluxo U1 · Home do plano — situação, informações e números",
     "faixa": "Fluxo de Home · Situação, informações e números",
-    "faixaSub": "A Home do PPA mostra onde o plano está, os dados institucionais e os números do plano, e troca a tabela por um clique no número.",
+    "faixaSub": "A Home do PPA mostra onde o plano está, os dados institucionais e os números do plano; abaixo, em ilha própria, as abas trocam a tabela.",
     "telas": [
         {"dados": "u1_01_home", "titulo": "Home do plano", "passo": "abre a Home — situação em linha do tempo, informações institucionais e os seis números do plano"},
         {"dados": "u1_02_descricao", "titulo": "Descrição aberta", "passo": "clica em “Ver mais” — a descrição inteira aparece; “Ver menos” a recolhe"},
-        {"dados": "u1_03_numero_causas", "titulo": "Número escolhido: Causas", "passo": "clica no número de Causas — o cartão fica marcado na sua cor e a tabela muda"},
-        {"dados": "u1_04_numero_indicadores", "titulo": "Número escolhido: Indicadores", "passo": "clica em Indicadores — a tabela de Indicadores aparece com o filtro dela"},
+        {"dados": "u1_03_aba_causas", "titulo": "Aba escolhida: Causas", "passo": "clica na aba Causas (68) — a tabela de Causas aparece"},
+        {"dados": "u1_04_aba_indicadores", "titulo": "Aba escolhida: Indicadores", "passo": "clica na aba Indicadores (47) — a tabela de Indicadores aparece com o filtro dela"},
         {"dados": "u1_05_home_setorial", "titulo": "Visão do setorial", "passo": "o Planejamento setorial vê a mesma Home, sem os botões de Adicionar e Editar"},
     ],
     "handoff": {
         "titulo": "Home do plano",
         "arquivo": "ppa-detalhe.html",
-        "entrega": "A Home resume o PPA corrente. No alto, o nome, a situação e a descrição, que se recolhe com “Ver mais” e “Ver menos”. Abaixo, seis números grandes — Programas, Eixos, Objetivos, Causas, Indicadores e Problemas — que também escolhem o que a tabela de baixo mostra. À direita, a situação do plano em linha do tempo, as informações institucionais, a equipe e os documentos.",
+        "entrega": "A Home resume o PPA corrente. No alto, o nome, a situação e a descrição, que se recolhe com “Ver mais” e “Ver menos”. Abaixo, seis números grandes — Programas, Eixos, Objetivos, Causas, Indicadores e Problemas — só para informar, sem clique. Numa ilha própria, as abas com ícone e contagem escolhem a tabela. As ilhas ficam a 8px uma da outra, com borda cinza de 1px. À direita, a situação do plano em linha do tempo, as informações institucionais, a equipe e os documentos.",
         "acesso": [
             ["Perfil", "Todos. Adicionar e Editar só aparecem para quem escreve; o setorial e a Consulta só leem."],
             ["Menu", "Home, o primeiro item do menu."],
             ["Plano", "O plano corrente, escolhido no seletor do cabeçalho."],
         ],
         "componentes": [
-            ["Cartão de estatística tracejado", "a.card.border.border-dashed do Inspinia, com número, ícone e rótulo; o escolhido ganha a cor do tom"],
+            ["Cartão de estatística tracejado", "div.card.border.border-dashed do Inspinia, com número, ícone e rótulo, em fundo translúcido na cor do tom; não é clicável"],
             ["Linha do tempo da situação", "lista vertical com as seis situações do PPA; a atual fica em destaque, Reprovado sai do ramo da submissão"],
             ["Informações institucionais", "avatar com ícone, título mais escuro e subtítulo — Vigência, Processo SEI e Valor previsto"],
             ["Descrição recolhível", "bloco de texto com altura limitada e botão “Ver mais / Ver menos”"],
-            ["Abas sem barra", "tab-content do Bootstrap; os próprios números fazem o papel da barra de abas"],
+            ["Abas com ícone e contagem", "nav-tabs nav-bordered do Inspinia, como “Programas (26)”, na ilha da tabela"],
+            ["Ilhas", "cartões brancos separados por 8px, com borda cinza de 1px"],
         ],
-        "tabelas": [{"titulo": "Os seis números", "cab": ["Número", "Cor", "Mostra", "Padrão"], "linhas": [
-            ["Programas", "Verde", "Tabela de Programas", "Sim"],
-            ["Eixos estratégicos", "Azul-acinzentado", "Tabela de Eixos", "—"],
-            ["Objetivos estratégicos", "Roxo", "Tabela de Objetivos", "—"],
-            ["Causas", "Laranja", "Tabela de Causas", "—"],
-            ["Indicadores", "Azul-claro", "Tabela de Indicadores", "—"],
-            ["Problemas", "Vermelho", "Tabela de Problemas", "—"],
+        "tabelas": [{"titulo": "Os seis números", "cab": ["Número", "Cor", "Função", "Padrão"], "linhas": [
+            ["Programas", "Verde", "Só informa", "—"],
+            ["Eixos estratégicos", "Azul-acinzentado", "Só informa", "—"],
+            ["Objetivos estratégicos", "Roxo", "Só informa", "—"],
+            ["Causas", "Laranja", "Só informa", "—"],
+            ["Indicadores", "Azul-claro", "Só informa", "—"],
+            ["Problemas", "Vermelho", "Só informa", "—"],
         ]}],
         "secoes": [
             {"titulo": "Situação do PPA", "texto": "A linha do tempo mostra as seis situações: Em elaboração, Submetido, Reprovado (que volta à elaboração), Aprovado, Vigente e Encerrado. A atual fica marcada; as já vividas e as por vir aparecem em tons diferentes."},
             {"titulo": "Descrição", "texto": "A descrição aparece recolhida em poucas linhas para ganhar espaço de tela. O botão só existe quando o texto passa do limite."},
         ],
-        "estados": ["Home — Programas escolhido", "Descrição aberta — Ver menos", "Número escolhido — o cartão muda de cor e a tabela troca", "Visão do setorial — sem Adicionar e Editar"],
+        "estados": ["Home — Programas escolhido", "Descrição aberta — Ver menos", "Aba escolhida — a tabela troca", "Visão do setorial — sem Adicionar e Editar"],
     },
 })
 

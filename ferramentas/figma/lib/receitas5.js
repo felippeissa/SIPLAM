@@ -25,7 +25,7 @@
     };
     window.c5 = c5;
     const home = "/ppa-detalhe.html?id=ppa-2028";
-    const numero = (d, aba) => d.querySelector(`#numeros-plano [href="#${aba}"]`);
+    const numero = (d, aba) => d.querySelector(`#conteudo .nav-tabs [href="#${aba}"]`);
     const verMais = async (d) => { const b = d.getElementById("descricao-alternar"); if (b && !b.classList.contains("d-none")) { b.click(); await esp(400); } };
     const abrirJanela = async (d) => { d.getElementById("f-icone-botao").click(); await esp(900); };
     const escolher = async (d, c) => { d.querySelector(`[data-icone="${c}"]`).click(); await esp(900); };
@@ -38,8 +38,8 @@
         // U1 — Home do plano
         R.push(await c5("u1_01_home", home));
         R.push(await c5("u1_02_descricao", home, { prep: async (w, d) => { await verMais(d); } }));
-        R.push(await c5("u1_03_numero_causas", home, { prep: async (w, d) => { await clique(d, numero(d, "t-causas"), 700); } }));
-        R.push(await c5("u1_04_numero_indicadores", home, { prep: async (w, d) => { await clique(d, numero(d, "t-indicadores"), 700); } }));
+        R.push(await c5("u1_03_aba_causas", home, { prep: async (w, d) => { await clique(d, numero(d, "t-causas"), 700); } }));
+        R.push(await c5("u1_04_aba_indicadores", home, { prep: async (w, d) => { await clique(d, numero(d, "t-indicadores"), 700); } }));
         R.push(await c5("u1_05_home_setorial", home, { ls: SET }));
         // U2 — ícone do Programa
         const ed = "/central-programas/editar.html?id=" + window.__pid5;
@@ -60,9 +60,9 @@
         const sec = (d) => [...d.querySelectorAll("h5")].find((h) => h.textContent.trim() === "Situação").closest("div");
         R.push(await c5("mu_01_home", home, { anot: [
             { alvo: (d) => d.querySelector("#descricao-plano").closest(".mb-4"), tipo: "mod", rotulo: "ALTERADO", texto: "Descrição recolhida em poucas linhas, com “Ver mais” e “Ver menos” para ganhar espaço" },
-            { alvo: (d) => d.querySelector("#numeros-plano"), tipo: "novo", rotulo: "ADICIONADO", texto: "Seis números grandes (Programas, Eixos, Objetivos, Causas, Indicadores e Problemas), cada um com ícone e cor; o escolhido mostra a tabela abaixo" },
-            { alvo: (d) => d.querySelector("#t-programas"), dy: -26, h: 10, tipo: "exc", rotulo: "EXCLUÍDO", texto: "As abas de navegação (nav-tabs) saíram: os números fazem o papel delas", fantasma: true },
-            { alvo: (d) => d.querySelector(".card-header h3").parentElement, tipo: "mod", rotulo: "ALTERADO", texto: "A situação “Em elaboração” subiu para a frente do título do plano" },
+            { alvo: (d) => d.querySelector("#numeros-plano"), tipo: "novo", rotulo: "ADICIONADO", texto: "Seis números grandes (Programas, Eixos, Objetivos, Causas, Indicadores e Problemas), cada um com ícone e cor; são só informação, sem clique" },
+            { alvo: (d) => d.querySelector(".col-xl-9 .ilhas > .ilha:nth-child(2)"), tipo: "mod", rotulo: "ALTERADO", texto: "Abas com ícone e contagem e a tabela ficam numa ilha própria, separada por 8px e borda cinza de 1px" },
+            { alvo: (d) => d.querySelector(".card-header h3").parentElement, tipo: "mod", rotulo: "ALTERADO", texto: "A situação “Em elaboração” subiu para a frente do título e as tags seguem o padrão Inspinia (badge suave)" },
             { alvo: (d) => sec(d), tipo: "mod", rotulo: "ALTERADO", texto: "Situação virou uma linha do tempo com todas as situações do PPA; a atual fica marcada" },
             { alvo: (d) => [...d.querySelectorAll("h5")].find((h) => h.textContent.trim() === "Informações Institucionais").parentElement, tipo: "novo", rotulo: "ADICIONADO", texto: "Bloco Informações Institucionais: Vigência, Processo SEI e Valor previsto, cada um com ícone" },
         ] }));
