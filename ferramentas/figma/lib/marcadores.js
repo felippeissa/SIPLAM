@@ -175,13 +175,13 @@
 
     G.__modif = { estado: "parado" };
     /** itens: [{ nome, titulo, resumo }] — nomes de capturas md_*; as marcações vêm de an_<nome>.json. */
-    G.siplamModificacoes = function (y, itens) {
+    G.siplamModificacoes = function (y, itens, tema = "Marcadores") {
         G.__modif = { estado: "rodando", feitos: [], erro: null };
         (async () => {
             try {
                 await fontes();
                 const sec = figma.createSection();
-                sec.name = "Fluxo de modificações · Marcadores";
+                sec.name = "Fluxo de modificações · " + tema;
                 sec.fills = [];
                 sec.strokes = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 }, opacity: 0.1 }];
                 sec.strokeWeight = 1;
@@ -198,7 +198,7 @@
                 faixa.cornerRadius = 8;
                 faixa.clipsContent = true;
                 const barra = figma.createFrame(); barra.name = "Marca"; barra.resize(5, 84); barra.fills = cor(C.verde); faixa.appendChild(barra);
-                const t1 = T("Fluxo de modificações · Marcadores", { fs: 20, fw: "Bold", c: "#ffffff" }); faixa.appendChild(t1); t1.x = 28; t1.y = 20;
+                const t1 = T("Fluxo de modificações · " + tema, { fs: 20, fw: "Bold", c: "#ffffff" }); faixa.appendChild(t1); t1.x = 28; t1.y = 20;
                 const t2 = T("O que foi adicionado, alterado e excluído em cada tela existente.", { fs: 12.5, c: "#9fb3c8" }); faixa.appendChild(t2); t2.x = 28; t2.y = 50;
                 let lx = faixa.width - 600;
                 for (const k of ["novo", "mod", "exc"]) {

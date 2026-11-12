@@ -13,7 +13,7 @@ from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
-PROJETO = r"C:\Users\felip\Desktop\SIPLAM"
+PROJETO = os.path.normpath(os.path.join(AQUI, "..", ".."))
 FONTE = TTFont(os.path.join(PROJETO, "inspinia", "assets", "css", "fonts", "tabler-icons.ttf"))
 CMAP = FONTE.getBestCmap(); GS = FONTE.getGlyphSet(); UPM = FONTE["head"].unitsPerEm
 ASC = FONTE["hhea"].ascent; DESC = FONTE["hhea"].descent  # descent negativo
