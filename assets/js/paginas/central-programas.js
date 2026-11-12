@@ -10,6 +10,7 @@ import { APTIDAO_LABEL, DISPONIBILIZACAO_LABEL } from "../dados/regras.js";
 import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { chip, esc, faixaIndicadores, criarPaginacao, listaResumida } from "../ui.js";
 import { criarFiltros, opcoesDe } from "../filtros.js";
+import { seloDoIcone } from "../icone-programa.js";
 import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro, abrirJanelaDeMarcadores } from "../cadastros/marcador.js";
 
 const { estado } = montarShell();
@@ -152,8 +153,13 @@ function corpo() {
             <td>${selosDeMarcadores(p.marcadorIds, estado, p.marcadorObs)}</td>
             <td class="codigo text-muted">${esc(p.codigo)}</td>
             <td>
-                <a href="${url(`programa.html?id=${p.id}`)}" class="fw-medium">${esc(p.nome)}</a>
-                <div class="fs-12 text-muted">${esc(p.eixo)}</div>
+                <div class="d-flex align-items-start gap-2">
+                    ${seloDoIcone(p)}
+                    <div>
+                        <a href="${url(`programa.html?id=${p.id}`)}" class="fw-medium">${esc(p.nome)}</a>
+                        <div class="fs-12 text-muted">${esc(p.eixo)}</div>
+                    </div>
+                </div>
                 ${falta.length ? `<div class="fs-12 text-warning mt-1">Falta: ${esc(falta.join(", "))}</div>` : ""}
             </td>
             <td class="fs-13">${listaResumida(causasDe(p), chip("Nenhuma", "alerta"))}</td>
@@ -187,7 +193,7 @@ function render() {
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
-                        <th style="width:6rem">Marcador</th>
+                        <th style="width:9rem">Marcador</th>
                         <th style="width:5rem">Código</th>
                         <th>Programa</th>
                         <th style="width:16rem">Causas</th>

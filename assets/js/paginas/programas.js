@@ -27,6 +27,7 @@ import {
 import { montarShell, cabecalhoPagina , somenteLeitura } from "../shell.js";
 import { chip, statusChip, esc, faixaIndicadores } from "../ui.js";
 import { chipsPendencias } from "../ui-financeiro.js";
+import { seloDoIcone } from "../icone-programa.js";
 import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro } from "../cadastros/marcador.js";
 
 const { estado } = montarShell();
@@ -152,8 +153,13 @@ function linhaPrograma(l) {
         <td>${selosDeMarcadores(p.marcadorIds, estado, p.marcadorObs)}</td>
         <td class="codigo text-muted">${esc(p.codigo)}</td>
         <td>
-            <a href="programa.html?id=${p.id}" class="fw-medium">${esc(p.nome)}</a>
-            <div class="fs-12 text-muted">${esc(p.eixo)}</div>
+            <div class="d-flex align-items-start gap-2">
+                ${seloDoIcone(p)}
+                <div>
+                    <a href="programa.html?id=${p.id}" class="fw-medium">${esc(p.nome)}</a>
+                    <div class="fs-12 text-muted">${esc(p.eixo)}</div>
+                </div>
+            </div>
             ${semCausas ? `<div class="fs-12 text-warning mt-1">Programa sem causas cadastradas — não é possível concluir uma Iniciativa nele.</div>` : ""}
         </td>
         <td>${chip(PARTICIPACAO_LABEL[l.participacao], TOM_PARTICIPACAO[l.participacao])}</td>
@@ -247,7 +253,7 @@ function render() {
                 <thead>
                     <tr>
                         <th></th>
-                        <th style="width:6rem">Marcador</th>
+                        <th style="width:9rem">Marcador</th>
                         <th style="width:5rem">Código</th>
                         <th>Programa</th>
                         <th style="width:12rem">Participação</th>

@@ -9,6 +9,7 @@
 import { obterEstado } from "../dados/store.js";
 import { iniciativasDoOrgao, entregasDaIniciativa, APTIDAO_LABEL, DISPONIBILIZACAO_LABEL } from "../dados/regras.js";
 import { montarShell, barraTitulo, visaoAtual } from "../shell.js";
+import { seloDoIcone } from "../icone-programa.js";
 import { chip, statusChip, esc, secao } from "../ui.js";
 
 const { estado } = montarShell();
@@ -55,7 +56,9 @@ if (!p) {
     ${barraTitulo(esc(p.nome), [`${esc(p.codigo)} — ${esc(p.nome)}`])}
     <div class="my-3">
         <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
-            <div>
+            <div class="d-flex align-items-start gap-3">
+                <span class="icone-programa icone-programa-grande" title="Ícone do programa">${seloDoIcone(p).match(/<i .*<\/i>/)[0]}</span>
+                <div>
                 <h4 class="fw-bold mb-1">${esc(p.nome)}</h4>
                 <div class="d-flex flex-wrap align-items-center gap-2 fs-13 text-muted">
                     <span class="codigo">${esc(p.codigo)}</span>
@@ -63,6 +66,7 @@ if (!p) {
                     <span>${esc(p.eixo)}</span>
                     ${chip(APTIDAO_LABEL[p.aptidao ?? "incompleto"], p.aptidao === "apto" ? "ok" : "alerta")}
                     ${chip(DISPONIBILIZACAO_LABEL[p.disponibilizacao ?? "em_estruturacao"], p.disponibilizacao === "disponivel" ? "ok" : "neutro")}
+                </div>
                 </div>
             </div>
         </div>

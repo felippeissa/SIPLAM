@@ -10,6 +10,7 @@
  */
 import { estadoInicial, ANOS, REGIOES, ACOES } from "./seed.js";
 import { anosDoPlano } from "./anos.js";
+import { iconeDeExemplo } from "../icone-programa.js";
 import { PPAS, DESCRICOES_EIXO, DESCRICOES_OBJETIVO, SUBCAUSAS, CAUSAS, INDICADORES } from "./exemplos.js";
 import { ESTRUTURA_REAL, PROGRAMAS_PPA } from "./programas-ppa.js";
 
@@ -620,6 +621,22 @@ function carregar() {
         base.marcadoresSemeados = true;
         if (!base.marcadores.length) base.marcadores = marcadoresDeExemplo(base);
     }
+    // Mais dez marcadores de exemplo, para quem já tinha os 40 gravados.
+    if (!base.marcadoresExtras) {
+        base.marcadoresExtras = true;
+        for (const m of marcadoresExtrasDeExemplo()) if (!base.marcadores.some((x) => x.id === m.id)) base.marcadores.push(m);
+    }
+    // Os marcadores postos nos Programas dos planos, para a coluna e os filtros terem o que mostrar. Uma vez só: se a pessoa
+    // tirar, não voltam; e Programa que já tem marcador, posto por ela, fica como está.
+    if (!base.marcadoresAplicados) {
+        base.marcadoresAplicados = true;
+        aplicarMarcadoresDeExemplo(base);
+    }
+    // Ícone dos Programas, uma vez só: quem já escolheu o seu fica como está.
+    if (!base.iconesAplicados) {
+        base.iconesAplicados = true;
+        for (const p of base.programas ?? []) if (!p.icone) p.icone = iconeDeExemplo(p);
+    }
     // Os de exemplo gravados antes vinham presos a um plano: soltos, aparecem em qualquer um.
     for (const m of base.marcadores) if (/^marcadores-ex\d+$/.test(m.id) && m.ppaId) m.ppaId = "";
     // Protótipo: um histórico de exemplo, uma vez só, para a lista não nascer vazia.
@@ -949,6 +966,121 @@ function marcadoresDeExemplo(base) {
         ppaId: "",
         criadoEm,
     }));
+}
+
+/** Mais dez marcadores, que completam os 50 do protótipo. */
+function marcadoresExtrasDeExemplo() {
+    const cores = ["#1AB394", "#1C84C6", "#E08E1B", "#ED5565", "#7266BA", "#23A6A8", "#6C757D", "#E0559A", "#8B5E3C", "#343A40"];
+    const areas = ["perfil:setorial", "perfil:admin-central", "eu", "perfil:gestao-central", "perfil:gestao-setorial", "perfil:controle"];
+    const lista = [
+        ["Programa estruturante", "Organiza outros Programas e define a agenda do eixo."],
+        ["Alinhado aos ODS", "Contribui diretamente para os Objetivos de Desenvolvimento Sustentável."],
+        ["Financiamento externo", "Parte do recurso vem de organismo multilateral."],
+        ["Em revisão jurídica", "O texto está com a Procuradoria para parecer."],
+        ["Aguardando diagnóstico", "Depende de um diagnóstico que ainda está sendo concluído."],
+        ["Entrega no primeiro ano", "Tem resultado previsto para o primeiro ano do ciclo."],
+        ["Risco alto", "Reúne mais de um risco e pede acompanhamento de perto."],
+        ["Monitoramento trimestral", "Entra na reunião de resultados de cada trimestre."],
+        ["Meta do governador", "Meta acompanhada direto pelo gabinete do governador."],
+        ["Prioridade da Assembleia", "Foi pedido ou reforçado pela Assembleia Legislativa."],
+    ];
+    const criadoEm = new Date().toLocaleDateString("pt-BR");
+    return lista.map(([nome, descricao], i) => ({
+        id: `marcadores-ex${41 + i}`,
+        nome,
+        descricao,
+        cor: cores[(40 + i) % cores.length],
+        area: areas[(40 + i) % areas.length],
+        dono: "admin-central",
+        ppaId: "",
+        criadoEm,
+    }));
+}
+
+/**
+ * Põe marcadores nos Programas de todos os planos: sempre o da área de governo do eixo e, conforme o Programa,
+ * situação, prioridade, risco, recurso e andamento — com observação em parte deles. A escolha é determinística
+ * (sai do código do Programa), então a base é a mesma a cada vez que nasce.
+ */
+function aplicarMarcadoresDeExemplo(base) {
+    const ex = (n) => `marcadores-ex${String(n).padStart(2, "0")}`;
+    const existe = (id) => base.marcadores.some((m) => m.id === id);
+    const AREA_DE_GOVERNO = [
+        [/sa[uú]de/i, 25], [/educa[cç][aã]o/i, 26], [/seguran[cç]a/i, 27], [/infraestrutura/i, 28], [/social/i, 29],
+        [/inova[cç][aã]o/i, 33], [/gest[aã]o/i, 34], [/cultura|esporte/i, 32], [/meio ambiente/i, 30],
+    ];
+    const POOLS = {
+        situacao: [5, 6, 7, 8, 20, 21, 22, 40, 44, 45],
+        prioridade: [1, 2, 3, 4, 41, 49, 50],
+        risco: [9, 10, 47, 17],
+        recurso: [12, 13, 11, 43],
+        andamento: [14, 15, 16, 35, 36, 37, 38, 39, 46, 48, 42, 18, 19, 23, 24],
+    };
+    const OBS = {
+        1: ["Acompanhar com o gabinete.", "Pauta fixa da reunião de segunda."],
+        2: ["Promessa de campanha, com prazo no primeiro ano."],
+        3: ["Vai na frente se o recurso apertar."],
+        5: ["A equipe da Central conclui a análise esta semana."],
+        6: ["Falta o órgão enviar as metas por ano."],
+        7: ["O órgão já enviou; falta o retorno da Central."],
+        8: ["Anexar o ofício no processo do SEI."],
+        9: ["O cronograma de obras está apertado.", "Licitação ainda não saiu."],
+        10: ["O valor previsto pode não caber na LOA."],
+        11: ["Depende da assinatura do convênio."],
+        12: ["Contrapartida estadual de 20%."],
+        13: ["Recurso do Tesouro estadual já garantido."],
+        14: ["Executado com as prefeituras da região."],
+        17: ["Sem valor de referência para o indicador principal."],
+        18: ["Rever o objetivo do programa."],
+        19: ["Mandar o texto para a Procuradoria."],
+        20: ["Reunião com a Controladoria marcada."],
+        21: ["A Central pediu ajuste nas metas."],
+        22: ["Aval da alta gestão em 02/09."],
+        35: ["Já em execução no ciclo atual."],
+        39: ["Entra na pauta mensal do comitê."],
+        45: ["Estudo ainda em campo."],
+        47: ["Mais de um risco ao mesmo tempo."],
+    };
+    const GERAL = ["Conferir com o órgão responsável.", "Ver a ata da última reunião.", "Revisar antes do envio.", "Combinado em reunião com a Central.", "Aguardando posição da área técnica."];
+
+    // gerador determinístico a partir de um texto
+    const semente = (s) => [...String(s)].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7);
+    const sorteio = (seed) => () => {
+        seed = (seed + 0x6d2b79f5) >>> 0;
+        let t = seed;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+
+    for (const p of base.programas) {
+        if ((p.marcadorIds ?? []).length) continue;
+        const rnd = sorteio(semente(p.id + (p.ppaId ?? "")));
+        const escolha = (pool) => pool[Math.floor(rnd() * pool.length)];
+        const ids = [];
+        const poe = (n) => {
+            const id = ex(n);
+            if (existe(id) && !ids.includes(id)) ids.push(id);
+        };
+        const area = AREA_DE_GOVERNO.find(([re]) => re.test(p.eixo ?? ""));
+        poe(area ? area[1] : escolha([30, 31]));
+        if (/desenvolvimento econ[oô]mico/i.test(p.eixo ?? "")) poe(31);
+        poe(escolha(POOLS.situacao));
+        if (rnd() < 0.5) poe(escolha(POOLS.prioridade));
+        if (rnd() < 0.4) poe(escolha(POOLS.risco));
+        if (rnd() < 0.5) poe(escolha(POOLS.recurso));
+        if (rnd() < 0.6) poe(escolha(POOLS.andamento));
+        const finais = ids.slice(0, 5);
+        const obs = {};
+        for (const id of finais) {
+            if (rnd() >= 0.45) continue;
+            const n = Number(id.replace("marcadores-ex", ""));
+            const textos = OBS[n] ?? GERAL;
+            obs[id] = textos[Math.floor(rnd() * textos.length)];
+        }
+        p.marcadorIds = finais;
+        if (Object.keys(obs).length) p.marcadorObs = obs;
+    }
 }
 
 /* ---------- Histórico (auditoria) ---------- */

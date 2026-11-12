@@ -240,12 +240,14 @@
    o menu nem estourar a sidenav recolhida. */
 .sidenav-menu .logo-lg img,
 .logo-topbar .logo-lg img {
-    max-height: 26px;
+    height: 34px;
+    max-height: 34px;
     width: auto;
 }
 .sidenav-menu .logo-sm img,
 .logo-topbar .logo-sm img {
-    max-height: 26px;
+    height: 34px;
+    max-height: 34px;
     width: auto;
 }
 
@@ -612,3 +614,78 @@ tr.linha-clicavel {
 .paginacao-lista .btn-link:not(:disabled):hover {
     opacity: 0.7;
 }
+
+/* ---------- Linha do tempo da situação do PPA (Home do plano) ---------- */
+.linha-tempo { display: flex; flex-direction: column; }
+.tl-item { --tl: #5b6873; --tl-bg: #eef1f5; position: relative; display: flex; gap: 12px; padding-bottom: 16px; }
+.tl-item:last-child { padding-bottom: 0; }
+.tl-item:not(:last-child)::before { content: ""; position: absolute; left: 10px; top: 24px; bottom: 2px; width: 2px; background: var(--theme-border-color, #e3e8ef); }
+.tl-info { --tl: #1f5c8b; --tl-bg: #e4eef6; }
+.tl-alerta { --tl: #8a5a12; --tl-bg: #f7eddb; }
+.tl-ok { --tl: #1f6b4d; --tl-bg: #e2f0e9; }
+.tl-impeditivo { --tl: #9b3324; --tl-bg: #f8e5e2; }
+.tl-neutro { --tl: #5b6873; --tl-bg: #eef1f5; }
+[data-bs-theme="dark"] .tl-info { --tl: #71b2df; --tl-bg: #17303f; }
+[data-bs-theme="dark"] .tl-alerta { --tl: #dcae63; --tl-bg: #332714; }
+[data-bs-theme="dark"] .tl-ok { --tl: #6fc79f; --tl-bg: #15302a; }
+[data-bs-theme="dark"] .tl-impeditivo { --tl: #e8897a; --tl-bg: #361d1b; }
+[data-bs-theme="dark"] .tl-neutro { --tl: #8492a0; --tl-bg: #222b34; }
+.tl-marcador { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; border: 2px solid var(--theme-border-color, #dde3ea); background: transparent; }
+.tl-feito .tl-marcador { background: var(--tl-bg); border-color: var(--tl); color: var(--tl); }
+.tl-atual .tl-marcador { background: var(--tl); border-color: var(--tl); color: var(--tl-bg); box-shadow: 0 0 0 4px var(--tl-bg); }
+.tl-titulo { font-size: 13px; font-weight: 500; line-height: 1.3; color: var(--theme-body-color, #4c4c5c); }
+.tl-sub { font-size: 11.5px; color: var(--theme-tertiary-color, #8a93a0); line-height: 1.3; }
+.tl-atual .tl-titulo { font-weight: 700; color: var(--tl); }
+.tl-futuro .tl-titulo { color: var(--theme-tertiary-color, #8a93a0); font-weight: 400; }
+/* o ramo "Reprovado": recuado, com marcador menor e tracejado */
+.tl-ramo { margin-left: 34px; padding-bottom: 16px; }
+/* a linha principal passa por trás do ramo, sem quebrar entre o Submetido e o Aprovado */
+.tl-ramo::before { left: -24px; top: 0; }
+.tl-ramo .tl-marcador { width: 18px; height: 18px; font-size: 11px; border-style: dashed; }
+.tl-ramo.tl-atual .tl-marcador { border-style: solid; }
+
+/* A coluna Marcador da Home comporta até cinco selos numa linha só. */
+#t-programas thead th:first-child { min-width: 9.5rem; }
+
+/* ---------- Home do plano: descrição recolhida e números do plano ---------- */
+.descricao-plano.recolhida { max-height: 4.9em; overflow: hidden; position: relative; -webkit-mask-image: linear-gradient(#000 60%, transparent); mask-image: linear-gradient(#000 60%, transparent); }
+.descricao-plano p:last-child { margin-bottom: .5rem; }
+
+/* Números do plano: o cartão tracejado do Inspinia, com cor por item. O escolhido é o que está sendo mostrado abaixo. */
+.numero-plano { --np: var(--theme-primary); --np-rgb: var(--theme-primary-rgb); color: inherit; text-decoration: none; transition: background-color .12s, border-color .12s; }
+.numero-plano:hover { color: inherit; border-color: var(--np) !important; }
+.numero-plano-valor { color: var(--theme-heading-color, #2b3138); font-weight: 700; }
+[data-bs-theme="dark"] .numero-plano-valor { color: #f1f4f7; }
+.numero-plano-icone .avatar-title { background: rgba(var(--np-rgb), .14); color: var(--np); }
+.numero-plano.active { background-color: rgba(var(--np-rgb), .1); border-color: var(--np) !important; }
+.numero-plano.active .numero-plano-icone .avatar-title { background: var(--np); color: #fff; }
+.numero-plano.active .numero-plano-rotulo { color: var(--np) !important; font-weight: 600; }
+
+/* ---------- Contraste do texto (tema claro) ----------
+ * O texto do template é cinza-azulado e o texto de apoio (text-muted) é claro demais sobre o branco, cerca de 2,4:1.
+ * Aqui o texto base fica mais escuro e o de apoio sobe para perto de 5:1. O tema escuro não muda. */
+[data-bs-theme="light"] {
+    --theme-body-color: #2c2d39;
+    --theme-body-color-rgb: 44, 45, 57;
+    --theme-emphasis-color: #1c1d27;
+    --theme-secondary-color: #5f6b7a;
+    --theme-secondary-color-rgb: 95, 107, 122;
+    --theme-tertiary-color: rgba(44, 45, 57, 0.68);
+    --theme-sidenav-item-color: #3d4752;
+}
+/* o template define a cor do menu por skin + cor do menu; aqui vale para o que o sistema usa (skin minimal, menu cinza ou claro) */
+html[data-skin][data-bs-theme="light"][data-menu-color="gray"],
+html[data-skin][data-bs-theme="light"][data-menu-color="light"] { --theme-sidenav-item-color: #3d4752; }
+[data-bs-theme="light"] h1, [data-bs-theme="light"] h2, [data-bs-theme="light"] h3,
+[data-bs-theme="light"] h4, [data-bs-theme="light"] h5, [data-bs-theme="light"] h6,
+[data-bs-theme="light"] .h1, [data-bs-theme="light"] .h2, [data-bs-theme="light"] .h3,
+[data-bs-theme="light"] .h4, [data-bs-theme="light"] .h5, [data-bs-theme="light"] .h6 { color: var(--theme-body-color); }
+[data-bs-theme="light"] .text-muted { color: var(--theme-secondary-color) !important; }
+
+/* Ícone do Programa: o selo ao lado do nome nas tabelas e no formulário. */
+.icone-programa { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 1.9rem; height: 1.9rem; border-radius: .4rem; background: rgba(var(--theme-primary-rgb), .14); color: var(--theme-primary); font-size: 1.05rem; }
+.icone-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr)); gap: .4rem; margin-bottom: 1rem; }
+.icone-opcao { display: flex; align-items: center; justify-content: center; height: 2.75rem; border: 1px solid var(--theme-border-color); border-radius: .4rem; background: transparent; color: inherit; font-size: 1.3rem; cursor: pointer; }
+.icone-opcao:hover { border-color: var(--theme-primary); color: var(--theme-primary); }
+.icone-opcao.ativo { background: var(--theme-primary); border-color: var(--theme-primary); color: #fff; }
+.icone-programa-grande { width: 3rem; height: 3rem; font-size: 1.6rem; border-radius: .6rem; }

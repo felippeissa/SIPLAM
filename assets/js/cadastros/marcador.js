@@ -177,7 +177,7 @@ export function selosDeMarcadores(ids, estado, observacoes = {}) {
     const todos = new Map((estado.marcadores ?? []).map((m) => [m.id, m]));
     const lista = (ids ?? []).map((id) => todos.get(id)).filter(Boolean);
     if (!lista.length) return '<span class="text-muted">—</span>';
-    return `<span class="d-inline-flex flex-wrap gap-1">${lista
+    return `<span class="d-inline-flex flex-wrap gap-1" style="min-width:9.25rem">${lista
         .map(
             (m) => `<span class="badge rounded-pill d-inline-flex align-items-center justify-content-center p-0"
                   style="background:${esc(m.cor ?? CORES[0])};width:24px;height:24px" tabindex="0"

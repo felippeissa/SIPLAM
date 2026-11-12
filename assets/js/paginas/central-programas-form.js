@@ -30,7 +30,8 @@ import { addPrograma, updPrograma, updIniciativa, ppaCorrente } from "../dados/s
 import { DISPONIBILIZACAO_LABEL } from "../dados/regras.js";
 import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { catalogo } from "../catalogo.js";
-import { campoDeMarcadores, ligarCampoDeMarcadores, lerCampoDeMarcadores, marcadoresVisiveis } from "../cadastros/marcador.js";
+import { campoDeIcone, ligarCampoDeIcone, lerIcone } from "../icone-programa.js";
+import { campoDeMarcadores,ligarCampoDeMarcadores, lerCampoDeMarcadores, marcadoresVisiveis } from "../cadastros/marcador.js";
 import { esc, chip } from "../ui.js";
 import { avisar } from "../toast.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
@@ -286,6 +287,7 @@ export function montarFormularioPrograma({ novo }) {
             objetivo: v("f-objetivo").trim(),
             resultadoEsperado: v("f-resultadoEsperado").trim(),
             disponibilizacao: v("f-status"),
+            icone: lerIcone(),
             // O que a pessoa não enxerga (marcador privado de outro) fica como estava: salvar não o tira.
             marcadorIds: [
                 ...(edicao.marcadorIds ?? []).filter((id) => !marcadoresVisiveis(estado).some((m) => m.id === id)),
@@ -319,8 +321,9 @@ export function montarFormularioPrograma({ novo }) {
     function corpo() {
         return `
         <div class="row g-3">
-            <div class="col-md-5">${campoTexto("f-nome", "Nome do programa", edicao.nome, { obrigatorio: true })}</div>
-            <div class="col-md-4">${campoDeMarcadores(edicao.marcadorIds, estado, leitura)}</div>
+            <div class="col-md-4">${campoTexto("f-nome", "Nome do programa", edicao.nome, { obrigatorio: true })}</div>
+            <div class="col-md-2">${campoDeIcone(edicao.icone, leitura)}</div>
+            <div class="col-md-3">${campoDeMarcadores(edicao.marcadorIds, estado, leitura)}</div>
             <div class="col-md-3">
                 <div class="mb-3">
                     <label class="form-label" for="f-status">Status <span class="text-danger">*</span></label>
@@ -349,6 +352,7 @@ export function montarFormularioPrograma({ novo }) {
 
     function ligarCatalogos(escopo) {
         ligarCampoDeMarcadores(escopo, estado);
+        ligarCampoDeIcone(escopo);
         catalogoEixo.ligar(escopo);
         catalogoObjetivo.ligar(escopo);
         catalogoProblema.ligar(escopo);

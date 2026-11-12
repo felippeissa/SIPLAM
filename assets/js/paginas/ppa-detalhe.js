@@ -5,14 +5,52 @@
  * Programas, Eixos e Objetivos estratégicos. A lateral traz a situação, a
  * equipe e os documentos. Só leitura: editar o plano é no cadastro.
  */
-import { situacaoPpa, ppaCorrente, updPpa, updPrograma } from "../dados/store.js";
+import { situacaoPpa, ppaCorrente, updPpa, updPrograma, SITUACOES_PPA } from "../dados/store.js";
 import { recursosDaIniciativa, moeda } from "../dados/regras.js";
 import { montarShell, barraTitulo, somenteLeitura, perfilAtual, visaoAtual, url } from "../shell.js";
 import { esc, chip } from "../ui.js";
 import { confirmarExclusao } from "../confirmar.js";
 import { avisar } from "../toast.js";
+import { seloDoIcone } from "../icone-programa.js";
 import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro, abrirJanelaDeMarcadores } from "../cadastros/marcador.js";
 import { tamanhoLegivel, nomeDoPerfil } from "../usuarios-decisao.js";
+
+/**
+ * A situação do PPA como linha do tempo: o caminho do plano, da elaboração ao encerramento, com o ponto em que ele
+ * está. O que já passou vem marcado, o atual vem em destaque, e o que falta vem apagado. O "Reprovado" é um ramo que
+ * sai do "Submetido" e devolve o plano à elaboração.
+ */
+const CURTO = {
+    elaboracao: "órgãos preenchem",
+    submetido: "congelado para edição",
+    aprovado: "aguarda a vigência",
+    reprovado: "volta para elaboração",
+    vigente: "só muda por alteração",
+    encerrado: "permanece para consulta",
+};
+const CAMINHO = ["elaboracao", "submetido", "aprovado", "vigente", "encerrado"];
+
+function linhaDoTempoDaSituacao(atual) {
+    // posição no caminho principal; reprovado passou por elaboração e submissão
+    const posicao = atual === "reprovado" ? 1 : CAMINHO.indexOf(atual);
+    const passo = (id, estado, ramo = false) => {
+        const s = SITUACOES_PPA.find((x) => x.id === id);
+        const icone = estado === "feito" ? "ti-check" : estado === "atual" ? (ramo ? "ti-arrow-back-up" : "ti-point-filled") : "";
+        return `
+        <div class="tl-item tl-${s.tom} tl-${estado}${ramo ? " tl-ramo" : ""}"${estado === "atual" ? ' aria-current="step"' : ""}>
+            <span class="tl-marcador">${icone ? `<i class="ti ${icone}"></i>` : ""}</span>
+            <div class="tl-texto"><div class="tl-titulo">${esc(s.rotulo)}</div><div class="tl-sub">${esc(CURTO[id])}</div></div>
+        </div>`;
+    };
+    return `<div class="linha-tempo">${CAMINHO.map((id, i) => {
+        const estado = id === atual ? "atual" : i < posicao || (atual === "reprovado" && i <= 1) ? "feito" : "futuro";
+        // o ramo "Reprovado" fica logo abaixo do "Submetido"
+        return passo(id, estado) + (id === "submetido" ? passo("reprovado", atual === "reprovado" ? "atual" : "futuro", true) : "");
+    }).join("")}</div>`;
+}
+
+// A descrição do plano começa recolhida, para dar espaço à tela; fica aberta depois de a pessoa abrir, mesmo que a tela se redesenhe.
+let descricaoAberta = false;
 
 const { estado } = montarShell();
 // Sem `?id=` — a Home aberta pelo menu — vale o plano escolhido.
@@ -78,7 +116,7 @@ function render() {
         programas.map(
             (p) => `<tr data-eixo="${esc(p.eixo ?? "")}" data-marcadores="${esc((p.marcadorIds ?? []).join(","))}">
             <td>${selosDeMarcadores(p.marcadorIds, estado, p.marcadorObs)}</td>
-            <td><span class="fw-medium">${esc(p.nome)}</span><span class="d-block fs-12 text-muted">${esc(p.codigo ?? "")}</span></td>
+            <td><div class="d-flex align-items-center gap-2">${seloDoIcone(p)}<div><span class="fw-medium">${esc(p.nome)}</span><span class="d-block fs-12 text-muted">${esc(p.codigo ?? "")}</span></div></div></td>
             <td class="text-end">${esc(p.eixo || "—")}</td><td class="text-end">${iniciativasDo(p.id).length}</td><td class="text-end">${moeda(previstoDo(p.id))}</td>${acoesDoPrograma(p)}</tr>`
         ),
         "Este plano ainda não tem Programas.",
@@ -167,11 +205,6 @@ function render() {
             </div>
         </div>`;
 
-    const aba = (idAba, icone, rotulo, n, ativa) => `
-        <li class="nav-item"><a class="nav-link${ativa ? " active" : ""}" data-bs-toggle="tab" href="#${idAba}" role="tab">
-            <i class="ti ${icone} fs-lg me-md-1 align-middle"></i>
-            <span class="d-none d-md-inline-block align-middle">${rotulo} (${n})</span></a></li>`;
-
     const meta = (r, v) => `<div class="col-md-4 col-xl-3"><h6 class="mb-1 text-muted text-uppercase">${r}</h6><p class="fw-medium mb-0">${v}</p></div>`;
 
     document.getElementById("conteudo").innerHTML = `
@@ -182,9 +215,11 @@ function render() {
                 <div class="card-header align-items-start p-4">
                     <div class="avatar-xxl me-3"><span class="avatar-title text-bg-light rounded fs-2 fw-semibold">${esc(ppa.primeiroAno)}</span></div>
                     <div>
-                        <h3 class="mb-1 fs-xl">${esc(ppa.nome)}</h3>
-                        <p class="text-muted mb-2 fs-xxs">${esc(ppa.primeiroAno)}–${esc(ppa.ultimoAno)}</p>
-                        ${chip(s.rotulo, s.tom)}
+                        <div class="d-flex align-items-center flex-wrap column-gap-2 mb-1">
+                            <h3 class="mb-0 fs-xl">${esc(ppa.nome)}</h3>
+                            ${chip(s.rotulo, s.tom)}
+                        </div>
+                        <p class="text-muted mb-0 fs-xxs">${esc(ppa.primeiroAno)}–${esc(ppa.ultimoAno)}</p>
                     </div>
                     <div class="ms-auto d-flex gap-2">
                         ${
@@ -212,22 +247,41 @@ function render() {
                 <div class="card-body px-4">
                     <div class="mb-4">
                         <h5 class="fs-base mb-2">Descrição:</h5>
-                        ${(ppa.descricao ?? "").split("\n\n").map((t) => `<p class="text-muted">${esc(t)}</p>`).join("") || vazio("Sem descrição.")}
+                        <div class="descricao-plano${descricaoAberta ? "" : " recolhida"}" id="descricao-plano">
+                            ${(ppa.descricao ?? "").split("\n\n").map((t) => `<p class="text-muted">${esc(t)}</p>`).join("") || vazio("Sem descrição.")}
+                        </div>
+                        <button type="button" class="btn btn-link btn-sm p-0 fs-13 d-none" id="descricao-alternar" aria-expanded="${descricaoAberta}" aria-controls="descricao-plano">
+                            <span>${descricaoAberta ? "Ver menos" : "Ver mais"}</span> <i class="ti ti-chevron-${descricaoAberta ? "up" : "down"}"></i>
+                        </button>
                     </div>
-                    <div class="row mb-4 gy-3">
-                        ${meta("Vigência", `${esc(ppa.primeiroAno)}–${esc(ppa.ultimoAno)}`)}
-                        ${meta("Processo SEI", esc(ppa.processoSei || "—"))}
-                        ${meta("Valor previsto", moeda(total))}
-                        ${meta("Programas", programas.length)}
+                    <div class="row mb-4 g-3" id="numeros-plano" role="tablist" aria-label="O que o plano tem">
+                        ${[
+                            ["ti-stack-2", programas.length, "Programas", "t-programas", "primary"],
+                            ["ti-layout-grid", eixos.length, "Eixos estratégicos", "t-eixos", "secondary"],
+                            ["ti-target", objetivos.length, "Objetivos estratégicos", "t-objetivos", "purple"],
+                            ["ti-git-branch", causas.length, "Causas", "t-causas", "warning"],
+                            ["ti-chart-line", indicadores.length, "Indicadores", "t-indicadores", "info"],
+                            ["ti-alert-triangle", problemas.length, "Problemas", "t-problemas", "danger"],
+                        ]
+                            .map(
+                                ([icone, n, rotuloN, aba, tom]) => `
+                        <div class="col-6 col-md-4 col-xl-2">
+                            <!-- Cartão de estatística tracejado do Inspinia (widgets.html); o escolhido ganha a cor do tom -->
+                            <a href="#${aba}" class="card border border-dashed shadow-none rounded-0 mb-0 h-100 numero-plano${aba === "t-programas" ? " active" : ""}"
+                               role="tab" data-bs-toggle="tab" aria-selected="${aba === "t-programas"}" aria-controls="${aba}" title="Mostrar ${esc(rotuloN)}"
+                               style="--np: var(--theme-${tom}); --np-rgb: var(--theme-${tom}-rgb)">
+                                <div class="card-body p-3">
+                                    <div class="mb-2 d-flex justify-content-between align-items-center">
+                                        <h5 class="fs-xl mb-0 numero-plano-valor">${n}</h5>
+                                        <span class="avatar-sm rounded numero-plano-icone"><span class="avatar-title rounded"><i class="ti ${icone} fs-xl"></i></span></span>
+                                    </div>
+                                    <p class="text-muted mb-0 numero-plano-rotulo">${esc(rotuloN)}</p>
+                                </div>
+                            </a>
+                        </div>`
+                            )
+                            .join("")}
                     </div>
-                    <ul class="nav nav-tabs nav-bordered mb-3" role="tablist">
-                        ${aba("t-programas", "ti-stack-2", "Programas", programas.length, true)}
-                        ${aba("t-eixos", "ti-layout-grid", "Eixos", eixos.length)}
-                        ${aba("t-objetivos", "ti-target", "Objetivos estratégicos", objetivos.length)}
-                        ${aba("t-causas", "ti-git-branch", "Causas", causas.length)}
-                        ${aba("t-indicadores", "ti-chart-line", "Indicadores", indicadores.length)}
-                        ${aba("t-problemas", "ti-alert-triangle", "Problemas", problemas.length)}
-                    </ul>
                     <div class="tab-content">
                         <div class="tab-pane fade active show" id="t-programas" role="tabpanel">${filtroDaAba("t-programas")}${abaProgramas}</div>
                         <div class="tab-pane fade" id="t-eixos" role="tabpanel">${filtroDaAba("t-eixos")}${abaEixos}</div>
@@ -243,8 +297,24 @@ function render() {
             <div class="card card-h-100 rounded-0 rounded-end">
                 <div class="card-body p-0">
                     <div class="p-3 border-bottom border-dashed">
-                        <h5 class="mb-2">Situação</h5>
-                        <input type="text" class="form-control" value="${esc(s.rotulo)}" disabled />
+                        <h5 class="mb-3">Situação</h5>
+                        ${linhaDoTempoDaSituacao(ppa.situacao)}
+                    </div>
+                    <div class="p-3 border-bottom border-dashed">
+                        <h5 class="mb-3">Informações Institucionais</h5>
+                        ${[
+                            ["ti-calendar-event", "Vigência", `${ppa.primeiroAno}–${ppa.ultimoAno}`],
+                            ["ti-file-certificate", "Processo SEI", ppa.processoSei || "—"],
+                            ["ti-cash", "Valor previsto", moeda(total)],
+                        ]
+                            .map(
+                                ([icone, titulo, valor]) => `
+                        <div class="d-flex align-items-center gap-3 py-1">
+                            <span class="avatar-sm rounded bg-primary-subtle text-primary d-flex align-items-center justify-content-center flex-shrink-0"><i class="ti ${icone} fs-xl"></i></span>
+                            <div style="min-width:0"><h5 class="mb-0 lh-base fs-13 text-body-emphasis">${esc(titulo)}</h5><p class="text-muted fs-xxs mb-0">${esc(valor)}</p></div>
+                        </div>`
+                            )
+                            .join("")}
                     </div>
                     <div class="p-3 border-bottom border-dashed">
                         <div class="d-flex mb-3 justify-content-between align-items-center">
@@ -295,6 +365,21 @@ function render() {
     document.querySelectorAll("[data-chat]").forEach((b) =>
         b.addEventListener("click", () => window.dispatchEvent(new CustomEvent("siplam:chat", { detail: { id: b.dataset.chat } })))
     );
+
+    // Descrição: o botão só aparece se o texto passar do que cabe recolhido.
+    const descricao = document.getElementById("descricao-plano");
+    const alternar = document.getElementById("descricao-alternar");
+    if (descricao && alternar) {
+        const cabe = () => descricao.scrollHeight <= descricao.clientHeight + 1;
+        if (descricaoAberta || !cabe()) alternar.classList.remove("d-none");
+        alternar.addEventListener("click", () => {
+            descricaoAberta = !descricaoAberta;
+            descricao.classList.toggle("recolhida", !descricaoAberta);
+            alternar.setAttribute("aria-expanded", String(descricaoAberta));
+            alternar.querySelector("span").textContent = descricaoAberta ? "Ver menos" : "Ver mais";
+            alternar.querySelector("i").className = `ti ti-chevron-${descricaoAberta ? "up" : "down"}`;
+        });
+    }
 
     // Marcadores dos Programas: a dica dos selos e a janela de "Adicionar marcadores".
     iniciarDicasDeMarcador(document.getElementById("conteudo"));
