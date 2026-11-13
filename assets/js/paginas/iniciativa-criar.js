@@ -2,7 +2,7 @@
  * Nova Iniciativa — tela própria de criação.
  *
  * Os campos são os da matriz de mapeamento, os mesmos da ficha (módulo
- * `iniciativa-campos.js`): nome, status, descrição, programa, problema, causa e
+ * `iniciativa-campos.js`): nome, status, descrição, programa, indicadores, causa e
  * subcausa e, quando o status é "reportar divergência", o motivo.
  *
  * Antes isto era uma janela dentro da lista de Programas, com público-alvo e
@@ -12,11 +12,11 @@
  * criação não há Entrega alguma: a opção aparece, porque a matriz a lista, mas
  * escolhê-la aqui é recusado com o motivo.
  */
-import { addIniciativa } from "../dados/store.js";
+import { addIniciativa, updIniciativa, ppaCorrente } from "../dados/store.js";
 import { montarShell, barraTitulo, url } from "../shell.js";
 import { esc } from "../ui.js";
 import { avisar } from "../toast.js";
-import { camposDaIniciativa, blocoDeCausas, problemaDaIniciativa, idDoStatus } from "../iniciativa-campos.js";
+import { camposDaIniciativa, blocoDeCausas, idDoStatus, catalogoIndicadores, aoMudarIndicadores } from "../iniciativa-campos.js";
 import { limparAoDigitar } from "../validacao.js";
 
 const { estado } = montarShell();
@@ -31,10 +31,9 @@ const rascunho = {
     motivo: "",
     status: "em_preenchimento",
     programaId: estado.programas.some((p) => p.id === doEndereco) ? doEndereco : "",
-    problemaId: "",
+    indicadorIds: [],
     causas: [],
 };
-rascunho.problemaId = problemaDaIniciativa(estado, rascunho);
 
 function render() {
     document.getElementById("conteudo").innerHTML = `
@@ -43,9 +42,15 @@ function render() {
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header d-block p-3">
-                    <h4 class="card-title mb-1">Iniciativa</h4>
-                    <p class="text-muted mb-0 fs-13">A contribuição do órgão para um Programa.</p>
+                <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2 p-3">
+                    <div>
+                        <h4 class="card-title mb-1">Iniciativa</h4>
+                        <p class="text-muted mb-0 fs-13">A contribuição do órgão para um Programa.</p>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        <a href="${voltar}" class="btn btn-light">Cancelar</a>
+                        <button type="button" class="btn btn-primary" id="criar">Cadastrar</button>
+                    </div>
                 </div>
                 <div class="card-body" id="formulario">
                     ${// A Iniciativa nasce no fluxo do órgão, seja quem for que a cadastre: os
@@ -55,13 +60,11 @@ function render() {
             </div>
         </div>
     </div>
-
-    <div class="mt-1 mb-4 d-flex gap-2 align-items-center justify-content-end">
-        <a href="${voltar}" class="btn btn-light">Cancelar</a>
-        <button type="button" class="btn btn-primary" id="criar">Cadastrar</button>
-    </div>`;
+`;
 
     limparAoDigitar(document.getElementById("formulario"));
+    aoMudarIndicadores((ids) => (rascunho.indicadorIds = ids));
+    catalogoIndicadores.ligar(document.getElementById("formulario"));
 }
 
 /** Guarda o que está digitado: trocar de Programa redesenha a lista de causas, e o resto não pode se perder. */
@@ -75,7 +78,7 @@ function ler() {
         motivo: v("f-motivo").trim(),
         descricao: v("f-descricao").trim(),
         programaId: v("f-programa"),
-        problemaId: v("f-problema"),
+        indicadorIds: catalogoIndicadores.ler(),
         causas: [...document.querySelectorAll("[data-causa]:checked")].map((c) => c.value),
     });
 }
@@ -100,8 +103,6 @@ document.addEventListener("change", (e) => {
         const programa = estado.programas.find((p) => p.id === rascunho.programaId);
         // As causas são do Programa: trocar de Programa as deixa sem a que se ligar.
         rascunho.causas = [];
-        rascunho.problemaId = problemaDaIniciativa(estado, rascunho);
-        document.getElementById("f-problema").value = rascunho.problemaId;
         document.getElementById("bloco-causas").innerHTML = blocoDeCausas(programa, [], false);
     }
 });
@@ -123,10 +124,12 @@ document.addEventListener("click", (e) => {
         nome: rascunho.nome,
         descricao: rascunho.descricao,
         causas: rascunho.causas,
-        problemaId: rascunho.problemaId,
         status: rascunho.status,
         motivo: rascunho.status === "divergencia" ? rascunho.motivo : "",
     });
+
+    // Sem Programa, é o PPA que liga a Iniciativa ao plano corrente.
+    updIniciativa(id, { ppaId: ppaCorrente(estado)?.id ?? "", indicadorIds: rascunho.indicadorIds });
 
     avisar("Iniciativa criada com sucesso.");
     window.location.href = url(`iniciativa.html?id=${encodeURIComponent(id)}`);

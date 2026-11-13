@@ -2,7 +2,7 @@
  * Os campos da Iniciativa, como a matriz de mapeamento os define.
  *
  *   Nome da iniciativa* · Status* · Descrição da iniciativa · Programa ·
- *   Problema · Causa e subcausa · Motivo (só quando o status é "reportar
+ *   Indicadores · Causa e subcausa · Motivo (só quando o status é "reportar
  *   divergência")
  *
  * Servem a duas telas — a ficha, que grava a cada tecla, e a de criação, que
@@ -13,7 +13,7 @@
  * visão:
  *
  *   setorial — em preenchimento, enviada, reportar divergência
- *   central  — em análise, devolvida, validada
+ *   central  — aprovada (validada) ou reprovada (devolvida)
  *
  * Escolher uma opção não troca só um texto: dispara a transição que o sistema já
  * tinha (enviar abre a conferência de pendências; validar e devolver pedem
@@ -25,8 +25,33 @@
  * tem. Um campo livre que aceitasse "quase pronta" deixaria o fluxo sem sentido.
  */
 import { esc } from "./ui.js";
+import { catalogo } from "./catalogo.js";
 import { ppaCorrente } from "./dados/store.js";
 import { STATUS_LABEL } from "./dados/regras.js";
+
+/**
+ * Indicadores da Iniciativa: os do cadastro de Indicadores, escolhidos por busca. O
+ * indicador tem cadastro próprio; aqui só se escolhe o que já existe. Guardado em
+ * `indicadorIds`. Quem monta a tela diz o que fazer ao escolher, com `aoMudarIndicadores`.
+ */
+let aoMudar = () => {};
+export const aoMudarIndicadores = (fn) => (aoMudar = fn);
+export const catalogoIndicadores = catalogo({
+    colecao: "indicadores",
+    singular: "Indicador",
+    plural: "Indicadores",
+    artigo: "o",
+    prefixo: "iind",
+    semCriar: true,
+    campos: [],
+    colunasExtra: [
+        { rotulo: "Tipo", valor: (i) => (i.tipo ? esc(i.tipo) : '<span class="text-muted">—</span>') },
+        { rotulo: "Unidade", valor: (i) => (i.unidade ? esc(i.unidade) : '<span class="text-muted">—</span>') },
+        { rotulo: "Linha de base", valor: (i) => (i.linhaBase ? esc(i.linhaBase) : '<span class="text-muted">—</span>') },
+    ],
+    detalhe: (i) => [i.tipo, i.unidade].filter(Boolean).join(" · "),
+    aoMudar: (ids) => aoMudar(ids),
+});
 
 export const STATUS_SETORIAL = [
     ["em_preenchimento", "Em preenchimento"],
@@ -34,10 +59,11 @@ export const STATUS_SETORIAL = [
     ["divergencia", "Reportar divergência"],
 ];
 
+// A Central só avalia: Aprovada leva a Iniciativa a "validada"; Reprovada a devolve
+// ao setorial, que é quem faz os ajustes.
 export const STATUS_CENTRAL = [
-    ["em_analise", "Em análise"],
-    ["devolvida", "Devolvida"],
-    ["validada", "Validada"],
+    ["validada", "Aprovada"],
+    ["devolvida", "Reprovada"],
 ];
 
 /** Para onde cada status pode ir, em cada visão. Fora disso, o campo fica travado. */
@@ -48,7 +74,7 @@ const DESTINOS = {
         divergencia: ["em_preenchimento", "enviada"],
     },
     central: {
-        enviada: ["em_analise"],
+        enviada: ["devolvida", "validada"],
         em_analise: ["devolvida", "validada"],
     },
 };
@@ -92,16 +118,9 @@ export function problemaDaIniciativa(estado, ini) {
 
 /* ---------- peças ---------- */
 
-function seletorDeStatus({ ini, visao, travado }) {
-    // `travado` aqui é só o perfil sem escrita; o resto quem decide é o fluxo.
-    const permitidos = DESTINOS[visao]?.[ini.status] ?? [];
-
-    return `
-    <input type="text" class="form-control" id="f-status" list="lista-status" autocomplete="off"
-           value="${esc(rotuloDoStatus(ini.status, visao))}" ${travado || permitidos.length === 0 ? "disabled" : ""} />
-    <datalist id="lista-status">
-        ${[ini.status, ...permitidos].map((k) => `<option value="${esc(rotuloDoStatus(k, visao))}"></option>`).join("")}
-    </datalist>`;
+function seletorDeStatus({ ini, visao }) {
+    // O status é só para ver: ele é consequência do fluxo (criar, enviar, avaliar), nunca se digita.
+    return `<input type="text" class="form-control" id="f-status" value="${esc(rotuloDoStatus(ini.status, visao))}" disabled />`;
 }
 
 /** As causas do Programa escolhido. Trocar o Programa troca a lista. */
@@ -132,18 +151,23 @@ export function blocoDeCausas(programa, selecionadas, travado) {
  * @param {boolean} o.travado  os campos não se editam
  * @param {boolean} [o.statusTravado]  o status não se escolhe — só o perfil sem escrita.
  *   Separado dos campos porque a Central os trava e escolhe o status: é por ele que analisa.
+ * @param {Set<string>|null} [o.liberados]  se informado, só estes campos se editam (os reprovados pela Central)
  * @param {(campo: string) => string} [o.marca]  o selo "apontado" da análise
+ * @param {(campo: string) => string} [o.avaliador]  os botões de aprovar/reprovar do campo (visão da Central)
  */
-export function camposDaIniciativa({ ini, estado, visao, travado, statusTravado = false, marca = () => "" }) {
+export function camposDaIniciativa({ ini, estado, visao, travado, liberados = null, statusTravado = false, marca = () => "", avaliador = () => "" }) {
+    // `liberados`: quando a Iniciativa volta da Central, só os campos reprovados se editam.
+    const trava = (campo) => travado || (liberados !== null && !liberados.has(campo));
+    const d = (campo) => (trava(campo) ? " disabled" : "");
     const dis = travado ? " disabled" : "";
     const programa = (estado.programas ?? []).find((p) => p.id === ini.programaId);
-    const problemaId = problemaDaIniciativa(estado, ini);
 
     return `
     <div class="mb-3">
         <label class="form-label" for="f-nome">Nome da iniciativa <span class="text-danger">*</span> ${marca("nome")}</label>
-        <input type="text" class="form-control" id="f-nome" value="${esc(ini.nome ?? "")}"${dis} />
+        <input type="text" class="form-control" id="f-nome" value="${esc(ini.nome ?? "")}"${d("nome")} />
         <div class="invalid-feedback" id="f-nome-erro"></div>
+        ${avaliador("nome")}
     </div>
 
     <div class="mb-3">
@@ -159,28 +183,22 @@ export function camposDaIniciativa({ ini, estado, visao, travado, statusTravado 
 
     <div class="mb-3">
         <label class="form-label" for="f-descricao">Descrição da iniciativa ${marca("descricao")}</label>
-        <textarea class="form-control" id="f-descricao" rows="3"${dis}>${esc(ini.descricao ?? "")}</textarea>
+        <textarea class="form-control" id="f-descricao" rows="3"${d("descricao")}>${esc(ini.descricao ?? "")}</textarea>
+        ${avaliador("descricao")}
     </div>
 
     <div class="mb-3">
         <label class="form-label" for="f-programa">Programa</label>
-        <select class="form-select" id="f-programa"${dis}>
+        <select class="form-select" id="f-programa"${d("programa")}>
             <option value="">Selecione o Programa</option>
             ${programasDoPlano(estado)
                 .map((p) => `<option value="${p.id}"${p.id === ini.programaId ? " selected" : ""}>${esc(p.codigo)} — ${esc(p.nome)}</option>`)
                 .join("")}
         </select>
+        ${avaliador("programa")}
     </div>
 
-    <div class="mb-3">
-        <label class="form-label" for="f-problema">Problema</label>
-        <select class="form-select" id="f-problema"${dis}>
-            <option value="">Selecione o problema</option>
-            ${problemasDoPlano(estado)
-                .map((p) => `<option value="${p.id}"${p.id === problemaId ? " selected" : ""}>${esc(p.nome)}</option>`)
-                .join("")}
-        </select>
-    </div>
+    <div class="mb-3">${catalogoIndicadores.html(ini.indicadorIds ?? [])}${avaliador("indicadores")}</div>
 
-    <div class="mb-0" id="bloco-causas">${blocoDeCausas(programa, ini.causas ?? [], travado)}</div>`;
+    <div class="mb-0" id="bloco-causas">${blocoDeCausas(programa, ini.causas ?? [], trava("causas"))}${avaliador("causas")}</div>`;
 }

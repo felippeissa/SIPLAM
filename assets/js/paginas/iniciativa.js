@@ -22,35 +22,47 @@ import {
     pendenciasIniciativa,
     resumoPendencias,
     situacaoEntrega,
-    comentariosDaIniciativa,
-    recursosDaIniciativa,
-    moedaCurta,
     STATUS_LABEL,
 } from "../dados/regras.js";
-import { linhasDaIniciativa } from "../dados/financeiro.js";
 import { ANOS } from "../dados/seed.js";
-import { montarShell, barraTitulo, somenteLeitura } from "../shell.js";
+import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { confirmarExclusao } from "../confirmar.js";
 import { avisar } from "../toast.js";
-import { chip, statusChip, esc, secao, faixaIndicadores } from "../ui.js";
-import { quadroFinanceiro, listaPendencias, chipsPendencias } from "../ui-financeiro.js";
-import { camposDaIniciativa, idDoStatus, podeIr } from "../iniciativa-campos.js";
+import { chip, statusChip, esc, secao } from "../ui.js";
+import { listaPendencias, chipsPendencias } from "../ui-financeiro.js";
+import { camposDaIniciativa, idDoStatus, podeIr, catalogoIndicadores, aoMudarIndicadores } from "../iniciativa-campos.js";
 
 const { estado } = montarShell();
 const id = new URLSearchParams(location.search).get("id");
 
 let envioAberto = false;
+// As alterações ficam aqui até a pessoa clicar em Salvar: só então vão para a Iniciativa.
+// Cancelar as descarta.
+let rascunho = {};
+const alterar = (patch) => {
+    Object.assign(rascunho, patch);
+    avisarSalvo();
+    atualizarEnvio();
+};
 
+/** Enviar para avaliação só fica clicável com os campos obrigatórios preenchidos. */
+function atualizarEnvio() {
+    const botao = document.getElementById("abrir-envio");
+    const salva = estado.iniciativas.find((i) => i.id === id);
+    if (!botao || !salva) return;
+    const faltam = resumoPendencias(pendenciasIniciativa(estado, { ...salva, ...rascunho })).impeditivos > 0;
+    botao.disabled = faltam;
+    botao.title = faltam ? "Preencha os campos obrigatórios para enviar" : "";
+}
+
+/** Mostra que há alterações ainda não salvas. */
 function avisarSalvo() {
-    const el = document.getElementById("aviso-salvo");
-    if (!el) return;
-    el.classList.remove("d-none");
-    clearTimeout(avisarSalvo.t);
-    avisarSalvo.t = setTimeout(() => el.classList.add("d-none"), 1500);
+    document.getElementById("aviso-salvo")?.classList.remove("d-none");
 }
 
 function render() {
-    const ini = estado.iniciativas.find((i) => i.id === id);
+    const salva = estado.iniciativas.find((i) => i.id === id);
+    const ini = salva && { ...salva, ...rascunho };
     if (!ini) {
         document.getElementById("conteudo").innerHTML = `
         <div class="text-center py-5">
@@ -61,26 +73,23 @@ function render() {
     }
 
     const programa = estado.programas.find((p) => p.id === ini.programaId);
-    const entregas = entregasDaIniciativa(estado, ini.id);
     const pendencias = pendenciasIniciativa(estado, ini);
     const resumo = resumoPendencias(pendencias);
-    const comentarios = comentariosDaIniciativa(estado, ini.id).filter((c) => !c.resolvido);
-    const eventos = estado.eventos.filter((ev) => ev.iniciativaId === ini.id);
     // Alta gestão e controle acompanham sem operar.
     const editavel = podeEditar(ini.status) && !somenteLeitura();
+    // Devolvida: só se edita o que a Central reprovou; o que foi aprovado fica travado.
+    const reprovados = Object.entries(ini.avaliacao ?? {}).filter(([, a]) => a.decisao === "reprovado").map(([c]) => c);
+    const liberados = ini.status === "devolvida" && reprovados.length ? new Set(reprovados) : null;
     const dis = editavel ? "" : " disabled";
 
-    const camposApontados = new Set(comentarios.filter((c) => c.alvoTipo === "iniciativa").map((c) => c.campo));
-    const marca = (campo) =>
-        camposApontados.has(campo) ? `<span class="ms-1">${chip("apontado", "alerta")}</span>` : "";
 
     document.getElementById("conteudo").innerHTML = `
-    <div class="my-3">
-        ${barraTitulo(esc(ini.nome), [
-            { rotulo: programa ? `${programa.codigo} — ${programa.nome}` : "Programa", href: `programa.html?id=${ini.programaId}` },
-            { rotulo: ini.nome },
-        ])}
-        <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+    ${barraTitulo(esc(ini.nome), [
+        { rotulo: programa ? `${programa.codigo} — ${programa.nome}` : "Programa", href: `programa.html?id=${ini.programaId}` },
+        { rotulo: ini.nome },
+    ])}
+    <div class="ilha p-3 mb-2">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
             <div>
                 <h4 class="fw-bold mb-1">${esc(ini.nome)}</h4>
                 <div class="d-flex flex-wrap align-items-center gap-2 fs-13 text-muted">
@@ -89,118 +98,81 @@ function render() {
                     <span>·</span>
                     <span>atualizada em ${esc(ini.atualizadoEm)}</span>
                     ${ini.analista ? `<span>·</span><span>analista: ${esc(ini.analista)}</span>` : ""}
-                    <span id="aviso-salvo" class="d-none">${chip("alterações salvas", "ok")}</span>
+                    <span id="aviso-salvo" class="${Object.keys(rascunho).length ? "" : "d-none"}">${chip("alterações não salvas", "alerta")}</span>
                 </div>
             </div>
             <div class="d-flex flex-wrap gap-2">
+                ${editavel ? `<button type="button" class="btn btn-light" id="cancelar-edicao">Cancelar</button>
+                <button type="button" class="btn btn-outline-primary" id="salvar-edicao"><i class="ti ti-device-floppy me-1"></i>Salvar</button>` : ""}
+                ${editavel && ini.status !== "divergencia" ? `<button type="button" class="btn btn-primary" id="abrir-envio"${resumo.impeditivos ? ' disabled title="Preencha os campos obrigatórios para enviar"' : ""}><i class="ti ti-send me-1"></i>${ini.status === "devolvida" ? "Reenviar para avaliação" : "Enviar para avaliação"}</button>` : ""}
                 ${editavel ? "" : `<span class="fs-12 text-muted align-self-center">${esc(STATUS_LABEL[ini.status])} — edição bloqueada</span>`}
             </div>
         </div>
     </div>
 
-    ${faixaIndicadores([
-        { valor: entregas.length, rotulo: "Entregas" },
-        { valor: resumo.impeditivos, rotulo: "Impeditivas" },
-        { valor: resumo.alertas, rotulo: "Alertas" },
-        { valor: comentarios.length, rotulo: "Apontamentos abertos" },
-        { valor: moedaCurta(recursosDaIniciativa(estado, ini.id)), rotulo: "Previsto" },
-    ])}
-
     <div class="row g-3">
         <div class="col-12">
             ${secao(
                 "Dados da Iniciativa",
-                camposDaIniciativa({ ini, estado, visao: "setorial", travado: !editavel, statusTravado: somenteLeitura(), marca })
+                camposDaIniciativa({ ini, estado, visao: "setorial", travado: !editavel, liberados, statusTravado: somenteLeitura() })
             )}
 
-            ${secao(
-                "Entregas",
-                `
-                ${
-                    entregas.length === 0
-                        ? `<p class="mb-3">${chip("Nenhuma Entrega", "impeditivo")} A Iniciativa precisa de ao menos uma Entrega.</p>`
-                        : `<div class="table-responsive mb-3"><table class="table table-sm mb-0">
-                    <thead><tr>
-                        <th>Entrega</th><th style="width:9rem">Unidade</th>
-                        ${ANOS.map((a) => `<th class="num" style="width:4.5rem">${a}</th>`).join("")}
-                        <th style="width:12rem">Situação</th><th style="width:7rem">Ações</th>
-                    </tr></thead>
-                    <tbody>
-                        ${entregas
-                            .map((e) => {
-                                const s = situacaoEntrega(estado, e);
-                                return `<tr>
-                            <td><a href="entrega.html?id=${e.id}">${esc(e.nome || "Sem nome")}</a></td>
-                            <td class="fs-12 text-muted">${esc(e.unidadeMedida || "—")}</td>
-                            ${ANOS.map((a) => `<td class="num">${e.metas[a] ?? '<span class="text-muted">—</span>'}</td>`).join("")}
-                            <td>${chip(s.texto, s.tom)}</td>
-                            <td>
-                                <a href="entrega.html?id=${e.id}" class="btn btn-sm btn-outline-primary">Abrir</a>
-                                ${editavel ? `<button class="btn btn-sm btn-light" data-excluir-entrega="${e.id}" title="Excluir"><i class="ti ti-trash"></i></button>` : ""}
-                            </td>
-                        </tr>`;
-                            })
-                            .join("")}
-                    </tbody>
-                </table></div>`
-                }
-                ${
-                    editavel
-                        ? `<div class="input-group input-group-sm" style="max-width:34rem">
-                    <input type="text" class="form-control" id="nova-entrega" placeholder="Nome da nova Entrega" />
-                    <button class="btn btn-primary" id="add-entrega"><i class="ti ti-plus me-1"></i>Adicionar Entrega</button>
-                </div>
-                <div class="form-text fs-12">Entrega é o resultado para a sociedade — “Construção de X” é nome de Projeto, não de Entrega.</div>`
-                        : ""
-                }`
-            )}
-
-            ${secao("Previsão financeira da Iniciativa", quadroFinanceiro(linhasDaIniciativa(estado, ini.id), { dimensao: "fonte", detalhe: "ipof", curto: false }))}
         </div>
 
-        <div class="col-12">
-            ${secao(
-                `Pendências <span class="ms-1">${chipsPendencias(resumo)}</span>`,
-                listaPendencias(pendencias)
-            )}
-
-            ${secao(
-                `Apontamentos da Área Central <span class="fs-12 text-muted">(${comentarios.length})</span>`,
-                comentarios.length === 0
-                    ? '<p class="fs-12 text-muted mb-0">Nenhum apontamento aberto.</p>'
-                    : `<ul class="list-group list-group-flush">${comentarios
-                          .map((c) => {
-                              const alvo =
-                                  c.alvoTipo === "entrega"
-                                      ? estado.entregas.find((e) => e.id === c.alvoId)?.nome ?? "Entrega"
-                                      : "Iniciativa";
-                              return `
-                    <li class="list-group-item px-0 py-2">
-                        <div class="fs-13">${esc(c.texto)}</div>
-                        <div class="fs-12 text-muted mt-1">${esc(alvo)} · campo ${esc(c.campo ?? "—")} · ${esc(c.autor)} em ${esc(c.criadoEm)}</div>
-                    </li>`;
-                          })
-                          .join("")}</ul>`
-            )}
-
-            ${secao(
-                "Histórico",
-                eventos.length === 0
-                    ? '<p class="fs-12 text-muted mb-0">Sem eventos.</p>'
-                    : `<ul class="list-group list-group-flush">${eventos
-                          .map(
-                              (ev) => `
-                    <li class="list-group-item px-0 py-2">
-                        <div class="fs-13">${esc(ev.texto)}</div>
-                        <div class="fs-12 text-muted">${esc(ev.autor)} · ${esc(ev.quando)}</div>
+        ${
+            // As pendências só existem depois que a Central avalia e devolve: são os campos
+            // reprovados, cada um com a justificativa.
+            ini.status === "devolvida"
+                ? `<div class="col-12">${secao(
+                      `Pendências <span class="ms-1">${chip("devolvida pela Área Central", "impeditivo")}</span>`,
+                      Object.values(ini.avaliacao ?? {}).some((a) => a.decisao === "reprovado")
+                          ? `<ul class="list-group list-group-flush">${Object.entries(ini.avaliacao)
+                                .filter(([, a]) => a.decisao === "reprovado")
+                                .map(
+                                    ([c, a]) => `
+                    <li class="list-group-item d-flex align-items-start gap-2 px-0 py-2">
+                        <i class="ti ti-circle-x text-danger mt-1"></i>
+                        <div>
+                            <div class="fw-medium">${esc(a.rotulo ?? c)}</div>
+                            <div class="fs-13">${esc(a.justificativa)}</div>
+                        </div>
                     </li>`
-                          )
-                          .join("")}</ul>`
-            )}
-        </div>
+                                )
+                                .join("")}</ul>`
+                          : `<p class="fs-13 mb-0">${esc(ini.justificativaDevolucao || "A Área Central não registrou justificativa.")}</p>`
+                  )}</div>`
+                : ""
+        }
     </div>
 
     ${envioAberto ? modalEnvio(ini, pendencias, resumo) : ""}`;
+
+    // Devolvida: o que a Central aprovou aparece em verde, travado; o reprovado fica livre para editar.
+    if (liberados) {
+        const bloco = {
+            nome: "f-nome",
+            descricao: "f-descricao",
+            programa: "f-programa",
+            indicadores: "iind-bloco",
+            causas: "bloco-causas",
+        };
+        for (const [campo, a] of Object.entries(ini.avaliacao ?? {})) {
+            if (a.decisao !== "ok" || !bloco[campo]) continue;
+            const el = document.getElementById(bloco[campo]);
+            (campo === "causas" ? el : el?.closest(".mb-3"))?.classList.add("aval-ok");
+        }
+    }
+
+    // Indicadores: escolher ou desvincular grava na hora, como os demais campos da ficha.
+    const escopo = document.getElementById("conteudo");
+    if (editavel && (!liberados || liberados.has("indicadores"))) {
+        aoMudarIndicadores((ids) => {
+            alterar({ indicadorIds: ids });
+        });
+        catalogoIndicadores.ligar(escopo);
+    } else {
+        document.getElementById("iind-bloco")?.querySelectorAll("input, button").forEach((c) => (c.disabled = true));
+    }
 
     if (envioAberto) {
         const el = document.getElementById("modal-envio");
@@ -240,12 +212,12 @@ function modalEnvio(ini, pendencias, resumo) {
                         ? `<p class="fs-12 text-muted">A Iniciativa foi devolvida: o reenvio cria a versão ${ini.versao + 1}.</p>`
                         : ""
                 }
-                ${listaPendencias(pendencias)}
+                ${pendencias.length ? listaPendencias(pendencias) : ""}
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Voltar</button>
                 <button type="button" class="btn btn-primary" id="confirmar-envio"${bloqueia ? " disabled" : ""}>
-                    Enviar para análise
+                    Confirmar envio para análise
                 </button>
             </div>
         </div>
@@ -263,33 +235,23 @@ document.addEventListener("input", (e) => {
     };
     const campo = campos[e.target.id];
     if (!campo) return;
-    updIniciativa(id, { [campo]: e.target.value });
-    avisarSalvo();
+    alterar({ [campo]: e.target.value });
 });
 
 document.addEventListener("change", (e) => {
     if (e.target.matches("[data-causa]")) {
         const causas = [...document.querySelectorAll("[data-causa]:checked")].map((c) => c.value);
-        updIniciativa(id, { causas });
-        avisarSalvo();
+        alterar({ causas });
         render();
         return;
     }
 
     if (e.target.id === "f-programa") {
         // As causas pertencem ao Programa: trocar de Programa deixa as escolhidas
-        // sem a que se ligar, e o problema volta ao do novo Programa.
+        // sem a que se ligar.
         const novo = e.target.value;
-        const problema = (estado.problemas ?? []).find((p) => p.id === `pb-${novo}`)?.id ?? "";
-        updIniciativa(id, { programaId: novo, causas: [], problemaId: problema });
-        avisarSalvo();
+        alterar({ programaId: novo, causas: [] });
         render();
-        return;
-    }
-
-    if (e.target.id === "f-problema") {
-        updIniciativa(id, { problemaId: e.target.value });
-        avisarSalvo();
         return;
     }
 
@@ -311,6 +273,24 @@ document.addEventListener("change", (e) => {
 });
 
 document.addEventListener("click", (e) => {
+    // Cancelar desfaz o que foi alterado nesta ficha e volta para a lista.
+    if (e.target.closest("#cancelar-edicao")) {
+        rascunho = {};
+        location.href = url("iniciativas.html");
+        return;
+    }
+    if (e.target.closest("#salvar-edicao")) {
+        // Fica na ficha: o que foi salvo passa a ser o novo ponto de volta do Cancelar.
+        if (Object.keys(rascunho).length) updIniciativa(id, rascunho);
+        rascunho = {};
+        render();
+        avisar("Iniciativa salva.");
+        return;
+    }
+    if (e.target.closest("#abrir-envio")) {
+        envioAberto = true;
+        return render();
+    }
     if (e.target.closest("#add-entrega")) {
         const campo = document.getElementById("nova-entrega");
         const nome = campo.value.trim();
@@ -344,6 +324,9 @@ document.addEventListener("click", (e) => {
     }
 
     if (e.target.closest("#confirmar-envio")) {
+        // O que foi alterado e ainda não salvo vai junto com o envio.
+        if (Object.keys(rascunho).length) updIniciativa(id, rascunho);
+        rascunho = {};
         enviar(id);
         bootstrap.Modal.getInstance(document.getElementById("modal-envio")).hide();
         envioAberto = false;

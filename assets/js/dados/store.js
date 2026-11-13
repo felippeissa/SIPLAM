@@ -1500,7 +1500,10 @@ export function enviar(id) {
     const ini = estado.iniciativas.find((i) => i.id === id);
     if (!ini) return;
     const versao = ini.versao + (ini.status === "devolvida" ? 1 : 0);
-    Object.assign(ini, { status: "enviada", enviadoEm: hoje(), atualizadoEm: hoje(), versao });
+    // Os campos que a Central aprovou continuam aprovados no reenvio; só o que foi reprovado volta a ser avaliado.
+    const aprovados = Object.entries(ini.avaliacao ?? {}).filter(([, a]) => a.decisao === "ok");
+    const mantidos = aprovados.length ? Object.fromEntries(aprovados) : null;
+    Object.assign(ini, { status: "enviada", enviadoEm: hoje(), atualizadoEm: hoje(), versao, justificativaDevolucao: "", avaliacao: mantidos, avaliacaoRascunho: null });
     registrarEvento(id, estado.orgaoAtual, `Iniciativa enviada para análise (versão ${versao})`);
     gravar();
 }
@@ -1535,7 +1538,7 @@ export function iniciarAnalise(id) {
     gravar();
 }
 
-export function devolver(id) {
+export function devolver(id, justificativa = "") {
     const ini = estado.iniciativas.find((i) => i.id === id);
     if (!ini) return;
     const entregas = estado.entregas.filter((e) => e.iniciativaId === id).map((e) => e.id);
@@ -1545,8 +1548,47 @@ export function devolver(id) {
             ((c.alvoTipo === "iniciativa" && c.alvoId === id) ||
                 (c.alvoTipo === "entrega" && entregas.includes(c.alvoId)))
     ).length;
-    Object.assign(ini, { status: "devolvida", analista: estado.analista, atualizadoEm: hoje() });
-    registrarEvento(id, estado.analista, `Iniciativa devolvida para ajuste com ${abertos} apontamento(s)`);
+    Object.assign(ini, { status: "devolvida", analista: estado.analista, atualizadoEm: hoje(), justificativaDevolucao: justificativa });
+    registrarEvento(id, estado.analista, `Iniciativa reprovada e devolvida para ajuste com ${abertos} apontamento(s). Justificativa: ${justificativa}`);
+    gravar();
+}
+
+/**
+ * A avaliação da Central, campo a campo. Cada campo é aprovado ou reprovado (com
+ * justificativa); basta um reprovado para a Iniciativa voltar ao setorial, e só com
+ * todos aprovados ela vira "validada".
+ */
+export function avaliarIniciativa(id, avaliacao, rotulos = {}) {
+    const ini = estado.iniciativas.find((i) => i.id === id);
+    if (!ini) return;
+    for (const [c, a] of Object.entries(avaliacao)) a.rotulo = rotulos[c] ?? c;
+    const reprovados = Object.entries(avaliacao).filter(([, a]) => a.decisao === "reprovado");
+    const resumo = reprovados.map(([c, a]) => `${rotulos[c] ?? c}: ${a.justificativa}`).join(" · ");
+    Object.assign(ini, {
+        status: reprovados.length ? "devolvida" : "validada",
+        analista: estado.analista,
+        atualizadoEm: hoje(),
+        avaliacao,
+        avaliacaoRascunho: null,
+        justificativaDevolucao: resumo,
+    });
+    registrarEvento(
+        id,
+        estado.analista,
+        reprovados.length ? `Iniciativa reprovada em ${reprovados.length} campo(s). ${resumo}` : "Iniciativa aprovada em todos os campos e validada"
+    );
+    gravar();
+}
+
+/**
+ * Guarda a avaliação em andamento sem encerrá-la: a Central pode parar no meio e
+ * voltar outro dia. O status da Iniciativa não muda.
+ */
+export function salvarRascunhoDaAvaliacao(id, rascunho, total) {
+    const ini = estado.iniciativas.find((i) => i.id === id);
+    if (!ini) return;
+    ini.avaliacaoRascunho = JSON.parse(JSON.stringify(rascunho));
+    registrarEvento(id, estado.analista, `Avaliação salva em andamento (${Object.keys(rascunho).length} de ${total} campos)`);
     gravar();
 }
 

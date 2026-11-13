@@ -108,15 +108,12 @@ function telasDoMenu(menu) {
  * `leitura: true` é só dos órgãos de controle. A alta gestão preenche e ainda
  * aprova — ela só está em construção porque a tela inicial dela não existe.
  */
-/**
- * Fora do computador de quem desenvolve, só o Administrador central se escolhe: os outros perfis ainda
- * não têm todas as telas. No endereço local (localhost) todos ficam liberados, para testar.
- */
-const LOCAL = ["localhost", "127.0.0.1", "[::1]", "::1"].includes(location.hostname);
+/** Todos os perfis podem ser escolhidos, no computador de quem desenvolve e no GitHub Pages. */
+const LIBERADO = true;
 
 const PERFIL = {
     setorial: {
-        selecionavel: LOCAL,
+        selecionavel: LIBERADO,
         nome: "Planejamento setorial",
         visao: "setorial",
         leitura: false,
@@ -132,7 +129,7 @@ const PERFIL = {
         descricao: "Analisa, valida e administra os Programas",
     },
     "gestao-setorial": {
-        selecionavel: LOCAL,
+        selecionavel: LIBERADO,
         nome: "Alta gestão setorial",
         visao: "setorial",
         leitura: false,
@@ -140,7 +137,7 @@ const PERFIL = {
         descricao: "Faz tudo do Planejamento setorial e aprova a proposta do órgão",
     },
     "gestao-central": {
-        selecionavel: LOCAL,
+        selecionavel: LIBERADO,
         nome: "Alta gestão central",
         visao: "central",
         leitura: false,
@@ -148,7 +145,7 @@ const PERFIL = {
         descricao: "Faz tudo do Administrador central e aprova a consolidação",
     },
     controle: {
-        selecionavel: LOCAL,
+        selecionavel: LIBERADO,
         nome: "Consulta",
         visao: "central",
         leitura: true,
@@ -159,8 +156,7 @@ const PERFIL = {
 
 /**
  * `selecionavel` diz se o perfil pode ser escolhido na tela de perfil e no
- * "Trocar perfil". Por ora só o Administrador central: os outros ficam
- * bloqueados, à vista, até as telas deles chegarem.
+ * "Trocar perfil". Hoje todos podem: no GitHub Pages cada pessoa vê todos os perfis.
  */
 
 /** O perfil ainda não tem telas construídas? */

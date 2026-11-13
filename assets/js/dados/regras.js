@@ -141,9 +141,6 @@ function pendenciasIniciativa(state, ini) {
   if (!ini.descricao.trim()) p.push({ nivel: "alerta", campo: "descricao", texto: "Detalhamento da Iniciativa n\xE3o informado" });
   if (ini.causas.length === 0)
     p.push({ nivel: "impeditivo", campo: "causas", texto: "Nenhuma causa do Programa relacionada \xE0 Iniciativa" });
-  const es = state.entregas.filter((e) => e.iniciativaId === ini.id);
-  if (es.length === 0) p.push({ nivel: "impeditivo", campo: "entregas", texto: "A Iniciativa n\xE3o possui Entregas" });
-  for (const e of es) p.push(...pendenciasEntrega(state, e));
   return p;
 }
 function resumoPendencias(ps) {

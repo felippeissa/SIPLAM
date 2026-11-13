@@ -78,6 +78,26 @@ export function esc(valor) {
  * cada filtro, então o tooltip é delegado do `body` e criado uma vez só.
  */
 let tooltipDelegado = false;
+let tooltipTextoLongo = false;
+/**
+ * Texto que corta com “…” depois de N linhas; passando o mouse (ou focando) o
+ * texto inteiro aparece num tooltip do Inspinia.
+ */
+export function textoLongo(texto, linhas = 3, larguraMax = "") {
+    if (!tooltipTextoLongo && window.bootstrap?.Tooltip) {
+        new bootstrap.Tooltip(document.body, { selector: "[data-texto-longo]", placement: "top", customClass: "tooltip-texto-longo" });
+        tooltipTextoLongo = true;
+    }
+    // Lista de textos: uma linha para cada, no tooltip.
+    const inteiro = Array.isArray(texto) ? texto.join(String.fromCharCode(10)) : texto;
+    const visivel = Array.isArray(texto) ? texto[0] : texto;
+    const corte =
+        linhas === 1
+            ? `display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${larguraMax ? `max-width:${larguraMax};` : ""}`
+            : `display:-webkit-box;-webkit-line-clamp:${linhas};-webkit-box-orient:vertical;overflow:hidden;`;
+    return `<span data-texto-longo tabindex="0" data-bs-title="${esc(inteiro)}" style="${corte}cursor:help">${esc(visivel)}</span>`;
+}
+
 export function listaResumida(nomes, vazio = '<span class="text-muted">—</span>') {
     if (!nomes.length) return vazio;
     if (!tooltipDelegado && window.bootstrap?.Tooltip) {
@@ -88,7 +108,7 @@ export function listaResumida(nomes, vazio = '<span class="text-muted">—</span
     if (!resto.length) return esc(primeiro);
     // O selo fica à direita do nome e não quebra de linha separado dele.
     return `<span class="d-inline-flex align-items-start gap-1">
-        <span>${esc(primeiro)}</span>
+        <span>${textoLongo(primeiro, 3)}</span>
         <span class="badge bg-light text-body border flex-shrink-0" tabindex="0" data-lista-mais
               data-bs-placement="top" data-bs-title="${esc(resto.map(esc).join("<br>"))}"
               aria-label="Mais ${resto.length}: ${esc(resto.join(", "))}">+${resto.length}</span>

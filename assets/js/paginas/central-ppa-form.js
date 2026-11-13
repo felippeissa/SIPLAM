@@ -89,54 +89,6 @@ export function montarFormularioPpa({ novo }) {
     const OFERECIDAS = ["elaboracao", "submetido", "aprovado", "vigente", "encerrado"];
     const opcoesDeSituacao = SITUACOES_PPA.filter((s) => OFERECIDAS.includes(s.id) || s.id === p.situacao);
 
-    /** As janelas em edição. Moram aqui porque a tabela se redesenha a cada linha acrescentada. */
-    let janelas = structuredClone(p.janelas ?? []);
-    const janelaVazia = () => ({ id: `jn-${Math.random().toString(36).slice(2, 9)}`, nome: "", de: "", ate: "" });
-
-    function tabelaDeJanelas() {
-        return `
-        <div class="table-responsive border rounded">
-            <table class="table table-sm align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>Nome da janela</th>
-                        <th style="width:11rem">De</th>
-                        <th style="width:11rem">Até</th>
-                        <th style="width:3rem"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${
-                        janelas.length
-                            ? janelas
-                                  .map(
-                                      (j) => `
-                    <tr>
-                        <td><input type="text" class="form-control form-control-sm" data-janela="${j.id}:nome" value="${esc(j.nome)}" ${leitura ? "disabled" : ""} /></td>
-                        <td><input type="date" class="form-control form-control-sm" data-janela="${j.id}:de" value="${esc(j.de)}" ${leitura ? "disabled" : ""} /></td>
-                        <td><input type="date" class="form-control form-control-sm" data-janela="${j.id}:ate" value="${esc(j.ate)}" ${leitura ? "disabled" : ""} /></td>
-                        <td class="text-end">
-                            ${leitura ? "" : `<button type="button" class="btn btn-sm btn-light" data-janela-tirar="${j.id}" aria-label="Remover janela"><i class="ti ti-trash"></i></button>`}
-                        </td>
-                    </tr>`
-                                  )
-                                  .join("")
-                            : '<tr><td colspan="4" class="text-center text-muted py-3 fs-12">Nenhuma janela de aprovação.</td></tr>'
-                    }
-                </tbody>
-            </table>
-        </div>`;
-    }
-
-    /** Guarda no módulo o que está digitado, antes de redesenhar a tabela. */
-    function lerJanelasDaTela() {
-        for (const el of document.querySelectorAll("[data-janela]")) {
-            const [jid, campo] = el.dataset.janela.split(":");
-            const janela = janelas.find((j) => j.id === jid);
-            if (janela) janela[campo] = el.value;
-        }
-    }
-
     /** O texto digitado na situação → o identificador; vazio se não for uma das cinco. */
     const normaliza = (s) => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
     function idDaSituacao(texto) {
@@ -237,14 +189,6 @@ export function montarFormularioPpa({ novo }) {
                                 <label class="form-label" for="f-descricao">Descrição</label>
                                 <textarea class="form-control" id="f-descricao" rows="12" ${leitura ? "disabled" : ""}>${esc(p.descricao ?? "")}</textarea>
                             </div>
-                            <div class="col-12 mt-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="form-label mb-0">Janela de aprovações</label>
-                                    ${leitura ? "" : '<button type="button" class="btn btn-sm btn-light" id="janela-nova"><i class="ti ti-plus me-1"></i>Adicionar janela</button>'}
-                                </div>
-                                <div id="f-janelas"><div id="janelas-tabela">${tabelaDeJanelas()}</div></div>
-                                <div class="invalid-feedback d-block" id="f-janelas-erro"></div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -266,7 +210,6 @@ export function montarFormularioPpa({ novo }) {
             // Desabilitado, o campo não muda nada: vale a situação que o plano tem.
             situacao: document.getElementById("f-situacao")?.disabled ? p.situacao : idDaSituacao(v("f-situacao")),
             descricao: v("f-descricao").trim(),
-            janelas: (lerJanelasDaTela(), janelas.map((j) => ({ ...j, nome: j.nome.trim() }))),
         };
     }
 
@@ -281,29 +224,12 @@ export function montarFormularioPpa({ novo }) {
             ultimo.dispatchEvent(new Event("change", { bubbles: true }));
         });
 
-        const tabela = document.getElementById("janelas-tabela");
-        document.getElementById("janela-nova")?.addEventListener("click", () => {
-            lerJanelasDaTela();
-            janelas.push(janelaVazia());
-            tabela.innerHTML = tabelaDeJanelas();
-        });
-        tabela?.addEventListener("click", (e) => {
-            const tirar = e.target.closest("[data-janela-tirar]");
-            if (!tirar) return;
-            lerJanelasDaTela();
-            janelas = janelas.filter((j) => j.id !== tirar.dataset.janelaTirar);
-            tabela.innerHTML = tabelaDeJanelas();
-        });
-
         document.getElementById("salvar")?.addEventListener("click", () => {
             const dados = ler();
             const escopo = document.getElementById("formulario");
             document.getElementById("f-vigencia-erro").textContent = "";
 
             const colide = ppaQueColide(estado, dados);
-            document.getElementById("f-janelas-erro").textContent = "";
-            const janelaIncompleta = dados.janelas.find((j) => !j.nome || !j.de || !j.ate);
-            const janelaInvertida = dados.janelas.find((j) => j.de && j.ate && j.ate < j.de);
             const ok = validar(escopo, [
                 { campo: "f-nome", valido: !!dados.nome, mensagem: "Informe o nome do plano." },
                 {
@@ -339,16 +265,6 @@ export function montarFormularioPpa({ novo }) {
                     mensagem: `Já existe um plano em elaboração: ${esc(
                         estado.ppas.find((outro) => outro.id !== dados.id && outro.situacao === "elaboracao")?.nome ?? ""
                     )}.`,
-                },
-                {
-                    campo: "f-janelas",
-                    valido: !janelaIncompleta,
-                    mensagem: "Cada janela precisa de nome, início e fim.",
-                },
-                {
-                    campo: "f-janelas",
-                    valido: !janelaInvertida,
-                    mensagem: `O fim da janela “${janelaInvertida?.nome}” não pode ser anterior ao início.`,
                 },
                 {
                     // Dois planos vigentes seriam duas leis valendo para os mesmos

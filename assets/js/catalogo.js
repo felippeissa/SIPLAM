@@ -33,6 +33,7 @@ import { avisar } from "./toast.js";
  * @param {{rotulo:string, valor:Function}[]} cfg.colunasExtra
  *                                colunas só de leitura na grade, ao lado dos campos —
  *                                o que se deriva do registro e não se digita nele
+ * @param {(ids: string[]) => void} [cfg.aoMudar]  chamada quando a pessoa escolhe ou desvincula
  * @param {string} cfg.prefixo    prefixo dos ids no HTML, para dois catálogos na mesma tela
  */
 export function catalogo(cfg) {
@@ -338,6 +339,7 @@ export function catalogo(cfg) {
                 busca.value = "";
                 termo = "";
                 redesenhar();
+                cfg.aoMudar?.([...escolhidos]);
             } else if (termo.trim()) {
                 abrirRegistro(null, termo.trim());
             }
@@ -372,6 +374,7 @@ export function catalogo(cfg) {
                 termo = "";
                 aberto = false;
                 redesenhar();
+                cfg.aoMudar?.([...escolhidos]);
                 return;
             }
 
@@ -393,6 +396,7 @@ export function catalogo(cfg) {
             if (tirar) {
                 escolhidos = escolhidos.filter((id) => id !== tirar.dataset[`${px}Tirar`]);
                 redesenhar();
+                cfg.aoMudar?.([...escolhidos]);
             }
         });
     }

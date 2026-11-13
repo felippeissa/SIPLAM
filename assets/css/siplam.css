@@ -700,3 +700,23 @@ html[data-skin][data-bs-theme="light"][data-menu-color="light"] { --theme-sidena
 .numero-plano { background-color: rgba(var(--np-rgb), .1); border-color: rgba(var(--np-rgb), .35) !important; }
 .numero-plano .numero-plano-icone .avatar-title { background: var(--np); color: #fff; }
 .numero-plano .numero-plano-rotulo { color: var(--np) !important; font-weight: 600; }
+.tooltip-texto-longo { --bs-tooltip-max-width: 28rem; }
+.tooltip-texto-longo .tooltip-inner { text-align: left; }
+
+/* Avaliação da Central: o campo ganha a cor do resultado. */
+.aval-ok, .aval-reprovado { border-radius: .4rem; padding: .6rem .75rem; }
+.aval-ok { background: rgba(var(--theme-success-rgb), .08); }
+.aval-bloco.aval-ok { border-color: var(--theme-success); }
+.aval-reprovado { background: rgba(var(--theme-danger-rgb), .08); }
+.aval-bloco.aval-reprovado { border-color: var(--theme-danger); }
+.aval-ok .form-control, .aval-ok .form-select { border-color: var(--theme-success); background-color: rgba(var(--theme-success-rgb), .12); }
+.aval-reprovado .form-control:not([data-justificativa]), .aval-reprovado .form-select { border-color: var(--theme-danger); background-color: rgba(var(--theme-danger-rgb), .12); }
+/* Botões ✓/✗ na frente do campo, à direita, na altura do valor. */
+.aval-bloco { position: relative; padding-right: 5.5rem; border: 1px dashed transparent; border-radius: .4rem; }
+.aval-bloco .aval-botoes { position: absolute; right: 0; top: 1.55rem; }
+.aval-bloco.aval-ok, .aval-bloco.aval-reprovado { padding-right: 5.75rem; }
+.aval-bloco.aval-ok .aval-botoes, .aval-bloco.aval-reprovado .aval-botoes { right: .75rem; top: calc(1.55rem + .6rem); }
+
+/* A faixa do título da página encosta na barra superior, sem vão em cima. */
+#conteudo > .my-3:first-child { margin-top: 0 !important; }
+.tooltip-texto-longo .tooltip-inner { white-space: pre-line; }

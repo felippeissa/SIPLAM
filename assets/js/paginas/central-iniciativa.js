@@ -5,8 +5,8 @@
  * Corrige T5.9.9: resolver apontamento existia no modelo de dados e não tinha
  * tela em lugar nenhum — ninguém conseguia fechar um apontamento.
  */
-import { obterEstado, iniciarAnalise, devolver, validar, addComentario, resolverComentario } from "../dados/store.js";
-import { camposDaIniciativa, idDoStatus, podeIr } from "../iniciativa-campos.js";
+import { obterEstado, avaliarIniciativa, salvarRascunhoDaAvaliacao, addComentario, resolverComentario } from "../dados/store.js";
+import { camposDaIniciativa } from "../iniciativa-campos.js";
 import { ANOS } from "../dados/seed.js";
 import {
     STATUS_LABEL,
@@ -16,17 +16,16 @@ import {
     resumoPendencias,
     situacaoEntrega,
     comentariosDaIniciativa,
-    recursosDaIniciativa,
     moeda,
-    moedaCurta,
     TERRITORIO_LABEL,
     COMPORTAMENTOS,
     projetosDaEntrega,
 } from "../dados/regras.js";
-import { linhasDaIniciativa, acoesDaEntrega } from "../dados/financeiro.js";
+import { acoesDaEntrega } from "../dados/financeiro.js";
 import { montarShell, barraTitulo, somenteLeitura } from "../shell.js";
-import { chip, statusChip, esc, secao, faixaIndicadores } from "../ui.js";
-import { quadroFinanceiro, listaPendencias, chipsPendencias } from "../ui-financeiro.js";
+import { chip, statusChip, esc, secao } from "../ui.js";
+import { avisar } from "../toast.js";
+import { listaPendencias, chipsPendencias } from "../ui-financeiro.js";
 
 const { estado } = montarShell();
 const id = new URLSearchParams(location.search).get("id");
@@ -35,6 +34,59 @@ const CAMPOS_INICIATIVA = ["nome", "descricao", "publicoAlvo", "causas", "result
 const CAMPOS_ENTREGA = ["nome", "descricao", "unidade", "metas", "comportamento", "territorio", "comprovacao", "orcamento"];
 
 let novoApontamento = null;
+
+// A avaliação é campo a campo, na tela toda: os campos da Iniciativa e os de cada Entrega.
+const CAMPOS_AVALIADOS = {
+    nome: "Nome da iniciativa",
+    descricao: "Descrição da iniciativa",
+    programa: "Programa",
+    indicadores: "Indicadores",
+    causas: "Causa e subcausa",
+};
+const CAMPOS_DA_ENTREGA = {
+    unidade: "Unidade de medida",
+    comportamento: "Comportamento",
+    territorio: "Território",
+    descricao: "Descrição",
+    comprovacao: "Método de comprovação",
+    gomap: "Projeto GOMAP",
+    metas: "Metas",
+    orcamento: "Vinculação orçamentária",
+};
+const chaveEntrega = (e, campo) => `ent:${e.id}:${campo}`;
+
+/** Todos os campos que a Central precisa avaliar nesta Iniciativa, com o rótulo de cada um. */
+function rotulosAvaliados() {
+    return { ...CAMPOS_AVALIADOS };
+}
+let rascunho = {};
+let rascunhoCarregado = false;
+const todosAvaliados = (ini) => Object.keys(rotulosAvaliados(ini)).every((c) => rascunho[c]);
+const avaliavel = (ini) => !somenteLeitura() && ["enviada", "em_analise"].includes(ini.status);
+/** Campos que a Central já aprovou numa rodada anterior: seguem aprovados e não voltam a ser avaliados. */
+const aprovadosAntes = (ini) =>
+    new Set(Object.entries(ini.avaliacao ?? {}).filter(([, a]) => a.decisao === "ok").map(([c]) => c));
+const avaliacaoDe = (ini) => (avaliavel(ini) ? rascunho : ini.avaliacao ?? {});
+
+function avaliador(ini) {
+    return (campo) => {
+        const a = avaliacaoDe(ini)[campo];
+        const editavel = avaliavel(ini);
+        // Validada: a avaliação acabou, os campos aparecem só bloqueados, sem o verde nem os botões.
+        if (!editavel && (!a || ini.status === "validada")) return "";
+        const dis = editavel && !aprovadosAntes(ini).has(campo) ? "" : " disabled";
+        return `<div class="aval-botoes d-flex align-items-center gap-1">
+            <button type="button" class="btn btn-sm btn-icon ${a?.decisao === "ok" ? "btn-success" : "btn-outline-success"}" data-decisao="ok" data-campo="${campo}" title="Aprovar o campo" aria-label="Aprovar ${esc(rotulosAvaliados(ini)[campo] ?? campo)}"${dis}><i class="ti ti-check"></i></button>
+            <button type="button" class="btn btn-sm btn-icon ${a?.decisao === "reprovado" ? "btn-danger" : "btn-outline-danger"}" data-decisao="reprovado" data-campo="${campo}" title="Reprovar o campo" aria-label="Reprovar ${esc(rotulosAvaliados(ini)[campo] ?? campo)}"${dis}><i class="ti ti-x"></i></button>
+        </div>
+        ${
+            a?.decisao === "reprovado"
+                ? `<textarea class="form-control mt-2 ${a.erro ? "is-invalid" : ""}" rows="2" data-justificativa="${campo}" placeholder="Justificativa da reprovação"${dis}>${esc(a.justificativa ?? "")}</textarea>
+        <div class="invalid-feedback">Escreva a justificativa para reprovar este campo.</div>`
+                : ""
+        }`;
+    };
+}
 
 function inexistente() {
     document.getElementById("conteudo").innerHTML = `
@@ -45,7 +97,8 @@ function inexistente() {
     </div>`;
 }
 
-function blocoEntrega(e) {
+function blocoEntrega(e, ini) {
+    const av = (campo) => avaliador(ini)(chaveEntrega(e, campo));
     const s = situacaoEntrega(estado, e);
     const acoes = acoesDaEntrega(estado, e.id);
     const projetos = projetosDaEntrega(estado, e.id);
@@ -63,24 +116,29 @@ function blocoEntrega(e) {
             <div class="col-md-4">
                 <div class="rotulo-secao mb-1">Unidade de medida</div>
                 <div>${esc(e.unidadeMedida || "—")}</div>
+                ${av("unidade")}
             </div>
             <div class="col-md-4">
                 <div class="rotulo-secao mb-1">Comportamento</div>
                 <div>${esc(comp?.nome ?? "—")} ${e.comportamentoValidado ? chip("validado", "ok") : chip("não validado", "alerta")}</div>
+                ${av("comportamento")}
             </div>
             <div class="col-md-4">
                 <div class="rotulo-secao mb-1">Território</div>
                 <div>${esc(TERRITORIO_LABEL[e.territorio.tipo] ?? "—")}${
                     e.territorio.regioes.length ? `<div class="fs-12 text-muted">${esc(e.territorio.regioes.join(", "))}</div>` : ""
                 }</div>
+                ${av("territorio")}
             </div>
             <div class="col-12">
                 <div class="rotulo-secao mb-1">Descrição</div>
                 <div>${esc(e.descricao || "—")}</div>
+                ${av("descricao")}
             </div>
             <div class="col-md-6">
                 <div class="rotulo-secao mb-1">Método de comprovação</div>
                 <div>${esc(e.metodoComprovacao || "—")}</div>
+                ${av("comprovacao")}
             </div>
             <div class="col-md-6">
                 <div class="rotulo-secao mb-1">Viabilizada por Projeto GOMAP</div>
@@ -97,6 +155,7 @@ function blocoEntrega(e) {
                         ? `<div class="fs-12 text-muted">${projetos.map((p) => esc(p.codigo + " — " + p.nome)).join(" · ")}</div>`
                         : ""
                 }</div>
+                ${av("gomap")}
             </div>
             <div class="col-12">
                 <div class="rotulo-secao mb-1">Metas</div>
@@ -104,6 +163,7 @@ function blocoEntrega(e) {
                     <thead><tr>${ANOS.map((a) => `<th class="num">${a}</th>`).join("")}</tr></thead>
                     <tbody><tr>${metas}</tr></tbody>
                 </table>
+                ${av("metas")}
             </div>
             <div class="col-12">
                 <div class="rotulo-secao mb-1">Vinculação orçamentária</div>
@@ -112,13 +172,9 @@ function blocoEntrega(e) {
                         ? `<p class="mb-0">${chip("Sem Ação vinculada", "alerta")} A Entrega não tem valor financeiro no PPA.</p>`
                         : `<div class="fs-12">${acoes.map((a) => `<span class="codigo">${esc(a.codigo)}</span> ${esc(a.nome)}`).join("<br />")}</div>`
                 }
+                ${av("orcamento")}
             </div>
-        </div>`,
-        somenteLeitura()
-            ? ""
-            : `<button class="btn btn-sm btn-outline-primary" data-apontar-entrega="${e.id}">
-            <i class="ti ti-message-plus me-1"></i>Apontar
-        </button>`
+        </div>`
     );
 }
 
@@ -126,6 +182,12 @@ function render() {
     const ini = estado.iniciativas.find((i) => i.id === id);
     if (!ini) return inexistente();
 
+    if (!rascunhoCarregado) {
+        rascunhoCarregado = true;
+        rascunho = JSON.parse(JSON.stringify(ini.avaliacaoRascunho ?? {}));
+        // O que já estava aprovado volta aprovado.
+        for (const c of aprovadosAntes(ini)) rascunho[c] = { decisao: "ok", justificativa: "" };
+    }
     const programa = estado.programas.find((p) => p.id === ini.programaId);
     const entregas = entregasDaIniciativa(estado, ini.id);
     const pendencias = pendenciasIniciativa(estado, ini);
@@ -133,20 +195,18 @@ function render() {
     const comentarios = comentariosDaIniciativa(estado, ini.id);
     const abertos = comentarios.filter((c) => !c.resolvido);
     const eventos = estado.eventos.filter((ev) => ev.iniciativaId === ini.id);
-    const previsto = recursosDaIniciativa(estado, ini.id);
 
-    // As ações de análise — iniciar, devolver, validar — são o campo Status, como na
-    // matriz de mapeamento. Aqui só o que a Central não pode fazer é dito.
+    // A Central só avalia: aprova ou reprova cada campo e salva. O status é resultado disso.
     const acoesCabecalho = somenteLeitura()
         ? `<span class="fs-12 text-muted align-self-center">Perfil de acompanhamento — sem ações de análise.</span>`
         : "";
 
     document.getElementById("conteudo").innerHTML = `
-    <div class="my-3">
-        ${barraTitulo(esc(ini.nome), [
-            { rotulo: programa ? `${programa.codigo} — ${programa.nome}` : "Programa", href: `programa.html?id=${ini.programaId}` },
-            { rotulo: ini.nome },
-        ])}
+    ${barraTitulo(esc(ini.nome), [
+        { rotulo: programa ? `${programa.codigo} — ${programa.nome}` : "Programa", href: `programa.html?id=${ini.programaId}` },
+        { rotulo: ini.nome },
+    ])}
+    <div class="ilha p-3 mb-2">
         <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
             <div>
                 <h4 class="fw-bold mb-1">${esc(ini.nome)}</h4>
@@ -161,89 +221,39 @@ function render() {
                     <span>atualizada em ${esc(ini.atualizadoEm)}</span>
                 </div>
             </div>
-            <div class="d-flex flex-wrap gap-2">${acoesCabecalho}</div>
+            <div class="d-flex flex-wrap gap-2">${acoesCabecalho}${
+                avaliavel(ini)
+                    ? `<button type="button" class="btn btn-outline-success" id="aprovar-todos"><i class="ti ti-checks me-1"></i>Aprovar todos os campos</button>
+                <button type="button" class="btn btn-outline-danger" id="reprovar-todos"><i class="ti ti-x me-1"></i>Reprovar todos os campos</button>
+                <button type="button" class="btn btn-light" id="salvar-rascunho"><i class="ti ti-device-floppy me-1"></i>Salvar</button>
+                <button type="button" class="btn btn-primary" id="devolver-iniciativa"${todosAvaliados(ini) ? "" : " disabled"} title="${todosAvaliados(ini) ? "Encerrar a avaliação" : "Avalie todos os campos para devolver"}"><i class="ti ti-arrow-back-up me-1"></i>Devolver iniciativa</button>`
+                    : ""
+            }</div>
         </div>
     </div>
-
-    ${faixaIndicadores([
-        { valor: entregas.length, rotulo: "Entregas" },
-        { valor: resumo.impeditivos, rotulo: "Pendências impeditivas" },
-        { valor: resumo.alertas, rotulo: "Alertas" },
-        { valor: abertos.length, rotulo: "Apontamentos abertos" },
-        { valor: moedaCurta(previsto), rotulo: "Previsto" },
-    ])}
 
     <div class="row g-3">
         <div class="col-12">
             ${secao(
                 "Iniciativa",
-                camposDaIniciativa({ ini, estado, visao: "central", travado: true, statusTravado: somenteLeitura() }),
-                somenteLeitura()
-                    ? ""
-                    : `<button class="btn btn-sm btn-outline-primary" data-apontar-iniciativa="1">
-                    <i class="ti ti-message-plus me-1"></i>Apontar
-                </button>`
+                camposDaIniciativa({ ini, estado, visao: "central", travado: true, statusTravado: true, avaliador: avaliador(ini) })
+
             )}
 
-            ${entregas.length === 0 ? secao("Entregas", '<p class="fs-12 text-muted mb-0">A Iniciativa não possui Entregas.</p>') : entregas.map(blocoEntrega).join("")}
-
-            ${secao("Previsão financeira da Iniciativa", quadroFinanceiro(linhasDaIniciativa(estado, ini.id), { dimensao: "fonte", detalhe: "ipof", curto: false }))}
-        </div>
-
-        <div class="col-12">
-            ${secao(
-                `Apontamentos <span class="fs-12 text-muted">(${abertos.length} aberto(s))</span>`,
-                comentarios.length === 0
-                    ? '<p class="fs-12 text-muted mb-0">Nenhum apontamento registrado.</p>'
-                    : `<ul class="list-group list-group-flush">${comentarios
-                          .map((c) => {
-                              const alvo =
-                                  c.alvoTipo === "entrega"
-                                      ? estado.entregas.find((e) => e.id === c.alvoId)?.nome ?? "Entrega"
-                                      : "Iniciativa";
-                              return `
-                    <li class="list-group-item px-0 py-2 ${c.resolvido ? "opacity-50" : ""}">
-                        <div class="d-flex justify-content-between align-items-start gap-2">
-                            <div class="fs-13">${esc(c.texto)}</div>
-                            ${
-                                c.resolvido
-                                    ? chip("resolvido", "ok")
-                                    : somenteLeitura()
-                                      ? ""
-                                      : `<button class="btn btn-sm btn-light" data-resolver="${c.id}" title="Marcar como resolvido"><i class="ti ti-check"></i></button>`
-                            }
-                        </div>
-                        <div class="fs-12 text-muted mt-1">
-                            ${esc(alvo)} · campo ${esc(c.campo ?? "—")} · ${esc(c.autor)} em ${esc(c.criadoEm)}
-                        </div>
-                    </li>`;
-                          })
-                          .join("")}</ul>`
-            )}
-
-            ${secao(
-                `Pendências <span class="ms-1">${chipsPendencias(resumo)}</span>`,
-                listaPendencias(pendencias)
-            )}
-
-            ${secao(
-                "Histórico",
-                eventos.length === 0
-                    ? '<p class="fs-12 text-muted mb-0">Sem eventos.</p>'
-                    : `<ul class="list-group list-group-flush">${eventos
-                          .map(
-                              (ev) => `
-                    <li class="list-group-item px-0 py-2">
-                        <div class="fs-13">${esc(ev.texto)}</div>
-                        <div class="fs-12 text-muted">${esc(ev.autor)} · ${esc(ev.quando)}</div>
-                    </li>`
-                          )
-                          .join("")}</ul>`
-            )}
         </div>
     </div>
 
     ${novoApontamento ? modalApontamento(ini) : ""}`;
+
+    // A Central só avalia: o campo de Indicadores mostra o vínculo, sem busca nem botão de tirar.
+    document.getElementById("iind-bloco")?.querySelectorAll("input, button").forEach((c) => (c.disabled = true));
+
+    // O campo avaliado ganha a cor do resultado: verde se aprovado, vermelho se reprovado.
+    document.querySelectorAll("[data-decisao]").forEach((b) => b.closest(".mb-3, .mb-0, [class*='col-']")?.classList.add("aval-bloco"));
+    document.querySelectorAll("[data-decisao].btn-success, [data-decisao].btn-danger").forEach((b) => {
+        const bloco = b.closest(".mb-3, .mb-0, [class*='col-']");
+        bloco?.classList.add(b.dataset.decisao === "ok" ? "aval-ok" : "aval-reprovado");
+    });
 
     if (novoApontamento) {
         const el = document.getElementById("modal-apontamento");
@@ -298,13 +308,61 @@ function modalApontamento(ini) {
 </div>`;
 }
 
+document.addEventListener("input", (e) => {
+    const j = e.target.closest("[data-justificativa]");
+    if (!j) return;
+    const a = rascunho[j.dataset.justificativa];
+    if (a) {
+        a.justificativa = j.value;
+        a.erro = false;
+        j.classList.remove("is-invalid");
+    }
+});
+
 document.addEventListener("click", (e) => {
     const ini = estado.iniciativas.find((i) => i.id === id);
     if (!ini) return;
 
-    const apIni = e.target.closest("[data-apontar-iniciativa]");
-    if (apIni) {
-        novoApontamento = { alvoTipo: "iniciativa", alvoId: ini.id, campo: "descricao" };
+    const dec = e.target.closest("[data-decisao]");
+    if (dec && avaliavel(ini)) {
+        const campo = dec.dataset.campo;
+        if (aprovadosAntes(ini).has(campo)) return;
+        rascunho[campo] = { decisao: dec.dataset.decisao, justificativa: rascunho[campo]?.justificativa ?? "" };
+        return render();
+    }
+
+    if (e.target.closest("#aprovar-todos, #reprovar-todos") && avaliavel(ini)) {
+        const decisao = e.target.closest("#aprovar-todos") ? "ok" : "reprovado";
+        const travados = aprovadosAntes(ini);
+        for (const c of Object.keys(rotulosAvaliados(ini))) {
+            if (travados.has(c)) continue;
+            rascunho[c] = { decisao, justificativa: rascunho[c]?.justificativa ?? "" };
+        }
+        return render();
+    }
+
+    // "Salvar" guarda o que já foi avaliado, sem encerrar: dá para voltar outro dia.
+    if (e.target.closest("#salvar-rascunho") && avaliavel(ini)) {
+        salvarRascunhoDaAvaliacao(ini.id, rascunho, Object.keys(rotulosAvaliados(ini)).length);
+        render();
+        return avisar("Avaliação salva.");
+    }
+
+    // "Devolver iniciativa" encerra a avaliação.
+    if (e.target.closest("#devolver-iniciativa")) {
+        const rotulos = rotulosAvaliados(ini);
+        const faltam = Object.keys(rotulos).filter((c) => !rascunho[c]);
+        if (faltam.length) {
+            return alert(`Avalie todos os campos antes de salvar. Faltam ${faltam.length} de ${Object.keys(rotulos).length}: ${faltam.slice(0, 5).map((c) => rotulos[c]).join("; ")}${faltam.length > 5 ? "…" : ""}.`);
+        }
+        let ok = true;
+        for (const [c, a] of Object.entries(rascunho)) {
+            a.erro = a.decisao === "reprovado" && !a.justificativa.trim();
+            if (a.erro) ok = false;
+        }
+        if (!ok) return render();
+        avaliarIniciativa(ini.id, rascunho, rotulosAvaliados(ini));
+        rascunho = {};
         return render();
     }
 
@@ -335,50 +393,6 @@ document.addEventListener("click", (e) => {
         bootstrap.Modal.getInstance(document.getElementById("modal-apontamento")).hide();
         novoApontamento = null;
         render();
-    }
-});
-
-/**
- * O status da Iniciativa, escolhido pela Central.
- *
- * Cada opção é uma transição que o sistema já tinha: iniciar a análise não pede
- * nada; devolver e validar pedem confirmação. Se a pessoa desiste, a tela se
- * redesenha e o campo volta ao status que a Iniciativa de fato tem.
- */
-document.addEventListener("change", (e) => {
-    if (e.target.id !== "f-status") return;
-    const ini = estado.iniciativas.find((i) => i.id === id);
-    if (!ini) return;
-
-    const destino = idDoStatus(e.target.value, "central");
-    // Texto que não é um status, ou um status para onde a Iniciativa não pode ir
-    // agora: a tela volta ao que ela tem.
-    if (!destino || !podeIr("central", ini.status, destino)) return render();
-
-    if (destino === "em_analise") {
-        iniciarAnalise(ini.id);
-        return render();
-    }
-
-    if (destino === "devolvida") {
-        const abertos = comentariosDaIniciativa(estado, ini.id).filter((c) => !c.resolvido).length;
-        const aviso =
-            abertos === 0
-                ? "Nenhum apontamento registrado. Devolver assim mesmo?"
-                : `Devolver com ${abertos} apontamento(s) aberto(s)? A Iniciativa volta ao órgão para ajuste.`;
-        if (confirm(aviso)) devolver(ini.id);
-        return render();
-    }
-
-    if (destino === "validada") {
-        const r = resumoPendencias(pendenciasIniciativa(estado, ini));
-        // O órgão não consegue enviar com impeditiva; aqui o analista é avisado (T5.9.11).
-        const aviso =
-            r.impeditivos > 0
-                ? `A Iniciativa ainda tem ${r.impeditivos} pendência(s) impeditiva(s). Validar assim mesmo?`
-                : "Validar a Iniciativa? Ela passa a compor o plano.";
-        if (confirm(aviso)) validar(ini.id);
-        return render();
     }
 });
 

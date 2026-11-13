@@ -5,7 +5,7 @@
  * Corrige T6.1.7: a ordenação por prioridade aplicava uma regra implícita que a
  * interface nunca explicava.
  */
-import { obterEstado, marcarSemContribuicao, reconsiderarParticipacao, removeIniciativa, noPlano, vinculosDe, descreverVinculos } from "../dados/store.js";
+import { obterEstado, updPrograma, marcarSemContribuicao, reconsiderarParticipacao, removeIniciativa, noPlano, vinculosDe, descreverVinculos } from "../dados/store.js";
 import { confirmarExclusao } from "../confirmar.js";
 import { avisar } from "../toast.js";
 import {
@@ -28,7 +28,7 @@ import { montarShell, cabecalhoPagina , somenteLeitura } from "../shell.js";
 import { chip, statusChip, esc, faixaIndicadores } from "../ui.js";
 import { chipsPendencias } from "../ui-financeiro.js";
 import { seloDoIcone } from "../icone-programa.js";
-import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro } from "../cadastros/marcador.js";
+import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro, abrirJanelaDeMarcadores } from "../cadastros/marcador.js";
 
 const { estado } = montarShell();
 const orgao = estado.orgaoAtual;
@@ -56,7 +56,7 @@ function linhas() {
         .filter((p) => !q || p.nome.toLowerCase().includes(q) || p.codigo.includes(q))
         .filter((p) => eixo === "todos" || p.eixo === eixo)
         .filter((p) => objetivo === "todos" || p.objetivoEstrategico === objetivo)
-        // Marcadores: aqui não se marca, só se consulta. Filtra por qualquer marcador posto nos Programas.
+        // Marcadores: filtra por qualquer marcador posto nos Programas.
         .filter((p) => marcador === "todos" || (p.marcadorIds ?? []).includes(marcador))
         .map((p) => {
             const inis = iniciativasDoOrgao(estado, p.id, orgao);
@@ -171,6 +171,7 @@ function linhaPrograma(l) {
         <td>
             <div class="d-flex gap-1">
                 ${somenteLeitura() ? "" : `<button class="btn btn-sm btn-primary" data-nova="${p.id}" title="Nova Iniciativa"><i class="ti ti-plus"></i></button>`}
+                ${somenteLeitura() ? "" : `<button class="btn btn-sm btn-outline-secondary btn-icon" data-marcar="${p.id}" title="Adicionar marcadores" aria-label="Adicionar marcadores a ${esc(p.nome)}"><i class="ti ti-tag-plus"></i></button>`}
                 <div class="dropdown">
                     <button class="btn btn-sm btn-light btn-icon" data-bs-toggle="dropdown" aria-label="Mais ações"><i class="ti ti-dots-vertical"></i></button>
                     <ul class="dropdown-menu dropdown-menu-end fs-13">
@@ -294,6 +295,24 @@ document.addEventListener("click", (e) => {
         const id = prog.dataset.programa;
         abertos.has(id) ? abertos.delete(id) : abertos.add(id);
         return render();
+    }
+
+    // "Adicionar marcadores": pôr ou tirar marcadores de um Programa sem sair da lista.
+    const marcar = e.target.closest("[data-marcar]");
+    if (marcar) {
+        const programa = estado.programas.find((x) => x.id === marcar.dataset.marcar);
+        if (!programa) return;
+        return abrirJanelaDeMarcadores({
+            titulo: `Marcadores — ${programa.nome}`,
+            selecionados: programa.marcadorIds ?? [],
+            observacoes: programa.marcadorObs ?? {},
+            estado,
+            aoSalvar: (ids, observacoes) => {
+                updPrograma(programa.id, { marcadorIds: ids, marcadorObs: observacoes });
+                render();
+                avisar("Marcadores do Programa atualizados.");
+            },
+        });
     }
 
     const nova = e.target.closest("[data-nova]");
