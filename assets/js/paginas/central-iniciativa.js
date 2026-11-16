@@ -236,7 +236,7 @@ function render() {
         <div class="col-12">
             ${secao(
                 "Iniciativa",
-                camposDaIniciativa({ ini, estado, visao: "central", travado: true, statusTravado: true, avaliador: avaliador(ini) })
+                camposDaIniciativa({ ini, estado, visao: "central", travado: true, avaliador: avaliador(ini) })
 
             )}
 

@@ -24,7 +24,7 @@
  * permite e qualquer outra é recusada — a tela volta ao status que a Iniciativa
  * tem. Um campo livre que aceitasse "quase pronta" deixaria o fluxo sem sentido.
  */
-import { esc } from "./ui.js";
+import { esc, statusChip } from "./ui.js";
 import { catalogo } from "./catalogo.js";
 import { ppaCorrente } from "./dados/store.js";
 import { STATUS_LABEL } from "./dados/regras.js";
@@ -118,11 +118,6 @@ export function problemaDaIniciativa(estado, ini) {
 
 /* ---------- peças ---------- */
 
-function seletorDeStatus({ ini, visao }) {
-    // O status é só para ver: ele é consequência do fluxo (criar, enviar, avaliar), nunca se digita.
-    return `<input type="text" class="form-control" id="f-status" value="${esc(rotuloDoStatus(ini.status, visao))}" disabled />`;
-}
-
 /** As causas do Programa escolhido. Trocar o Programa troca a lista. */
 export function blocoDeCausas(programa, selecionadas, travado) {
     const causas = programa?.causas ?? [];
@@ -149,13 +144,12 @@ export function blocoDeCausas(programa, selecionadas, travado) {
  * @param {object} o.estado
  * @param {"setorial"|"central"} o.visao
  * @param {boolean} o.travado  os campos não se editam
- * @param {boolean} [o.statusTravado]  o status não se escolhe — só o perfil sem escrita.
- *   Separado dos campos porque a Central os trava e escolhe o status: é por ele que analisa.
+ * @param {boolean} [o.mostrarStatus]  mostra o status como tag no formulário (só a criação, que não tem título)
  * @param {Set<string>|null} [o.liberados]  se informado, só estes campos se editam (os reprovados pela Central)
  * @param {(campo: string) => string} [o.marca]  o selo "apontado" da análise
  * @param {(campo: string) => string} [o.avaliador]  os botões de aprovar/reprovar do campo (visão da Central)
  */
-export function camposDaIniciativa({ ini, estado, visao, travado, liberados = null, statusTravado = false, marca = () => "", avaliador = () => "" }) {
+export function camposDaIniciativa({ ini, estado, visao, travado, liberados = null, mostrarStatus = false, marca = () => "", avaliador = () => "" }) {
     // `liberados`: quando a Iniciativa volta da Central, só os campos reprovados se editam.
     const trava = (campo) => travado || (liberados !== null && !liberados.has(campo));
     const d = (campo) => (trava(campo) ? " disabled" : "");
@@ -170,11 +164,15 @@ export function camposDaIniciativa({ ini, estado, visao, travado, liberados = nu
         ${avaliador("nome")}
     </div>
 
-    <div class="mb-3">
-        <label class="form-label" for="f-status">Status <span class="text-danger">*</span></label>
-        ${seletorDeStatus({ ini, visao, travado: statusTravado })}
-        <div class="invalid-feedback" id="f-status-erro"></div>
-    </div>
+    ${
+        // Nas fichas o status já aparece como tag no título; só a criação o mostra aqui.
+        mostrarStatus
+            ? `<div class="mb-3">
+        <label class="form-label d-block">Status</label>
+        ${statusChip(ini.status)}
+    </div>`
+            : ""
+    }
 
     <div class="mb-3" id="bloco-motivo" ${ini.status === "divergencia" ? "" : "hidden"}>
         <label class="form-label" for="f-motivo">Motivo</label>
@@ -198,7 +196,7 @@ export function camposDaIniciativa({ ini, estado, visao, travado, liberados = nu
         ${avaliador("programa")}
     </div>
 
-    <div class="mb-3">${catalogoIndicadores.html(ini.indicadorIds ?? [])}${avaliador("indicadores")}</div>
+    <div class="mb-3" id="bloco-causas">${blocoDeCausas(programa, ini.causas ?? [], trava("causas"))}${avaliador("causas")}</div>
 
-    <div class="mb-0" id="bloco-causas">${blocoDeCausas(programa, ini.causas ?? [], trava("causas"))}${avaliador("causas")}</div>`;
+    <div class="mb-0">${catalogoIndicadores.html(ini.indicadorIds ?? [])}${avaliador("indicadores")}</div>`;
 }

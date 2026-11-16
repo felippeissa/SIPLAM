@@ -16,7 +16,7 @@ import { addIniciativa, updIniciativa, ppaCorrente } from "../dados/store.js";
 import { montarShell, barraTitulo, url } from "../shell.js";
 import { esc } from "../ui.js";
 import { avisar } from "../toast.js";
-import { camposDaIniciativa, blocoDeCausas, idDoStatus, catalogoIndicadores, aoMudarIndicadores } from "../iniciativa-campos.js";
+import { camposDaIniciativa, blocoDeCausas, catalogoIndicadores, aoMudarIndicadores } from "../iniciativa-campos.js";
 import { limparAoDigitar } from "../validacao.js";
 
 const { estado } = montarShell();
@@ -55,7 +55,7 @@ function render() {
                 <div class="card-body" id="formulario">
                     ${// A Iniciativa nasce no fluxo do órgão, seja quem for que a cadastre: os
                     // status de análise só existem depois de ela ser enviada.
-                    camposDaIniciativa({ ini: rascunho, estado, visao: "setorial", travado: false })}
+                    camposDaIniciativa({ ini: rascunho, estado, visao: "setorial", travado: false, mostrarStatus: true })}
                 </div>
             </div>
         </div>
@@ -72,9 +72,6 @@ function ler() {
     const v = (campo) => document.getElementById(campo)?.value ?? "";
     Object.assign(rascunho, {
         nome: v("f-nome").trim(),
-        // O que está escrito, ainda sem saber se é um status: quem valida é o salvar.
-        statusTexto: v("f-status").trim(),
-        status: idDoStatus(v("f-status"), "setorial"),
         motivo: v("f-motivo").trim(),
         descricao: v("f-descricao").trim(),
         programaId: v("f-programa"),
@@ -92,12 +89,6 @@ function erro(campo, mensagem) {
 }
 
 document.addEventListener("change", (e) => {
-    if (e.target.id === "f-status") {
-        // O motivo só existe quando há divergência a explicar.
-        document.getElementById("bloco-motivo").hidden = idDoStatus(e.target.value, "setorial") !== "divergencia";
-        return;
-    }
-
     if (e.target.id === "f-programa") {
         ler();
         const programa = estado.programas.find((p) => p.id === rascunho.programaId);
@@ -114,10 +105,6 @@ document.addEventListener("click", (e) => {
     document.querySelectorAll("#formulario .is-invalid").forEach((c) => c.classList.remove("is-invalid"));
 
     if (!rascunho.nome) return erro("f-nome", "Informe o nome da iniciativa.");
-    if (!rascunho.status) return erro("f-status", "Escolha um status: Em preenchimento, Enviada ou Reportar divergência.");
-    if (rascunho.status === "enviada") {
-        return erro("f-status", "Uma Iniciativa só pode ser enviada depois de ter Entregas. Crie-a em preenchimento e envie pela ficha.");
-    }
 
     const id = addIniciativa({
         programaId: rascunho.programaId,

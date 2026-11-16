@@ -13,8 +13,6 @@ import {
     vinculosDe,
     descreverVinculos,
     enviar,
-    reportarDivergencia,
-    retomarPreenchimento,
 } from "../dados/store.js";
 import {
     podeEditar,
@@ -30,7 +28,7 @@ import { confirmarExclusao } from "../confirmar.js";
 import { avisar } from "../toast.js";
 import { chip, statusChip, esc, secao } from "../ui.js";
 import { listaPendencias, chipsPendencias } from "../ui-financeiro.js";
-import { camposDaIniciativa, idDoStatus, podeIr, catalogoIndicadores, aoMudarIndicadores } from "../iniciativa-campos.js";
+import { camposDaIniciativa, catalogoIndicadores, aoMudarIndicadores } from "../iniciativa-campos.js";
 
 const { estado } = montarShell();
 const id = new URLSearchParams(location.search).get("id");
@@ -114,7 +112,7 @@ function render() {
         <div class="col-12">
             ${secao(
                 "Dados da Iniciativa",
-                camposDaIniciativa({ ini, estado, visao: "setorial", travado: !editavel, liberados, statusTravado: somenteLeitura() })
+                camposDaIniciativa({ ini, estado, visao: "setorial", travado: !editavel, liberados })
             )}
 
         </div>
@@ -253,22 +251,6 @@ document.addEventListener("change", (e) => {
         alterar({ programaId: novo, causas: [] });
         render();
         return;
-    }
-
-    if (e.target.id === "f-status") {
-        const destino = idDoStatus(e.target.value, "setorial");
-        const ini = estado.iniciativas.find((i) => i.id === id);
-        // Texto que não é um status, ou um status para onde a Iniciativa não pode ir
-        // agora: a tela volta ao que ela tem.
-        if (!destino || !podeIr("setorial", ini.status, destino)) return render();
-        // Enviar tem conferência de pendências: abre a janela, que decide.
-        if (destino === "enviada") {
-            envioAberto = true;
-            return render();
-        }
-        if (destino === "divergencia") reportarDivergencia(id);
-        else if (destino === "em_preenchimento") retomarPreenchimento(id);
-        return render();
     }
 });
 
