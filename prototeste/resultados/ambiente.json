@@ -1,0 +1,21 @@
+{
+  "data": "2026-11-19T13:28:18.822Z",
+  "navegador": "Edg/157.0.4341.60",
+  "node": "v24.22.3",
+  "sistema": "win32",
+  "base": "http://127.0.0.1:8898",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "commit_base": "23e2692",
+  "arquivos_alterados_na_arvore_de_trabalho": 16,
+  "sha256_parcial": {
+    "assets/js/paginas/central-programas.js": "72945ad14c3a",
+    "assets/js/shell.js": "e24da815f11f",
+    "assets/js/toast.js": "340caa45ff4d"
+  },
+  "usuario_de_teste": "teste.prototeste",
+  "observacao": "Login de demonstração do protótipo (sem autenticação real). Dados 100% fictícios, em storage isolado por rodada.",
+  "duracao_total_s": 351
+}

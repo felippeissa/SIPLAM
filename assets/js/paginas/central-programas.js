@@ -139,6 +139,19 @@ function faixa() {
  * Causas e Iniciativas mostram os nomes, e não a contagem: com mais de um, o
  * primeiro fica à vista e os demais no selo "+N", como na grid de problemas.
  */
+// Prototeste (PROTOTESTE.md): `?acoes=esquerda` leva a coluna Ações para a primeira posição. Sem o
+// parâmetro, ela fica à direita, como sempre. Só a posição muda: conteúdo, larguras e botões são os mesmos.
+const ACOES_ESQUERDA = (() => {
+    // O parâmetro vale para a sessão: salvar e voltar para a lista não pode trocar de variante.
+    const param = new URLSearchParams(location.search).get("acoes");
+    try {
+        if (param) sessionStorage.setItem("siplam.prototeste.acoes", param);
+        return (param ?? sessionStorage.getItem("siplam.prototeste.acoes")) === "esquerda";
+    } catch {
+        return param === "esquerda";
+    }
+})();
+
 function corpo() {
     const ls = linhas();
     if (ls.length === 0) {
@@ -148,8 +161,18 @@ function corpo() {
         .fatia(ls)
         .map((p) => {
             const falta = faltaParaDisponibilizar(p);
-            return `
-        <tr>
+            const celulaAcoes = `
+            <td class="${ACOES_ESQUERDA ? "text-start" : "text-end"} coluna-acoes">${
+                leitura
+                    ? `<a href="${url(`programa.html?id=${p.id}`)}" class="btn btn-sm btn-light">Ver</a>`
+                    : `<div class="d-inline-flex gap-1">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-marcar="${esc(p.id)}"
+                                title="Adicionar marcadores" aria-label="Adicionar marcadores a ${esc(p.nome)}"><i class="ti ti-tag-plus"></i></button>
+                        <a href="${url(`central-programas/editar.html?id=${p.id}`)}" class="btn btn-sm btn-outline-primary">Editar</a>
+                    </div>`
+            }</td>
+            `;
+            const celulasDeDados = `
             <td>${selosDeMarcadores(p.marcadorIds, estado, p.marcadorObs)}</td>
             <td class="codigo text-muted">${esc(p.codigo)}</td>
             <td>
@@ -169,15 +192,10 @@ function corpo() {
                 DISPONIBILIZACAO_LABEL[p.disponibilizacao ?? "em_estruturacao"],
                 p.disponibilizacao === "disponivel" || p.disponibilizacao === "vigente" ? "ok" : "neutro"
             )}</td>
-            <td class="text-end coluna-acoes">${
-                leitura
-                    ? `<a href="${url(`programa.html?id=${p.id}`)}" class="btn btn-sm btn-light">Ver</a>`
-                    : `<div class="d-inline-flex gap-1">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-marcar="${esc(p.id)}"
-                                title="Adicionar marcadores" aria-label="Adicionar marcadores a ${esc(p.nome)}"><i class="ti ti-tag-plus"></i></button>
-                        <a href="${url(`central-programas/editar.html?id=${p.id}`)}" class="btn btn-sm btn-outline-primary">Editar</a>
-                    </div>`
-            }</td>
+            `;
+            return `
+        <tr>
+            ${ACOES_ESQUERDA ? celulaAcoes : ""}${celulasDeDados}${ACOES_ESQUERDA ? "" : celulaAcoes}
         </tr>`;
         })
         .join("");
@@ -193,6 +211,7 @@ function render() {
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
+                        ${ACOES_ESQUERDA ? '<th class="text-start coluna-acoes" style="width:9rem">Ações</th>' : ""}
                         <th style="width:9rem">Marcador</th>
                         <th style="width:5rem">Código</th>
                         <th>Programa</th>
@@ -200,7 +219,7 @@ function render() {
                         <th style="width:14rem">Iniciativas</th>
                         <th style="width:11rem">Aptidão</th>
                         <th style="width:14rem">Disponibilização</th>
-                        <th class="text-end coluna-acoes" style="width:9rem">Ações</th>
+                        ${ACOES_ESQUERDA ? "" : '<th class="text-end coluna-acoes" style="width:9rem">Ações</th>'}
                     </tr>
                 </thead>
                 <tbody id="corpo-lista">${corpo()}</tbody>

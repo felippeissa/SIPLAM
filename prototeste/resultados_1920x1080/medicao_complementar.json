@@ -1,0 +1,94 @@
+[
+  {
+    "largura": 1920,
+    "altura": 1080,
+    "variante": "direita",
+    "largura_da_janela": 1920,
+    "largura_visivel_da_tabela": 1643,
+    "largura_total_da_tabela": 1643,
+    "excesso_horizontal_px": 0,
+    "rolagem_horizontal": false,
+    "botao_editar": {
+      "esquerda": 1828,
+      "direita": 1887,
+      "largura": 59,
+      "parte_visivel_sem_rolar": 1
+    },
+    "botao_marcadores": {
+      "esquerda": 1786,
+      "direita": 1823,
+      "largura": 37,
+      "parte_visivel_sem_rolar": 1
+    },
+    "nome_do_programa": {
+      "esquerda": 560,
+      "direita": 648,
+      "largura": 88,
+      "parte_visivel_sem_rolar": 1
+    },
+    "distancia_horizontal_nome_a_editar_px": 1268,
+    "colunas_entre_nome_e_editar": 4,
+    "cabecalho_acoes": {
+      "esquerda": 1755,
+      "direita": 1899,
+      "largura": 144,
+      "parte_visivel_sem_rolar": 1
+    },
+    "colunas": [
+      "Marcador",
+      "Código",
+      "Programa",
+      "Causas",
+      "Iniciativas",
+      "Aptidão",
+      "Disponibilização",
+      "Ações"
+    ]
+  },
+  {
+    "largura": 1920,
+    "altura": 1080,
+    "variante": "esquerda",
+    "largura_da_janela": 1920,
+    "largura_visivel_da_tabela": 1643,
+    "largura_total_da_tabela": 1643,
+    "excesso_horizontal_px": 0,
+    "rolagem_horizontal": false,
+    "botao_editar": {
+      "esquerda": 310,
+      "direita": 369,
+      "largura": 59,
+      "parte_visivel_sem_rolar": 1
+    },
+    "botao_marcadores": {
+      "esquerda": 268,
+      "direita": 305,
+      "largura": 37,
+      "parte_visivel_sem_rolar": 1
+    },
+    "nome_do_programa": {
+      "esquerda": 704,
+      "direita": 792,
+      "largura": 88,
+      "parte_visivel_sem_rolar": 1
+    },
+    "distancia_horizontal_nome_a_editar_px": 394,
+    "colunas_entre_nome_e_editar": 2,
+    "cabecalho_acoes": {
+      "esquerda": 256,
+      "direita": 400,
+      "largura": 144,
+      "parte_visivel_sem_rolar": 1
+    },
+    "colunas": [
+      "Ações",
+      "Marcador",
+      "Código",
+      "Programa",
+      "Causas",
+      "Iniciativas",
+      "Aptidão",
+      "Disponibilização"
+    ]
+  }
+]

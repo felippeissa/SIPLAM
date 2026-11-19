@@ -1,0 +1,128 @@
+{
+  "gerado_em": "2026-11-19T13:47:59.722Z",
+  "por_variante": {
+    "A-direita": {
+      "execucoes": 50,
+      "sucesso": 50,
+      "com_erro": 0,
+      "identificar_mediana_ms": 78,
+      "editar_mediana_ms": 2,
+      "total_mediana_ms": 3354,
+      "interacoes_mediana": 10
+    },
+    "B-esquerda": {
+      "execucoes": 50,
+      "sucesso": 50,
+      "com_erro": 0,
+      "identificar_mediana_ms": 81,
+      "editar_mediana_ms": 2,
+      "total_mediana_ms": 3320,
+      "interacoes_mediana": 10
+    }
+  },
+  "por_celula": {
+    "P1|A-direita": {
+      "n": 10,
+      "sucesso": 10,
+      "erros": 0,
+      "identificar_ms": 462,
+      "editar_ms": 2,
+      "total_ms": 3594.5,
+      "interacoes": 12
+    },
+    "P1|B-esquerda": {
+      "n": 10,
+      "sucesso": 10,
+      "erros": 0,
+      "identificar_ms": 461,
+      "editar_ms": 2,
+      "total_ms": 3625,
+      "interacoes": 12
+    },
+    "P2|A-direita": {
+      "n": 10,
+      "sucesso": 10,
+      "erros": 0,
+      "identificar_ms": 1,
+      "editar_ms": 2,
+      "total_ms": 2934.5,
+      "interacoes": 10
+    },
+    "P2|B-esquerda": {
+      "n": 10,
+      "sucesso": 10,
+      "erros": 0,
+      "identificar_ms": 1,
+      "editar_ms": 2,
+      "total_ms": 2887,
+      "interacoes": 10
+    },
+    "P3|A-direita": {
+      "n": 10,
+      "sucesso": 10,
+      "erros": 0,
+      "identificar_ms": 81.5,
+      "editar_ms": 1,
+      "total_ms": 3354,
+      "interacoes": 10
+    },
+    "P3|B-esquerda": {
+      "n": 10,
+      "sucesso": 10,
+      "erros": 0,
+      "identificar_ms": 84.5,
+      "editar_ms": 1,
+      "total_ms": 3343,
+      "interacoes": 10
+    },
+    "P4|A-direita": {
+      "n": 10,
+      "sucesso": 10,
+      "erros": 0,
+      "identificar_ms": 9,
+      "editar_ms": 2,
+      "total_ms": 3285.5,
+      "interacoes": 10
+    },
+    "P4|B-esquerda": {
+      "n": 10,
+      "sucesso": 10,
+      "erros": 0,
+      "identificar_ms": 9,
+      "editar_ms": 2,
+      "total_ms": 3249.5,
+      "interacoes": 10
+    },
+    "P5|A-direita": {
+      "n": 10,
+      "sucesso": 10,
+      "erros": 0,
+      "identificar_ms": 108,
+      "editar_ms": 83.5,
+      "total_ms": 3372.5,
+      "interacoes": 83
+    },
+    "P5|B-esquerda": {
+      "n": 10,
+      "sucesso": 10,
+      "erros": 0,
+      "identificar_ms": 123.5,
+      "editar_ms": 50.5,
+      "total_ms": 3346.5,
+      "interacoes": 73.5
+    }
+  },
+  "falhas": [],
+  "teclado": {
+    "A-direita": {
+      "n": 10,
+      "tabs_ate_linha": 35,
+      "tabs_ate_editar": 45
+    },
+    "B-esquerda": {
+      "n": 10,
+      "tabs_ate_linha": 34.5,
+      "tabs_ate_editar": 35.5
+    }
+  }
+}

@@ -1,0 +1,224 @@
+[
+  {
+    "largura": 1280,
+    "variante": "direita",
+    "largura_da_janela": 1280,
+    "largura_visivel_da_tabela": 1003,
+    "largura_total_da_tabela": 1178,
+    "excesso_horizontal_px": 175,
+    "rolagem_horizontal": true,
+    "botao_editar": {
+      "esquerda": 1363,
+      "direita": 1422,
+      "largura": 59,
+      "parte_visivel_sem_rolar": 0
+    },
+    "botao_marcadores": {
+      "esquerda": 1321,
+      "direita": 1358,
+      "largura": 37,
+      "parte_visivel_sem_rolar": 0
+    },
+    "cabecalho_acoes": {
+      "esquerda": 1309,
+      "direita": 1434,
+      "largura": 125,
+      "parte_visivel_sem_rolar": 0
+    },
+    "colunas": [
+      "Marcador",
+      "Código",
+      "Programa",
+      "Causas",
+      "Iniciativas",
+      "Aptidão",
+      "Disponibilização",
+      "Ações"
+    ]
+  },
+  {
+    "largura": 1280,
+    "variante": "esquerda",
+    "largura_da_janela": 1280,
+    "largura_visivel_da_tabela": 1003,
+    "largura_total_da_tabela": 1178,
+    "excesso_horizontal_px": 175,
+    "rolagem_horizontal": true,
+    "botao_editar": {
+      "esquerda": 310,
+      "direita": 369,
+      "largura": 59,
+      "parte_visivel_sem_rolar": 1
+    },
+    "botao_marcadores": {
+      "esquerda": 268,
+      "direita": 305,
+      "largura": 37,
+      "parte_visivel_sem_rolar": 1
+    },
+    "cabecalho_acoes": {
+      "esquerda": 256,
+      "direita": 381,
+      "largura": 125,
+      "parte_visivel_sem_rolar": 1
+    },
+    "colunas": [
+      "Ações",
+      "Marcador",
+      "Código",
+      "Programa",
+      "Causas",
+      "Iniciativas",
+      "Aptidão",
+      "Disponibilização"
+    ]
+  },
+  {
+    "largura": 1440,
+    "variante": "direita",
+    "largura_da_janela": 1440,
+    "largura_visivel_da_tabela": 1163,
+    "largura_total_da_tabela": 1178,
+    "excesso_horizontal_px": 15,
+    "rolagem_horizontal": true,
+    "botao_editar": {
+      "esquerda": 1363,
+      "direita": 1422,
+      "largura": 59,
+      "parte_visivel_sem_rolar": 0.95
+    },
+    "botao_marcadores": {
+      "esquerda": 1321,
+      "direita": 1358,
+      "largura": 37,
+      "parte_visivel_sem_rolar": 1
+    },
+    "cabecalho_acoes": {
+      "esquerda": 1309,
+      "direita": 1434,
+      "largura": 125,
+      "parte_visivel_sem_rolar": 0.88
+    },
+    "colunas": [
+      "Marcador",
+      "Código",
+      "Programa",
+      "Causas",
+      "Iniciativas",
+      "Aptidão",
+      "Disponibilização",
+      "Ações"
+    ]
+  },
+  {
+    "largura": 1440,
+    "variante": "esquerda",
+    "largura_da_janela": 1440,
+    "largura_visivel_da_tabela": 1163,
+    "largura_total_da_tabela": 1178,
+    "excesso_horizontal_px": 15,
+    "rolagem_horizontal": true,
+    "botao_editar": {
+      "esquerda": 310,
+      "direita": 369,
+      "largura": 59,
+      "parte_visivel_sem_rolar": 1
+    },
+    "botao_marcadores": {
+      "esquerda": 268,
+      "direita": 305,
+      "largura": 37,
+      "parte_visivel_sem_rolar": 1
+    },
+    "cabecalho_acoes": {
+      "esquerda": 256,
+      "direita": 381,
+      "largura": 125,
+      "parte_visivel_sem_rolar": 1
+    },
+    "colunas": [
+      "Ações",
+      "Marcador",
+      "Código",
+      "Programa",
+      "Causas",
+      "Iniciativas",
+      "Aptidão",
+      "Disponibilização"
+    ]
+  },
+  {
+    "largura": 1920,
+    "variante": "direita",
+    "largura_da_janela": 1920,
+    "largura_visivel_da_tabela": 1643,
+    "largura_total_da_tabela": 1643,
+    "excesso_horizontal_px": 0,
+    "rolagem_horizontal": false,
+    "botao_editar": {
+      "esquerda": 1828,
+      "direita": 1887,
+      "largura": 59,
+      "parte_visivel_sem_rolar": 1
+    },
+    "botao_marcadores": {
+      "esquerda": 1786,
+      "direita": 1823,
+      "largura": 37,
+      "parte_visivel_sem_rolar": 1
+    },
+    "cabecalho_acoes": {
+      "esquerda": 1755,
+      "direita": 1899,
+      "largura": 144,
+      "parte_visivel_sem_rolar": 1
+    },
+    "colunas": [
+      "Marcador",
+      "Código",
+      "Programa",
+      "Causas",
+      "Iniciativas",
+      "Aptidão",
+      "Disponibilização",
+      "Ações"
+    ]
+  },
+  {
+    "largura": 1920,
+    "variante": "esquerda",
+    "largura_da_janela": 1920,
+    "largura_visivel_da_tabela": 1643,
+    "largura_total_da_tabela": 1643,
+    "excesso_horizontal_px": 0,
+    "rolagem_horizontal": false,
+    "botao_editar": {
+      "esquerda": 310,
+      "direita": 369,
+      "largura": 59,
+      "parte_visivel_sem_rolar": 1
+    },
+    "botao_marcadores": {
+      "esquerda": 268,
+      "direita": 305,
+      "largura": 37,
+      "parte_visivel_sem_rolar": 1
+    },
+    "cabecalho_acoes": {
+      "esquerda": 256,
+      "direita": 400,
+      "largura": 144,
+      "parte_visivel_sem_rolar": 1
+    },
+    "colunas": [
+      "Ações",
+      "Marcador",
+      "Código",
+      "Programa",
+      "Causas",
+      "Iniciativas",
+      "Aptidão",
+      "Disponibilização"
+    ]
+  }
+]
