@@ -14,6 +14,7 @@
 import { obterEstado, ppaCorrente, situacaoPpa, selecionarPpa } from "./dados/store.js";
 import { cartaoPlano } from "./cartao-plano.js";
 import { esc } from "./ui.js";
+import { mostrarAvisosPendentes } from "./toast.js";
 import { instalarBusca } from "./busca.js";
 import { instalarAtena } from "./atena.js";
 import { instalarChat } from "./chat.js";
@@ -721,6 +722,8 @@ export function montarShell() {
     instalarNotificacoes(estado, visao);
     instalarAtena(estado);
     instalarChat(estado);
+    // O aviso de uma ação que terminou na tela anterior (salvou e voltou, excluiu e voltou).
+    mostrarAvisosPendentes();
 
     return { estado, visao };
 }

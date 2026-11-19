@@ -17,7 +17,7 @@
 import { situacaoUsuario, updItem } from "../dados/store.js";
 import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { esc } from "../ui.js";
-import { avisar } from "../toast.js";
+import { avisar, avisarDepois } from "../toast.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
 import { PERFIS } from "../usuarios-decisao.js";
 
@@ -165,7 +165,7 @@ function ligar(u) {
         }
         updItem("usuarios", u.id, patch, mudou() ? justificativa : "");
 
-        avisar(
+        avisarDepois(
             !mudou()
                 ? "Usuário editado com sucesso."
                 : situacao === "inativo"

@@ -442,6 +442,7 @@ function render() {
             if (!justificativa) return;
             updPpa(ppa.id, { documentos: ppa.documentos.filter((_, k) => k !== i) }, justificativa);
             render();
+            avisar("Documento excluído com sucesso.");
         })
     );
     const lerArquivo = (f) =>
@@ -481,6 +482,7 @@ function render() {
             modal.hide();
             updPpa(ppa.id, { documentos: [...(ppa.documentos ?? []), ...novos] });
             render();
+            avisar(novos.length > 1 ? "Documentos adicionados com sucesso." : "Documento adicionado com sucesso.");
         });
         modal.show();
     });

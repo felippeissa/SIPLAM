@@ -33,7 +33,7 @@ import { catalogo } from "../catalogo.js";
 import { campoDeIcone, ligarCampoDeIcone, lerIcone } from "../icone-programa.js";
 import { campoDeMarcadores,ligarCampoDeMarcadores, lerCampoDeMarcadores, marcadoresVisiveis } from "../cadastros/marcador.js";
 import { esc, chip } from "../ui.js";
-import { avisar } from "../toast.js";
+import { avisar, avisarDepois } from "../toast.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -447,7 +447,7 @@ export function montarFormularioPrograma({ novo }) {
             if (estava === quer) continue;
             updIniciativa(ini.id, { programaId: quer ? edicao.id : "", causas: [] });
         }
-        avisar(`Programa ${novo ? "criado" : "editado"} com sucesso.`);
+        avisarDepois(`Programa ${novo ? "criado" : "editado"} com sucesso.`);
         window.location.href = voltar;
     });
 

@@ -7,6 +7,7 @@
  * visão. Aqui o indicador de Iniciativa é editável pelo órgão; o de Programa
  * continua no Cadastro de Programa, que é de quem o define.
  */
+import { avisar } from "../toast.js";
 import { obterEstado, updIniciativa, noPlano } from "../dados/store.js";
 import { ANOS } from "../dados/seed.js";
 import { eixos, objetivos, podeEditar } from "../dados/regras.js";
@@ -317,7 +318,8 @@ document.addEventListener("click", (e) => {
         updIniciativa(ini.id, { indicadores: atuais });
         bootstrap.Modal.getInstance(document.getElementById("modal-indicador")).hide();
         edicao = null;
-        return render();
+        render();
+        return avisar(idx >= 0 ? "Indicador editado com sucesso." : "Indicador criado com sucesso.");
     }
 
     if (e.target.closest("#excluir-ind")) {
@@ -327,6 +329,7 @@ document.addEventListener("click", (e) => {
         bootstrap.Modal.getInstance(document.getElementById("modal-indicador")).hide();
         edicao = null;
         render();
+        avisar("Indicador excluído com sucesso.");
     }
 });
 

@@ -26,7 +26,7 @@ import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { esc, chip } from "../ui.js";
 import { catalogo } from "../catalogo.js";
 import { confirmarExclusao } from "../confirmar.js";
-import { avisar } from "../toast.js";
+import { avisar, avisarDepois } from "../toast.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
 
 // A mesma comparação dos outros cadastros: sem caixa, sem acento, sem espaço nas pontas.
@@ -262,7 +262,7 @@ export function montarFormularioIniciativa({ novo }) {
                 if (escolhidas.has(c.id) && !tem) updItem("causas", c.id, { iniciativaIds: [...(c.iniciativaIds ?? []), iniId] });
                 if (!escolhidas.has(c.id) && tem) updItem("causas", c.id, { iniciativaIds: c.iniciativaIds.filter((x) => x !== iniId) });
             }
-            avisar(`Iniciativa ${novo ? "criada" : "editada"} com sucesso.`);
+            avisarDepois(`Iniciativa ${novo ? "criada" : "editada"} com sucesso.`);
             window.location.href = voltar;
         });
 
@@ -279,7 +279,7 @@ export function montarFormularioIniciativa({ novo }) {
                 avisar(r.motivo, "erro");
                 return;
             }
-            avisar("Iniciativa excluída com sucesso.");
+            avisarDepois("Iniciativa excluída com sucesso.");
             window.location.href = voltar;
         });
     }

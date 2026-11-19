@@ -36,7 +36,7 @@ import {
 import { montarShell, barraTitulo, somenteLeitura, perfilAtual, url } from "../shell.js";
 import { esc, chip } from "../ui.js";
 import { confirmarExclusao } from "../confirmar.js";
-import { avisar } from "../toast.js";
+import { avisar, avisarDepois } from "../toast.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
 import { seletorDeAno, ligarSeletoresDeAno } from "../seletor-ano.js";
 
@@ -128,7 +128,7 @@ export function montarFormularioPpa({ novo }) {
                 novo || leitura
                     ? ""
                     : `<button type="button" class="btn btn-danger" id="excluir"
-                    ${vinculos.length ? `disabled title="Não pode ser excluído: está vinculado a ${esc(descreverVinculos(vinculos))}"` : ""}>
+                    ${vinculos.length ? `aria-disabled="true" style="opacity:.65" title="Não pode ser excluído: está vinculado a ${esc(descreverVinculos(vinculos))}"` : ""}>
                     Excluir plano
                 </button>`
             }
@@ -290,12 +290,15 @@ export function montarFormularioPpa({ novo }) {
 
             if (novo) addPpa(dados);
             else updPpa(dados.id, dados);
-            avisar(`Plano plurianual ${novo ? "criado" : "editado"} com sucesso.`);
+            avisarDepois(`Plano plurianual ${novo ? "criado" : "editado"} com sucesso.`);
             window.location.href = voltar;
         });
 
         document.getElementById("excluir")?.addEventListener("click", async () => {
-            if (vinculos.length) return;
+            if (vinculos.length) {
+                // O botão fica clicável de propósito: o clique explica por que não dá para excluir.
+                return avisar(`Não foi possível excluir o plano: está vinculado a ${descreverVinculos(vinculos)}.`, "erro");
+            }
             const justificativa = await confirmarExclusao({
                 titulo: "Excluir plano plurianual",
                 texto: "O plano não tem nada vinculado a ele.",
@@ -308,7 +311,7 @@ export function montarFormularioPpa({ novo }) {
                 avisar(r.motivo, "erro");
                 return;
             }
-            avisar("Plano plurianual excluído com sucesso.");
+            avisarDepois("Plano plurianual excluído com sucesso.");
             window.location.href = voltar;
         });
     }

@@ -21,7 +21,7 @@ import { obterEstado, addItem, updItem, removeItem, vinculosDe, descreverVinculo
 import { montarShell, barraTitulo, somenteLeitura, url } from "./shell.js";
 import { esc } from "./ui.js";
 import { confirmarExclusao } from "./confirmar.js";
-import { avisar } from "./toast.js";
+import { avisar, avisarDepois } from "./toast.js";
 import { campoErro, validar, limparAoDigitar } from "./validacao.js";
 
 /**
@@ -163,7 +163,7 @@ export function montarFormulario(cfg) {
             novo || !cfg.podeExcluir
                 ? ""
                 : `<button type="button" class="btn btn-danger" id="excluir"
-                    ${usos ? `disabled title="Não pode ser excluído: está vinculado a ${esc(descreverVinculos(vinculos))}"` : ""}>
+                    ${usos ? `aria-disabled="true" style="opacity:.65" title="Não pode ser excluído: está vinculado a ${esc(descreverVinculos(vinculos))}"` : ""}>
                     Excluir
                 </button>`;
         return `
@@ -230,12 +230,15 @@ export function montarFormulario(cfg) {
 
             const salvo = novo ? addItem(cfg.colecao, dados) : (updItem(cfg.colecao, dados.id, dados), dados);
             cfg.extra?.aoSalvar?.(salvo, estado);
-            avisar(`${cfg.singular} ${novo ? "criad" : "editad"}${fim} com sucesso.`);
+            avisarDepois(`${cfg.singular} ${novo ? "criad" : "editad"}${fim} com sucesso.`);
             window.location.href = voltar;
         });
 
         document.getElementById("excluir")?.addEventListener("click", async () => {
-            if (usos > 0) return;
+            if (usos > 0) {
+                // O botão fica clicável de propósito: o clique explica por que não dá para excluir.
+                return avisar(`Não foi possível excluir ${fim} ${cfg.singular.toLowerCase()}: está vinculad${fim} a ${descreverVinculos(vinculos)}.`, "erro");
+            }
             const justificativa = await confirmarExclusao({
                 titulo: `Excluir ${cfg.singular.toLowerCase()}`,
                 texto: `“${esc(edicao.nome)}” será removid${fim} do cadastro.`,
@@ -249,7 +252,7 @@ export function montarFormulario(cfg) {
             }
             // O cadastro pode ter vínculos seus a desfazer depois que sai.
             cfg.aoExcluir?.(edicao, estado);
-            avisar(`${cfg.singular} excluíd${fim} com sucesso.`);
+            avisarDepois(`${cfg.singular} excluíd${fim} com sucesso.`);
             window.location.href = voltar;
         });
     }

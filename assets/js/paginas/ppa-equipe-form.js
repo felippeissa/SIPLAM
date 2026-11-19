@@ -6,7 +6,7 @@
  */
 import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { esc } from "../ui.js";
-import { avisar } from "../toast.js";
+import { avisar, avisarDepois } from "../toast.js";
 import { confirmarExclusao } from "../confirmar.js";
 import { nomeDoPerfil } from "../usuarios-decisao.js";
 import { FUNCOES, vinculosDaEquipe, equipeDoPlano, livresParaEquipe, salvarEquipe } from "../ppa-equipe-dados.js";
@@ -118,7 +118,7 @@ function montar() {
         if (novo) vinculos.push({ id: escolhida.id, funcao });
         else vinculos.find((m) => m.id === membroId).funcao = funcao;
         salvarEquipe(ppa, vinculos);
-        avisar(novo ? "Membro adicionado à equipe." : "Membro atualizado.");
+        avisarDepois(novo ? "Membro adicionado à equipe." : "Membro atualizado.");
         window.location.href = voltar;
     });
 
@@ -130,7 +130,7 @@ function montar() {
         });
         if (!ok) return;
         salvarEquipe(ppa, vinculosDaEquipe(estado, ppa).filter((m) => m.id !== membroId), ok);
-        avisar("Membro removido da equipe.");
+        avisarDepois("Membro removido da equipe.");
         window.location.href = voltar;
     });
 }

@@ -4,6 +4,14 @@
  * Serve para o que já aconteceu: "criado", "editado", "excluído". O que ainda
  * não aconteceu — campo em branco, vínculo impedindo a exclusão — é validação
  * no formulário, não toast.
+ *
+ * Duas formas de usar:
+ *   avisar(texto)        — a ação terminou e a pessoa continua nesta tela.
+ *   avisarDepois(texto)  — a ação termina e a tela troca logo em seguida (salvar
+ *                          e voltar para a lista). Um toast criado aqui morreria
+ *                          junto com a página, então o aviso fica guardado e a
+ *                          próxima tela o mostra (`mostrarAvisosPendentes`, que o
+ *                          shell chama em toda tela).
  */
 import { esc } from "./ui.js";
 
@@ -49,4 +57,28 @@ export function avisar(texto, tom = "ok") {
     const toast = new bootstrap.Toast(el, { delay: 4000 });
     el.addEventListener("hidden.bs.toast", () => el.remove());
     toast.show();
+}
+
+const CHAVE_AVISOS = "siplam.avisos";
+
+/** Guarda um aviso para a próxima tela: use quando a navegação vem logo depois da ação. */
+export function avisarDepois(texto, tom = "ok") {
+    try {
+        const fila = JSON.parse(sessionStorage.getItem(CHAVE_AVISOS) || "[]");
+        fila.push({ texto, tom });
+        sessionStorage.setItem(CHAVE_AVISOS, JSON.stringify(fila));
+    } catch {
+        // Sem sessionStorage o aviso se perde, mas a ação já foi feita.
+    }
+}
+
+/** Mostra os avisos guardados pela tela anterior. O shell chama isto em toda tela. */
+export function mostrarAvisosPendentes() {
+    try {
+        const fila = JSON.parse(sessionStorage.getItem(CHAVE_AVISOS) || "[]");
+        sessionStorage.removeItem(CHAVE_AVISOS);
+        for (const a of fila) avisar(a.texto, a.tom);
+    } catch {
+        // fila ilegível: segue sem avisos
+    }
 }
