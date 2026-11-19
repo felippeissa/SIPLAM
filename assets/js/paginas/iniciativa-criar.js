@@ -15,9 +15,10 @@
 import { addIniciativa, updIniciativa, ppaCorrente } from "../dados/store.js";
 import { montarShell, barraTitulo, url } from "../shell.js";
 import { esc } from "../ui.js";
-import { avisar } from "../toast.js";
+import { avisar, avisarDepois } from "../toast.js";
 import { camposDaIniciativa, blocoDeCausas, catalogoIndicadores, aoMudarIndicadores } from "../iniciativa-campos.js";
 import { limparAoDigitar } from "../validacao.js";
+import { ligarCampoDeMarcadores, lerCampoDeMarcadores } from "../cadastros/marcador.js";
 
 const { estado } = montarShell();
 const voltar = url("programas.html");
@@ -65,6 +66,7 @@ function render() {
     limparAoDigitar(document.getElementById("formulario"));
     aoMudarIndicadores((ids) => (rascunho.indicadorIds = ids));
     catalogoIndicadores.ligar(document.getElementById("formulario"));
+    ligarCampoDeMarcadores(document.getElementById("formulario"), estado);
 }
 
 /** Guarda o que está digitado: trocar de Programa redesenha a lista de causas, e o resto não pode se perder. */
@@ -76,6 +78,7 @@ function ler() {
         descricao: v("f-descricao").trim(),
         programaId: v("f-programa"),
         indicadorIds: catalogoIndicadores.ler(),
+        marcadorIds: lerCampoDeMarcadores(),
         causas: [...document.querySelectorAll("[data-causa]:checked")].map((c) => c.value),
     });
 }
@@ -113,12 +116,13 @@ document.addEventListener("click", (e) => {
         causas: rascunho.causas,
         status: rascunho.status,
         motivo: rascunho.status === "divergencia" ? rascunho.motivo : "",
+        marcadorIds: rascunho.marcadorIds,
     });
 
     // Sem Programa, é o PPA que liga a Iniciativa ao plano corrente.
     updIniciativa(id, { ppaId: ppaCorrente(estado)?.id ?? "", indicadorIds: rascunho.indicadorIds });
 
-    avisar("Iniciativa criada com sucesso.");
+    avisarDepois("Iniciativa criada com sucesso.");
     window.location.href = url(`iniciativa.html?id=${encodeURIComponent(id)}`);
 });
 

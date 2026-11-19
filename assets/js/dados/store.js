@@ -632,10 +632,23 @@ function carregar() {
         base.marcadoresAplicados = true;
         aplicarMarcadoresDeExemplo(base);
     }
+    // O mesmo nas Iniciativas, uma vez só: a coluna e o filtro de marcadores não nascem vazios.
+    if (!base.marcadoresIniciativasAplicados) {
+        base.marcadoresIniciativasAplicados = true;
+        aplicarMarcadoresDeExemplo(base, "iniciativas");
+    }
     // Ícone dos Programas, uma vez só: quem já escolheu o seu fica como está.
     if (!base.iconesAplicados) {
         base.iconesAplicados = true;
         for (const p of base.programas ?? []) if (!p.icone) p.icone = iconeDeExemplo(p);
+    }
+    // A Iniciativa inativa deixou de ser uma marca ao lado do status e virou o próprio status.
+    for (const i of base.iniciativas ?? []) {
+        if (i.inativa === true) {
+            if (i.status !== "inativa") i.statusAntesDeInativar = i.status;
+            i.status = "inativa";
+        }
+        delete i.inativa;
     }
     // Os de exemplo gravados antes vinham presos a um plano: soltos, aparecem em qualquer um.
     for (const m of base.marcadores) if (/^marcadores-ex\d+$/.test(m.id) && m.ppaId) m.ppaId = "";
@@ -1002,7 +1015,7 @@ function marcadoresExtrasDeExemplo() {
  * situação, prioridade, risco, recurso e andamento — com observação em parte deles. A escolha é determinística
  * (sai do código do Programa), então a base é a mesma a cada vez que nasce.
  */
-function aplicarMarcadoresDeExemplo(base) {
+function aplicarMarcadoresDeExemplo(base, alvo = "programas") {
     const ex = (n) => `marcadores-ex${String(n).padStart(2, "0")}`;
     const existe = (id) => base.marcadores.some((m) => m.id === id);
     const AREA_DE_GOVERNO = [
@@ -1053,9 +1066,14 @@ function aplicarMarcadoresDeExemplo(base) {
         return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
 
-    for (const p of base.programas) {
+    // Programas e Iniciativas recebem marcadores de exemplo do mesmo jeito; a Iniciativa herda a área de governo do Programa.
+    const registros =
+        alvo === "iniciativas"
+            ? base.iniciativas.map((i) => ({ ...i, __ref: i, eixo: base.programas.find((p) => p.id === i.programaId)?.eixo ?? "" }))
+            : base.programas.map((p) => ({ ...p, __ref: p }));
+    for (const p of registros) {
         if ((p.marcadorIds ?? []).length) continue;
-        const rnd = sorteio(semente(p.id + (p.ppaId ?? "")));
+        const rnd = sorteio(semente(p.id + (p.ppaId ?? "") + (alvo === "iniciativas" ? "-ini" : "")));
         const escolha = (pool) => pool[Math.floor(rnd() * pool.length)];
         const ids = [];
         const poe = (n) => {
@@ -1078,8 +1096,8 @@ function aplicarMarcadoresDeExemplo(base) {
             const textos = OBS[n] ?? GERAL;
             obs[id] = textos[Math.floor(rnd() * textos.length)];
         }
-        p.marcadorIds = finais;
-        if (Object.keys(obs).length) p.marcadorObs = obs;
+        p.__ref.marcadorIds = finais;
+        if (Object.keys(obs).length) p.__ref.marcadorObs = obs;
     }
 }
 
@@ -1454,7 +1472,7 @@ function tocar(iniciativaId) {
 
 /* ---------- Iniciativa ---------- */
 
-export function addIniciativa({ programaId, nome, descricao, publicoAlvo = "", causas = [], problemaId = "", status = "em_preenchimento", motivo = "" }) {
+export function addIniciativa({ programaId, nome, descricao, publicoAlvo = "", causas = [], problemaId = "", status = "em_preenchimento", motivo = "", marcadorIds = [], marcadorObs = {} }) {
     const id = `ini-${uid()}`;
     estado.iniciativas.push({
         id,
@@ -1466,6 +1484,8 @@ export function addIniciativa({ programaId, nome, descricao, publicoAlvo = "", c
         causas,
         problemaId,
         motivo,
+        marcadorIds,
+        marcadorObs,
         status,
         atualizadoEm: hoje(),
         versao: 1,
@@ -1534,7 +1554,7 @@ export function iniciarAnalise(id) {
     const ini = estado.iniciativas.find((i) => i.id === id);
     if (!ini) return;
     Object.assign(ini, { status: "em_analise", analista: estado.analista, atualizadoEm: hoje() });
-    registrarEvento(id, estado.analista, "Análise iniciada pela Área Central");
+    registrarEvento(id, estado.analista, "Revisão iniciada pela Área Central");
     gravar();
 }
 
@@ -1589,6 +1609,48 @@ export function salvarRascunhoDaAvaliacao(id, rascunho, total) {
     if (!ini) return;
     ini.avaliacaoRascunho = JSON.parse(JSON.stringify(rascunho));
     registrarEvento(id, estado.analista, `Avaliação salva em andamento (${Object.keys(rascunho).length} de ${total} campos)`);
+    gravar();
+}
+
+/**
+ * A Iniciativa já validada volta para a revisão da Central: a avaliação é refeita do zero, campo a campo. A
+ * avaliação anterior fica guardada (`avaliacaoAnterior`), e o motivo da reavaliação vai para o histórico.
+ */
+export function reavaliarIniciativa(id, justificativa = "") {
+    const ini = estado.iniciativas.find((i) => i.id === id);
+    if (!ini || ini.status !== "validada") return;
+    Object.assign(ini, {
+        status: "em_analise",
+        analista: estado.analista,
+        atualizadoEm: hoje(),
+        avaliacaoAnterior: ini.avaliacao ?? null,
+        avaliacao: null,
+        avaliacaoRascunho: null,
+        justificativaDevolucao: "",
+        justificativaReavaliacao: justificativa,
+    });
+    registrarEvento(id, estado.analista, `Reavaliação iniciada pela Área Central: a Iniciativa validada voltou para revisão. Justificativa: ${justificativa}`);
+    gravar();
+}
+
+/**
+ * Inativa é um status, como Enviada ou Validada: a Iniciativa é uma coisa ou outra. Inativar a tira de circulação sem
+ * apagá-la, só para consulta; o status que ela tinha fica guardado (`statusAntesDeInativar`) para a reativação devolvê-la
+ * exatamente como estava.
+ */
+export function inativarIniciativa(id) {
+    const ini = estado.iniciativas.find((i) => i.id === id);
+    if (!ini || ini.status === "inativa") return;
+    Object.assign(ini, { statusAntesDeInativar: ini.status, status: "inativa", inativadaEm: hoje(), atualizadoEm: hoje() });
+    registrarEvento(id, estado.analista, "Iniciativa inativada");
+    gravar();
+}
+
+export function reativarIniciativa(id) {
+    const ini = estado.iniciativas.find((i) => i.id === id);
+    if (!ini || ini.status !== "inativa") return;
+    Object.assign(ini, { status: ini.statusAntesDeInativar || "em_preenchimento", statusAntesDeInativar: undefined, inativadaEm: undefined, atualizadoEm: hoje() });
+    registrarEvento(id, estado.analista, "Iniciativa reativada");
     gravar();
 }
 

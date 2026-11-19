@@ -14,18 +14,20 @@ import {
 const STATUS_LABEL = {
   em_preenchimento: "Em preenchimento",
   enviada: "Enviada",
-  em_analise: "Em an\xE1lise pela \xC1rea Central",
+  em_analise: "Em revis\xE3o pela \xC1rea Central",
   devolvida: "Devolvida para ajuste",
   validada: "Validada",
-  divergencia: "Divergência reportada"
+  divergencia: "Divergência reportada",
+  inativa: "Inativa"
 };
 const STATUS_CURTO = {
   em_preenchimento: "Em preenchimento",
   enviada: "Enviada",
-  em_analise: "Em an\xE1lise",
+  em_analise: "Em revis\xE3o",
   devolvida: "Devolvida",
   validada: "Validada",
-  divergencia: "Divergência"
+  divergencia: "Divergência",
+  inativa: "Inativa"
 };
 const COMPORTAMENTOS = [
   { id: "acumulativa", nome: "Acumulativa", ajuda: "Os valores anuais se somam ao longo do plano." },

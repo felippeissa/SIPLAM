@@ -93,7 +93,7 @@ function filtros() {
  */
 function linhaIniciativa(i) {
     const rotulo =
-        i.status === "enviada" ? "Analisar" : i.status === "em_analise" ? "Continuar análise" : "Visualizar";
+        i.status === "enviada" ? "Iniciar revisão" : i.status === "em_analise" ? "Continuar revisão" : "Visualizar";
     const marca = (status) => (i.status === status ? statusChip(i.status) : "—");
 
     return `

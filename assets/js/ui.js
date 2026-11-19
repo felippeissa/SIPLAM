@@ -21,6 +21,7 @@ const STATUS_TOM = {
     devolvida: "alerta",
     validada: "ok",
     divergencia: "alerta",
+    inativa: "neutro",
 };
 
 /** Pílula semântica em cinco tons. */
@@ -96,6 +97,28 @@ export function textoLongo(texto, linhas = 3, larguraMax = "") {
             ? `display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${larguraMax ? `max-width:${larguraMax};` : ""}`
             : `display:-webkit-box;-webkit-line-clamp:${linhas};-webkit-box-orient:vertical;overflow:hidden;`;
     return `<span data-texto-longo tabindex="0" data-bs-title="${esc(inteiro)}" style="${corte}cursor:help">${esc(visivel)}</span>`;
+}
+
+/**
+ * O menu "Ações" do cabeçalho de uma ficha: um dropdown com as ações que o status da Iniciativa libera.
+ *
+ * Cada item é `{ id, icone, rotulo, classe?, desabilitado?, titulo? }`, ou `{ divisor: true }`. O `id` vai para o botão,
+ * para a tela ligar a ação como ligaria um botão solto. Sem itens, não desenha nada — quem não tem ação não vê menu.
+ */
+export function menuDeAcoes(itens) {
+    const lista = (itens ?? []).filter(Boolean);
+    if (!lista.some((i) => !i.divisor)) return "";
+    const li = lista
+        .map((i) =>
+            i.divisor
+                ? '<li><hr class="dropdown-divider" /></li>'
+                : `<li><button type="button" class="dropdown-item ${i.classe ?? ""}" id="${esc(i.id)}"${i.desabilitado ? " disabled" : ""}${i.titulo ? ` title="${esc(i.titulo)}"` : ""}><i class="ti ${esc(i.icone)} me-2"></i>${esc(i.rotulo)}</button></li>`
+        )
+        .join("");
+    return `<div class="dropdown">
+        <button type="button" class="btn btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="menu-acoes">Ações</button>
+        <ul class="dropdown-menu dropdown-menu-end fs-13">${li}</ul>
+    </div>`;
 }
 
 export function listaResumida(nomes, vazio = '<span class="text-muted">—</span>') {

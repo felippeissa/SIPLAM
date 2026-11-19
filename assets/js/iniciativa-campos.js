@@ -26,6 +26,7 @@
  */
 import { esc, statusChip } from "./ui.js";
 import { catalogo } from "./catalogo.js";
+import { campoDeMarcadores } from "./cadastros/marcador.js";
 import { ppaCorrente } from "./dados/store.js";
 import { STATUS_LABEL } from "./dados/regras.js";
 
@@ -198,5 +199,10 @@ export function camposDaIniciativa({ ini, estado, visao, travado, liberados = nu
 
     <div class="mb-3" id="bloco-causas">${blocoDeCausas(programa, ini.causas ?? [], trava("causas"))}${avaliador("causas")}</div>
 
-    <div class="mb-0">${catalogoIndicadores.html(ini.indicadorIds ?? [])}${avaliador("indicadores")}</div>`;
+    <div class="mb-3">${catalogoIndicadores.html(ini.indicadorIds ?? [])}${avaliador("indicadores")}</div>
+
+    <div class="mb-0">${
+        // Marcador não se avalia: é uma etiqueta de quem acompanha. Só `travado` (Iniciativa fechada ou perfil de leitura) o impede.
+        campoDeMarcadores(ini.marcadorIds ?? [], estado, travado)
+    }</div>`;
 }

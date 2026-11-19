@@ -26,9 +26,10 @@ import { ANOS } from "../dados/seed.js";
 import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { confirmarExclusao } from "../confirmar.js";
 import { avisar } from "../toast.js";
-import { chip, statusChip, esc, secao } from "../ui.js";
+import { chip, statusChip, esc, secao, menuDeAcoes } from "../ui.js";
 import { listaPendencias, chipsPendencias } from "../ui-financeiro.js";
 import { camposDaIniciativa, catalogoIndicadores, aoMudarIndicadores } from "../iniciativa-campos.js";
+import { ligarCampoDeMarcadores, lerCampoDeMarcadores, marcadoresVisiveis } from "../cadastros/marcador.js";
 
 const { estado } = montarShell();
 const id = new URLSearchParams(location.search).get("id");
@@ -56,6 +57,25 @@ function atualizarEnvio() {
 /** Mostra que há alterações ainda não salvas. */
 function avisarSalvo() {
     document.getElementById("aviso-salvo")?.classList.remove("d-none");
+}
+
+/** As ações que o status libera para o setorial, no menu "Ações" do cabeçalho. O Salvar fica fora do menu, à vista. */
+function acoesDaFicha(ini, editavel, resumo) {
+    const itens = [];
+    if (editavel) {
+        if (ini.status !== "divergencia") {
+            const bloqueado = resumo.impeditivos > 0;
+            itens.push({
+                id: "abrir-envio",
+                icone: "ti-send",
+                rotulo: ini.status === "devolvida" ? "Reenviar para avaliação" : "Enviar para avaliação",
+                desabilitado: bloqueado,
+                titulo: bloqueado ? "Preencha os campos obrigatórios para enviar" : "",
+            });
+        }
+        itens.push({ divisor: true }, { id: "cancelar-edicao", icone: "ti-x", rotulo: "Cancelar" });
+    }
+    return itens;
 }
 
 function render() {
@@ -99,10 +119,9 @@ function render() {
                     <span id="aviso-salvo" class="${Object.keys(rascunho).length ? "" : "d-none"}">${chip("alterações não salvas", "alerta")}</span>
                 </div>
             </div>
-            <div class="d-flex flex-wrap gap-2">
-                ${editavel ? `<button type="button" class="btn btn-light" id="cancelar-edicao">Cancelar</button>
-                <button type="button" class="btn btn-outline-primary" id="salvar-edicao"><i class="ti ti-device-floppy me-1"></i>Salvar</button>` : ""}
-                ${editavel && ini.status !== "divergencia" ? `<button type="button" class="btn btn-primary" id="abrir-envio"${resumo.impeditivos ? ' disabled title="Preencha os campos obrigatórios para enviar"' : ""}><i class="ti ti-send me-1"></i>${ini.status === "devolvida" ? "Reenviar para avaliação" : "Enviar para avaliação"}</button>` : ""}
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                ${editavel ? `<button type="button" class="btn btn-light" id="salvar-edicao"><i class="ti ti-device-floppy me-1"></i>Salvar</button>` : ""}
+                ${menuDeAcoes(acoesDaFicha(ini, editavel, resumo))}
                 ${editavel ? "" : `<span class="fs-12 text-muted align-self-center">${esc(STATUS_LABEL[ini.status])} — edição bloqueada</span>`}
             </div>
         </div>
@@ -160,6 +179,9 @@ function render() {
             (campo === "causas" ? el : el?.closest(".mb-3"))?.classList.add("aval-ok");
         }
     }
+
+    // Marcadores: como os demais campos, entram no rascunho e só valem ao salvar.
+    ligarCampoDeMarcadores(document.getElementById("conteudo"), estado);
 
     // Indicadores: escolher ou desvincular grava na hora, como os demais campos da ficha.
     const escopo = document.getElementById("conteudo");
@@ -237,6 +259,17 @@ document.addEventListener("input", (e) => {
 });
 
 document.addEventListener("change", (e) => {
+    if (e.target.name === "f-marcador") {
+        const salva = estado.iniciativas.find((i) => i.id === id);
+        const atual = { ...salva, ...rascunho };
+        // O que a pessoa não enxerga (marcador privado de outra) fica como estava: salvar não o tira.
+        const invisiveis = (atual.marcadorIds ?? []).filter((m) => !marcadoresVisiveis(estado).some((x) => x.id === m));
+        const marcadorIds = [...invisiveis, ...lerCampoDeMarcadores()];
+        const marcadorObs = Object.fromEntries(Object.entries(atual.marcadorObs ?? {}).filter(([m]) => marcadorIds.includes(m)));
+        alterar({ marcadorIds, marcadorObs });
+        return;
+    }
+
     if (e.target.matches("[data-causa]")) {
         const causas = [...document.querySelectorAll("[data-causa]:checked")].map((c) => c.value);
         alterar({ causas });
@@ -299,8 +332,9 @@ document.addEventListener("click", (e) => {
         }).then((justificativa) => {
             if (!justificativa) return;
             const r = removeEntrega(entrega.id, justificativa);
-            if (!r.ok) return avisar(r.motivo, "erro");
+            if (!r.ok) return avisar(r.motivo || "Não foi possível excluir a Entrega.", "erro");
             render();
+            avisar("Entrega excluída com sucesso.");
         });
         return;
     }
@@ -313,6 +347,7 @@ document.addEventListener("click", (e) => {
         bootstrap.Modal.getInstance(document.getElementById("modal-envio")).hide();
         envioAberto = false;
         render();
+        avisar("Iniciativa enviada para avaliação.");
     }
 });
 

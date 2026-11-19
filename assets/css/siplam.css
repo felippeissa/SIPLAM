@@ -694,8 +694,10 @@ html[data-skin][data-bs-theme="light"][data-menu-color="light"] { --theme-sidena
 .card { margin-bottom: 8px; }
 .row, .row[class*="g-"] { --theme-gutter-x: 8px; --theme-gutter-y: 8px; --bs-gutter-y: 8px; }
 .ilhas { display: flex; flex-direction: column; gap: 8px; }
-.ilha { background: var(--bs-card-bg, #fff); border-radius: var(--bs-card-border-radius, .5rem); }
+/* O fundo da ilha é o do cartão do tema: branco no claro, escuro no escuro. (O --bs-card-bg do Bootstrap não existe neste template.) */
+.ilha { background: var(--theme-secondary-bg, #fff); border-radius: var(--theme-border-radius, .5rem); }
 .card:not(.numero-plano), .ilha { border: 1px solid #d9dce3; }
+[data-bs-theme="dark"] .card:not(.numero-plano), [data-bs-theme="dark"] .ilha { border-color: rgba(229, 243, 255, 0.14); }
 /* Big numbers: cada cartão com o tom do seu número, em fundo translúcido. */
 .numero-plano { background-color: rgba(var(--np-rgb), .1); border-color: rgba(var(--np-rgb), .35) !important; }
 .numero-plano .numero-plano-icone .avatar-title { background: var(--np); color: #fff; }
@@ -720,3 +722,7 @@ html[data-skin][data-bs-theme="light"][data-menu-color="light"] { --theme-sidena
 /* A faixa do título da página encosta na barra superior, sem vão em cima. */
 #conteudo > .my-3:first-child { margin-top: 0 !important; }
 .tooltip-texto-longo .tooltip-inner { white-space: pre-line; }
+
+/* Linha de Iniciativa inativa: esmaece só as células de dados. A opacidade na linha inteira criaria um plano de
+   empilhamento próprio e prenderia o menu de Ações dentro dela, por baixo das linhas seguintes. */
+.linha-inativa > td:not(.coluna-acoes) { opacity: .65; }

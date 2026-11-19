@@ -6,9 +6,10 @@
  *
  * Os big numbers do alto são a contagem por status da Iniciativa.
  */
-import { noPlano, ppaCorrente } from "../dados/store.js";
+import { noPlano, ppaCorrente, updIniciativa, iniciarAnalise, reavaliarIniciativa, inativarIniciativa, reativarIniciativa } from "../dados/store.js";
 import {
     STATUS_CURTO,
+    podeEditar,
     entregasDaIniciativa,
     pendenciasIniciativa,
 } from "../dados/regras.js";
@@ -16,6 +17,9 @@ import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { esc, statusChip, criarPaginacao, listaResumida, textoLongo } from "../ui.js";
 import { criarFiltros, opcoesDe } from "../filtros.js";
 import { listaPendencias } from "../ui-financeiro.js";
+import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro, abrirJanelaDeMarcadores } from "../cadastros/marcador.js";
+import { avisar, avisarDepois } from "../toast.js";
+import { pedirJustificativa } from "../justificar.js";
 import { STATUS_CENTRAL } from "../iniciativa-campos.js";
 
 export function montarListaDeIniciativas({ visao }) {
@@ -23,8 +27,6 @@ export function montarListaDeIniciativas({ visao }) {
     const leitura = somenteLeitura();
     const central = visao === "central";
     const detalhe = central ? "central-iniciativa.html" : "iniciativa.html";
-    const iconeDaAcao = leitura ? "ti-eye" : central ? "ti-clipboard-check" : "ti-pencil";
-    const rotuloDaAcao = leitura ? "Ver Iniciativa" : central ? "Avaliar Iniciativa" : "Abrir Iniciativa";
     
     // Um PPA por vez: a Iniciativa pertence ao plano do Programa de onde descende.
     // O Programa é opcional; sem ele, quem diz o plano é o `ppaId` da Iniciativa.
@@ -58,7 +60,7 @@ export function montarListaDeIniciativas({ visao }) {
     
     // A tabela mostra uma página por vez. A faixa conta o filtro inteiro.
     const paginacao = criarPaginacao(() => {
-        document.getElementById("corpo-lista").innerHTML = corpo();
+        repintarCorpo();
         paginacao.atualizar();
     });
     
@@ -70,6 +72,13 @@ export function montarListaDeIniciativas({ visao }) {
                 `${i.nome} ${i.descricao ?? ""} ${i.motivo ? rotuloMotivo(i.motivo) : ""} ${i.unidadeResponsavel ?? ""} ${i.orgao ?? ""} ${rotuloPrograma(programaDe(i))} ${problemaDe(i)?.nome ?? ""} ${causasDe(i).map((c) => c.nome).join(" ")} ${indicadoresDe(i).map((x) => x.nome).join(" ")}`,
         },
         campos: [
+            {
+                // Os que a pessoa pode usar e os que já estão postos nas Iniciativas: o selo que ela vê ela também filtra.
+                id: "marcador",
+                rotulo: "Marcador",
+                opcoes: () => marcadoresParaFiltro(iniciativasDoPlano(), estado).map((m) => ({ valor: m.id, rotulo: m.nome })),
+                valorDe: (i) => i.marcadorIds ?? [],
+            },
             {
                 id: "programa",
                 rotulo: "Programa",
@@ -146,11 +155,13 @@ export function montarListaDeIniciativas({ visao }) {
             ["devolvida", "ti-arrow-back-up", "danger"],
             ["validada", "ti-circle-check", "primary"],
             ["divergencia", "ti-alert-triangle", "purple"],
+        ["inativa", "ti-ban", "dark"],
         ];
-        return `<div class="row g-2 mb-2">${itens
+        // Uma linha só: os sete cartões dividem a largura por igual, sem quebrar para a linha de baixo.
+    return `<div class="row g-2 mb-2 flex-nowrap">${itens
             .map(
                 ([st, icone, tom]) => `
-            <div class="col-6 col-md-4 col-xl-2">
+            <div class="col" style="min-width:8rem">
                 <div class="card border border-dashed shadow-none rounded-0 mb-0 h-100 numero-plano pe-none" style="--np: var(--theme-${tom}); --np-rgb: var(--theme-${tom}-rgb)">
                     <div class="card-body p-3">
                         <div class="mb-2 d-flex justify-content-between align-items-center">
@@ -165,10 +176,62 @@ export function montarListaDeIniciativas({ visao }) {
             .join("")}</div>`;
     }
     
+    /**
+     * As ações da linha, conforme o status da Iniciativa e quem olha.
+     *
+     * Setorial: edita enquanto a Iniciativa está aberta para ele (em preenchimento, devolvida, divergência); nos demais
+     * status só visualiza. Central: inicia a revisão da Enviada, continua a Em revisão, e reavalia a Validada. Marcar é
+     * uma etiqueta de quem acompanha e vale em qualquer status; as pendências só importam enquanto a Iniciativa se edita.
+     */
+    function acoesDaIniciativa(i) {
+        const ficha = url(`${detalhe}?id=${encodeURIComponent(i.id)}`);
+        // Inativa: só para consulta. A Central a reativa; o setorial só a vê.
+        if (i.status === "inativa") {
+            const so = [{ link: ficha, icone: "ti-eye", rotulo: "Visualizar" }];
+            if (central && !leitura) so.push({ acao: "reativar", icone: "ti-player-play", rotulo: "Reativar" });
+            if (!leitura) so.push({ acao: "marcar", icone: "ti-tag-plus", rotulo: "Adicionar marcadores" });
+            return so;
+        }
+        const abertaParaEditar = podeEditar(i.status);
+        const itens = [];
+        if (central) {
+            if (!leitura && i.status === "enviada") itens.push({ acao: "iniciar-revisao", icone: "ti-player-play", rotulo: "Iniciar revisão" });
+            else if (!leitura && i.status === "em_analise") itens.push({ link: ficha, icone: "ti-clipboard-check", rotulo: "Continuar revisão" });
+            else itens.push({ link: ficha, icone: "ti-eye", rotulo: "Visualizar" });
+            if (!leitura && i.status === "validada") itens.push({ acao: "reavaliar", icone: "ti-refresh", rotulo: "Reavaliar" });
+        } else {
+            itens.push(!leitura && abertaParaEditar ? { link: ficha, icone: "ti-pencil", rotulo: "Editar" } : { link: ficha, icone: "ti-eye", rotulo: "Visualizar" });
+        }
+        if (!leitura) itens.push({ acao: "marcar", icone: "ti-tag-plus", rotulo: "Adicionar marcadores" });
+        const pendencias = pendDe(i).length;
+        if (abertaParaEditar && pendencias) itens.push({ acao: "pendencias", icone: "ti-alert-triangle", rotulo: `Ver pendências (${pendencias})`, classe: "text-danger" });
+        // Só a Central inativa e reativa.
+        if (central && !leitura) itens.push({ divisor: true }, { acao: "inativar", icone: "ti-ban", rotulo: "Inativar" });
+        return itens;
+    }
+
+    function menuDeAcoes(i) {
+        const itens = acoesDaIniciativa(i)
+            .map((a) =>
+                a.divisor
+                    ? '<li><hr class="dropdown-divider" /></li>'
+                    : a.link
+                    ? `<li><a class="dropdown-item" href="${a.link}"><i class="ti ${a.icone} me-2"></i>${esc(a.rotulo)}</a></li>`
+                    : `<li><button type="button" class="dropdown-item ${a.classe ?? ""}" data-${a.acao === "marcar" ? "marcar" : a.acao}="${esc(i.id)}"><i class="ti ${a.icone} me-2"></i>${esc(a.rotulo)}</button></li>`
+            )
+            .join("");
+        // A tabela rola dentro do cartão: sem a estratégia "fixed" o menu seria cortado nas últimas linhas.
+        return `<div class="dropdown">
+            <button type="button" class="btn btn-sm btn-light btn-icon" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}'
+                    aria-expanded="false" aria-label="Ações de ${esc(i.nome)}"><i class="ti ti-dots-vertical"></i></button>
+            <ul class="dropdown-menu dropdown-menu-end fs-13">${itens}</ul>
+        </div>`;
+    }
+
     function corpo() {
         const ls = linhas();
         if (ls.length === 0) {
-            return `<tr><td colspan="${central ? 9 : 8}" class="text-center text-muted py-4 fs-12">${
+            return `<tr><td colspan="${central ? 10 : 9}" class="text-center text-muted py-4 fs-12">${
                 iniciativasDoPlano().length === 0
                     ? `Nenhuma Iniciativa neste plano.${central ? "" : " Comece por “Criar iniciativa”."}`
                     : "Nenhuma Iniciativa corresponde ao filtro."
@@ -179,7 +242,8 @@ export function montarListaDeIniciativas({ visao }) {
             .map((i) => {
                             const qtdEntregas = entregasDaIniciativa(estado, i.id).length;
                 return `
-            <tr>
+            <tr${i.status === "inativa" ? ' class="linha-inativa"' : ""}>
+                <td>${selosDeMarcadores(i.marcadorIds, estado, i.marcadorObs)}</td>
                 <td>
                     <span class="fw-medium text-nowrap">${esc(i.nome)}</span>
                 </td>
@@ -201,15 +265,7 @@ export function montarListaDeIniciativas({ visao }) {
                     ${i.status === "divergencia" && i.motivo ? `<div class="fs-12 text-muted mt-1" title="${esc(rotuloMotivo(i.motivo))}">Motivo: ${esc(rotuloMotivo(i.motivo, 60))}</div>` : ""}
                 </td>
                 <td class="text-center" style="font-variant-numeric:tabular-nums">${qtdEntregas}</td>
-                <td class="text-end coluna-acoes text-nowrap">
-                    <button type="button" class="btn btn-sm btn-icon me-1 ${pendDe(i).length ? "btn-danger" : "btn-light"}" data-pendencias="${esc(i.id)}"
-                        title="${pendDe(i).length ? `${pendDe(i).length} pendência(s)` : "Sem pendências"}" aria-label="Pendências"${pendDe(i).length ? "" : " disabled"}>
-                        <i class="ti ti-alert-triangle ${pendDe(i).length ? "" : "text-muted"}"></i>
-                    </button>
-                    <a href="${url(`${detalhe}?id=${encodeURIComponent(i.id)}`)}"
-                       class="btn btn-sm btn-icon ${leitura ? "btn-light" : "btn-outline-primary"}"
-                       title="${rotuloDaAcao}" aria-label="${rotuloDaAcao}"><i class="ti ${iconeDaAcao}"></i></a>
-                </td>
+                <td class="text-end coluna-acoes">${menuDeAcoes(i)}</td>
             </tr>`;
             })
             .join("");
@@ -225,6 +281,7 @@ export function montarListaDeIniciativas({ visao }) {
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
+                            <th style="width:9rem">Marcador</th>
                             <th>Iniciativa</th>
                             <th>Programa</th>
                             <th>Problema</th>
@@ -233,7 +290,7 @@ export function montarListaDeIniciativas({ visao }) {
                             ${central ? `<th>Órgão</th>` : ""}
                             <th style="width:9rem">Status</th>
                             <th class="text-center" style="width:5rem">Entregas</th>
-                            <th class="text-end coluna-acoes" style="width:6rem">Ações</th>
+                            <th class="text-end coluna-acoes" style="width:5rem">Ações</th>
                         </tr>
                     </thead>
                     <!-- Tudo alinhado ao topo: as células têm alturas diferentes, e
@@ -247,17 +304,90 @@ export function montarListaDeIniciativas({ visao }) {
         </div>`;
     
         paginacao.ligar();
+        iniciarDicasDeMarcador(document.getElementById("corpo-lista"));
         filtros.ligar(() => {
             paginacao.inicio();
-            document.getElementById("corpo-lista").innerHTML = corpo();
+            repintarCorpo();
             paginacao.atualizar();
             document.getElementById("faixa").innerHTML = faixa();
         });
+    }
+
+    function repintarCorpo() {
+        const corpoEl = document.getElementById("corpo-lista");
+        corpoEl.innerHTML = corpo();
+        iniciarDicasDeMarcador(corpoEl);
     }
     
     render();
     
     // Pendências da Iniciativa: o ícone da coluna Ações abre a lista; sem pendência, fica bloqueado.
+    // Iniciar revisão (Central, Iniciativa enviada): muda o status e abre a ficha, onde a avaliação começa.
+    document.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-iniciar-revisao]");
+        if (!b) return;
+        const ini = estado.iniciativas.find((x) => x.id === b.dataset.iniciarRevisao);
+        if (!ini || ini.status !== "enviada") return;
+        iniciarAnalise(ini.id);
+        avisarDepois("Revisão iniciada.");
+        location.href = url(`central-iniciativa.html?id=${encodeURIComponent(ini.id)}`);
+    });
+
+    // Inativar e reativar (só a Central): tira a Iniciativa de circulação, ou a devolve.
+    document.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-inativar], [data-reativar]");
+        if (!b || !central || leitura) return;
+        const reativando = b.hasAttribute("data-reativar");
+        const ini = estado.iniciativas.find((x) => x.id === (reativando ? b.dataset.reativar : b.dataset.inativar));
+        if (!ini) return;
+        if (reativando) reativarIniciativa(ini.id);
+        else inativarIniciativa(ini.id);
+        repintarCorpo();
+        document.getElementById("faixa").innerHTML = faixa();
+        avisar(reativando ? "Iniciativa reativada." : "Iniciativa inativada.");
+    });
+
+    // Reavaliar (Central, Iniciativa validada): pede o motivo, que fica no histórico, e devolve a Iniciativa à revisão.
+    document.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-reavaliar]");
+        if (!b) return;
+        const ini = estado.iniciativas.find((x) => x.id === b.dataset.reavaliar);
+        if (!ini || ini.status !== "validada") return;
+        pedirJustificativa({
+            titulo: "Reavaliar Iniciativa",
+            texto: `“${ini.nome}” volta para revisão e a avaliação é refeita do zero, campo a campo.`,
+            rotulo: "Por que esta Iniciativa precisa ser reavaliada?",
+            exemplo: "Explique o motivo da reavaliação (mínimo de 20 caracteres)",
+            confirmar: "Reavaliar",
+            nota: "A justificativa fica registrada no histórico, junto com a avaliação anterior.",
+        }).then((justificativa) => {
+            if (!justificativa) return;
+            reavaliarIniciativa(ini.id, justificativa);
+            repintarCorpo();
+            document.getElementById("faixa").innerHTML = faixa();
+            avisar("Reavaliação iniciada: a Iniciativa voltou para revisão.");
+        });
+    });
+
+    // "Adicionar marcadores": pôr ou tirar marcadores de uma Iniciativa sem abrir a ficha dela.
+    document.addEventListener("click", (e) => {
+        const botao = e.target.closest("[data-marcar]");
+        if (!botao) return;
+        const ini = estado.iniciativas.find((x) => x.id === botao.dataset.marcar);
+        if (!ini) return;
+        abrirJanelaDeMarcadores({
+            titulo: `Marcadores — ${ini.nome}`,
+            selecionados: ini.marcadorIds ?? [],
+            observacoes: ini.marcadorObs ?? {},
+            estado,
+            aoSalvar: (ids, observacoes) => {
+                updIniciativa(ini.id, { marcadorIds: ids, marcadorObs: observacoes });
+                repintarCorpo();
+                avisar("Marcadores da Iniciativa atualizados.");
+            },
+        });
+    });
+
     document.addEventListener("click", (e) => {
         const b = e.target.closest("[data-pendencias]");
         if (!b || b.disabled) return;

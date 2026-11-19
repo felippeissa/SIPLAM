@@ -5,7 +5,7 @@
  * Corrige T5.9.9: resolver apontamento existia no modelo de dados e não tinha
  * tela em lugar nenhum — ninguém conseguia fechar um apontamento.
  */
-import { obterEstado, avaliarIniciativa, salvarRascunhoDaAvaliacao, addComentario, resolverComentario } from "../dados/store.js";
+import { obterEstado, avaliarIniciativa, salvarRascunhoDaAvaliacao, iniciarAnalise, reavaliarIniciativa, inativarIniciativa, reativarIniciativa, addComentario, resolverComentario } from "../dados/store.js";
 import { camposDaIniciativa } from "../iniciativa-campos.js";
 import { ANOS } from "../dados/seed.js";
 import {
@@ -23,8 +23,9 @@ import {
 } from "../dados/regras.js";
 import { acoesDaEntrega } from "../dados/financeiro.js";
 import { montarShell, barraTitulo, somenteLeitura } from "../shell.js";
-import { chip, statusChip, esc, secao } from "../ui.js";
+import { chip, statusChip, esc, secao, menuDeAcoes } from "../ui.js";
 import { avisar } from "../toast.js";
+import { pedirJustificativa } from "../justificar.js";
 import { listaPendencias, chipsPendencias } from "../ui-financeiro.js";
 
 const { estado } = montarShell();
@@ -62,7 +63,11 @@ function rotulosAvaliados() {
 let rascunho = {};
 let rascunhoCarregado = false;
 const todosAvaliados = (ini) => Object.keys(rotulosAvaliados(ini)).every((c) => rascunho[c]);
-const avaliavel = (ini) => !somenteLeitura() && ["enviada", "em_analise"].includes(ini.status);
+// A Central só avalia depois de iniciar a revisão: Enviada mostra só "Iniciar revisão"; Em revisão libera a avaliação.
+const avaliavel = (ini) => !somenteLeitura() && ini.status === "em_analise";
+const podeIniciarRevisao = (ini) => !somenteLeitura() && ini.status === "enviada";
+// Validada fica só para visualizar, mas a Central pode reabri-la para uma nova avaliação.
+const podeReavaliar = (ini) => !somenteLeitura() && ini.status === "validada";
 /** Campos que a Central já aprovou numa rodada anterior: seguem aprovados e não voltam a ser avaliados. */
 const aprovadosAntes = (ini) =>
     new Set(Object.entries(ini.avaliacao ?? {}).filter(([, a]) => a.decisao === "ok").map(([c]) => c));
@@ -178,6 +183,44 @@ function blocoEntrega(e, ini) {
     );
 }
 
+/** As ações que o status libera para a Central, no menu "Ações" do cabeçalho. O Salvar fica fora do menu, à vista. */
+function acoesDaFicha(ini) {
+    const itens = [];
+    if (podeIniciarRevisao(ini)) itens.push({ id: "iniciar-revisao", icone: "ti-player-play", rotulo: "Iniciar revisão" });
+    if (podeReavaliar(ini)) itens.push({ id: "reavaliar", icone: "ti-refresh", rotulo: "Reavaliar" });
+    if (avaliavel(ini)) {
+        const completa = todosAvaliados(ini);
+        // O nome do botão diz o que ele vai fazer: com algum campo reprovado, devolve ao setorial; sem nenhum, aprova a
+        // Iniciativa (ela fica Validada). (O botão é o mesmo; só o rótulo acompanha o resultado.)
+        const devolve = Object.values(rascunho).some((a) => a.decisao === "reprovado");
+        itens.push(
+            { id: "aprovar-todos", icone: "ti-checks", rotulo: "Aprovar todos os campos", classe: "text-success" },
+            { id: "reprovar-todos", icone: "ti-x", rotulo: "Reprovar todos os campos", classe: "text-danger" },
+            { divisor: true },
+            {
+                id: "devolver-iniciativa",
+                icone: devolve ? "ti-arrow-back-up" : "ti-circle-check",
+                rotulo: devolve ? "Devolver iniciativa" : "Aprovar iniciativa",
+                desabilitado: !completa,
+                titulo: !completa
+                    ? `Avalie todos os campos para ${devolve ? "devolver" : "aprovar"}`
+                    : devolve
+                      ? "Encerra a avaliação e devolve a Iniciativa ao setorial"
+                      : "Todos os campos aprovados: encerra a avaliação e valida a Iniciativa",
+            }
+        );
+    }
+    // Inativar vale em qualquer status; uma Iniciativa inativa só pode ser reativada.
+    if (!somenteLeitura()) {
+        if (ini.status === "inativa") itens.push({ id: "reativar", icone: "ti-player-play", rotulo: "Reativar" });
+        else {
+            if (itens.length) itens.push({ divisor: true });
+            itens.push({ id: "inativar", icone: "ti-ban", rotulo: "Inativar" });
+        }
+    }
+    return itens;
+}
+
 function render() {
     const ini = estado.iniciativas.find((i) => i.id === id);
     if (!ini) return inexistente();
@@ -221,14 +264,10 @@ function render() {
                     <span>atualizada em ${esc(ini.atualizadoEm)}</span>
                 </div>
             </div>
-            <div class="d-flex flex-wrap gap-2">${acoesCabecalho}${
-                avaliavel(ini)
-                    ? `<button type="button" class="btn btn-outline-success" id="aprovar-todos"><i class="ti ti-checks me-1"></i>Aprovar todos os campos</button>
-                <button type="button" class="btn btn-outline-danger" id="reprovar-todos"><i class="ti ti-x me-1"></i>Reprovar todos os campos</button>
-                <button type="button" class="btn btn-light" id="salvar-rascunho"><i class="ti ti-device-floppy me-1"></i>Salvar</button>
-                <button type="button" class="btn btn-primary" id="devolver-iniciativa"${todosAvaliados(ini) ? "" : " disabled"} title="${todosAvaliados(ini) ? "Encerrar a avaliação" : "Avalie todos os campos para devolver"}"><i class="ti ti-arrow-back-up me-1"></i>Devolver iniciativa</button>`
-                    : ""
-            }</div>
+            <div class="d-flex flex-wrap gap-2 align-items-center">${acoesCabecalho}${
+                // O Salvar fica fora do menu, à vista: guarda a avaliação em andamento para continuar depois.
+                avaliavel(ini) ? `<button type="button" class="btn btn-light" id="salvar-rascunho"><i class="ti ti-device-floppy me-1"></i>Salvar</button>` : ""
+            }${menuDeAcoes(acoesDaFicha(ini))}</div>
         </div>
     </div>
 
@@ -319,9 +358,49 @@ document.addEventListener("input", (e) => {
     }
 });
 
+/** Aplica a reavaliação já justificada: a Iniciativa volta para revisão, sem nenhum campo pré-aprovado. */
+function reavaliarComJustificativa(ini, justificativa) {
+    reavaliarIniciativa(ini.id, justificativa);
+    rascunho = {};
+    render();
+    avisar("Reavaliação iniciada: a Iniciativa voltou para revisão.");
+}
+
 document.addEventListener("click", (e) => {
     const ini = estado.iniciativas.find((i) => i.id === id);
     if (!ini) return;
+
+    if (e.target.closest("#reavaliar") && podeReavaliar(ini)) {
+        pedirJustificativa({
+            titulo: "Reavaliar Iniciativa",
+            texto: "A Iniciativa validada volta para revisão e a avaliação é refeita do zero, campo a campo.",
+            rotulo: "Por que esta Iniciativa precisa ser reavaliada?",
+            exemplo: "Explique o motivo da reavaliação (mínimo de 20 caracteres)",
+            confirmar: "Reavaliar",
+            nota: "A justificativa fica registrada no histórico, junto com a avaliação anterior.",
+        }).then((justificativa) => {
+            if (!justificativa) return;
+            reavaliarComJustificativa(ini, justificativa);
+        });
+        return;
+    }
+
+    if (e.target.closest("#inativar") && !somenteLeitura() && ini.status !== "inativa") {
+        inativarIniciativa(ini.id);
+        render();
+        return avisar("Iniciativa inativada.");
+    }
+    if (e.target.closest("#reativar") && !somenteLeitura() && ini.status === "inativa") {
+        reativarIniciativa(ini.id);
+        render();
+        return avisar("Iniciativa reativada.");
+    }
+
+    if (e.target.closest("#iniciar-revisao") && podeIniciarRevisao(ini)) {
+        iniciarAnalise(ini.id);
+        render();
+        return avisar("Revisão iniciada.");
+    }
 
     const dec = e.target.closest("[data-decisao]");
     if (dec && avaliavel(ini)) {
@@ -361,9 +440,11 @@ document.addEventListener("click", (e) => {
             if (a.erro) ok = false;
         }
         if (!ok) return render();
+        const reprovou = Object.values(rascunho).some((a) => a.decisao === "reprovado");
         avaliarIniciativa(ini.id, rascunho, rotulosAvaliados(ini));
         rascunho = {};
-        return render();
+        render();
+        return avisar(reprovou ? "Avaliação concluída: Iniciativa devolvida ao órgão." : "Avaliação concluída: Iniciativa validada.");
     }
 
     const apEnt = e.target.closest("[data-apontar-entrega]");

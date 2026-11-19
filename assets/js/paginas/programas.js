@@ -325,13 +325,15 @@ document.addEventListener("click", (e) => {
     const sem = e.target.closest("[data-sem]");
     if (sem) {
         marcarSemContribuicao(sem.dataset.sem, orgao);
-        return render();
+        render();
+        return avisar("Programa marcado como sem contribuição do órgão.");
     }
 
     const rec = e.target.closest("[data-reconsiderar]");
     if (rec) {
         reconsiderarParticipacao(rec.dataset.reconsiderar, orgao);
-        return render();
+        render();
+        return avisar("Participação do órgão reconsiderada.");
     }
 
     const excluir = e.target.closest("[data-excluir]");
@@ -348,8 +350,9 @@ document.addEventListener("click", (e) => {
         }).then((justificativa) => {
             if (!justificativa) return;
             const r = removeIniciativa(ini.id, justificativa);
-            if (!r.ok) return avisar(r.motivo, "erro");
+            if (!r.ok) return avisar(r.motivo || "Não foi possível excluir a Iniciativa.", "erro");
             render();
+            avisar("Iniciativa excluída com sucesso.");
         });
         return;
     }
