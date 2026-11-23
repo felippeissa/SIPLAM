@@ -95,7 +95,7 @@ function render() {
     const editar = (pasta, rid) =>
         leitura
             ? ""
-            : `<td class="text-end coluna-acoes"><a href="${url(`${pasta}/editar.html?id=${encodeURIComponent(rid)}`)}" class="btn btn-sm btn-icon btn-default" title="Editar" aria-label="Editar"><i class="ti ti-pencil text-muted fs-lg"></i></a></td>`;
+            : `<td class="text-end coluna-acoes"><a href="${url(`${pasta}/editar.html?id=${encodeURIComponent(rid)}`)}" class="btn btn-sm btn-icon btn-terciario" title="Editar" aria-label="Editar"><i class="ti ti-pencil fs-16"></i></a></td>`;
     const tabela = (cab, linhas, semDados, { esquerda = 1, acoes = "4rem" } = {}) =>
         linhas.length
             ? `<div class="table-responsive"><table class="table table-sm align-middle mb-0">
@@ -108,8 +108,8 @@ function render() {
         leitura
             ? ""
             : `<td class="text-end coluna-acoes"><div class="d-inline-flex gap-1">
-                <button type="button" class="btn btn-sm btn-icon btn-default" data-marcar="${esc(p.id)}" title="Adicionar marcadores" aria-label="Adicionar marcadores a ${esc(p.nome)}"><i class="ti ti-tag-plus text-muted fs-lg"></i></button>
-                <a href="${url(`central-programas/editar.html?id=${encodeURIComponent(p.id)}`)}" class="btn btn-sm btn-icon btn-default" title="Editar" aria-label="Editar"><i class="ti ti-pencil text-muted fs-lg"></i></a>
+                <button type="button" class="btn btn-sm btn-icon btn-terciario" data-marcar="${esc(p.id)}" title="Adicionar marcadores" aria-label="Adicionar marcadores a ${esc(p.nome)}"><i class="ti ti-tag-plus fs-16"></i></button>
+                <a href="${url(`central-programas/editar.html?id=${encodeURIComponent(p.id)}`)}" class="btn btn-sm btn-icon btn-terciario" title="Editar" aria-label="Editar"><i class="ti ti-pencil fs-16"></i></a>
             </div></td>`;
     const abaProgramas = tabela(
         ["Marcador", "Programa", "Eixo", "Iniciativas", "Previsto"],

@@ -788,3 +788,9 @@ html[data-skin][data-bs-theme="light"][data-menu-color="light"] { --theme-sidena
 #sidenav-menu :is(.collapse, .collapsing) > .sub-menu .side-nav-link {
     padding-left: 10px;
 }
+
+/* Tabelas: o conteúdo de cada célula fica centralizado na vertical, e não colado ao topo da linha. */
+.table > tbody > tr > td { vertical-align: middle; }
+
+/* Campo travado mostrado como texto (campo-estatico.js): quebra linha e mantém a altura de uma linha. */
+.campo-estatico { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 2rem; }

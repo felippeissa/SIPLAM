@@ -114,12 +114,12 @@ export function catalogo(cfg) {
                     ${
                         cfg.semCriar
                             ? ""
-                            : `<button type="button" class="btn btn-sm btn-light me-1" data-${px}-editar="${id}" title="Editar ${esc(singular.toLowerCase())}">
-                        <i class="ti ti-pencil"></i>
+                            : `<button type="button" class="btn btn-sm btn-icon btn-terciario" data-${px}-editar="${id}" title="Editar ${esc(singular.toLowerCase())}">
+                        <i class="ti ti-pencil fs-16"></i>
                     </button>`
                     }
-                    <button type="button" class="btn btn-sm btn-light" data-${px}-tirar="${id}" title="Desvincular">
-                        <i class="ti ti-x"></i>
+                    <button type="button" class="btn btn-sm btn-icon btn-terciario" data-${px}-tirar="${id}" title="Desvincular" aria-label="Desvincular">
+                        <i class="ti ti-x fs-16"></i>
                     </button>
                 </td>
             </tr>`;

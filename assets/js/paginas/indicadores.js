@@ -206,8 +206,6 @@ function montar() {
                     <tr>
                         <th>Indicador</th>
                         <th style="width:8rem">Nível</th>
-                        <th style="width:16rem">Origem</th>
-                        <th style="width:8rem">Unidade</th>
                         <th class="num" style="width:7rem">Referência</th>
                         ${ANOS.map((a) => `<th class="num" style="width:5rem">${a}</th>`).join("")}
                         <th style="width:6rem">Ações</th>
@@ -236,7 +234,7 @@ function render() {
     );
     document.getElementById("corpo-indicadores").innerHTML =
         ls.length === 0
-            ? `<tr><td colspan="${ANOS.length + 6}" class="text-center text-muted py-4 fs-12">Nenhum indicador corresponde ao filtro.</td></tr>`
+            ? `<tr><td colspan="${ANOS.length + 4}" class="text-center text-muted py-4 fs-12">Nenhum indicador corresponde ao filtro.</td></tr>`
             : ls
                   .map((l) => {
                       const ind = l.indicador;
@@ -245,11 +243,9 @@ function render() {
                     <tr>
                         <td>
                             <div class="fw-medium">${esc(ind.nome)}</div>
-                            ${ind.fonte ? `<div class="fs-12 text-muted">Fonte: ${esc(ind.fonte)}${ind.periodicidade ? ` · ${esc(ind.periodicidade)}` : ""}</div>` : ""}
+                            <div class="fs-12 text-muted">${[l.origem, ind.unidade, ind.fonte ? `Fonte: ${ind.fonte}` : "", ind.periodicidade].filter(Boolean).map(esc).join(" · ")}</div>
                         </td>
                         <td>${chip(l.nivel, l.nivel === "Programa" ? "info" : "neutro")}</td>
-                        <td class="fs-12 text-muted">${esc(l.origem)}</td>
-                        <td class="fs-12">${esc(ind.unidade || "—")}</td>
                         <td class="num">${esc(ind.valorReferencia ?? ind.linhaBase ?? "—")}</td>
                         ${ANOS.map((a) => `<td class="num">${esc(metas[a] || (a === ANOS[ANOS.length - 1] ? ind.meta ?? "—" : "—"))}</td>`).join("")}
                         <td>

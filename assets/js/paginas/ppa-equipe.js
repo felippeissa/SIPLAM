@@ -60,7 +60,7 @@ function montar() {
                 <td><span class="fw-medium">${esc(m.nome)}</span><span class="d-block fs-12 text-muted">${esc(m.orgao || "—")}</span></td>
                 <td class="fs-13 text-muted">${esc(m.perfil)}</td>
                 <td class="fs-13">${esc(m.funcao)}</td>
-                <td class="text-end coluna-acoes"><a href="${editar(m.id)}" class="btn btn-sm ${leitura ? "btn-light" : "btn-outline-primary"}">${leitura ? "Ver" : "Editar"}</a></td>
+                <td class="text-end coluna-acoes"><a href="${editar(m.id)}" class="btn btn-sm btn-icon btn-terciario" title="${leitura ? "Visualizar" : "Editar"}" aria-label="${leitura ? "Visualizar" : "Editar"} ${esc(m.nome)}"><i class="ti ${leitura ? "ti-eye" : "ti-pencil"} fs-16"></i></a></td>
             </tr>`
             )
             .join("");

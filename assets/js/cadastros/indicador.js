@@ -138,7 +138,7 @@ function linhaDeMeta(m) {
             </select>
         </td>
         <td class="text-end" style="width:3rem">
-            <button type="button" class="btn btn-sm btn-light" data-meta-tirar="${m.id}" aria-label="Remover meta"><i class="ti ti-trash"></i></button>
+            <button type="button" class="btn btn-sm btn-icon btn-terciario" data-meta-tirar="${m.id}" title="Remover meta" aria-label="Remover meta"><i class="ti ti-trash fs-16"></i></button>
         </td>
     </tr>`;
 }

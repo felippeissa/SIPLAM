@@ -81,7 +81,7 @@ aprova a consolidação do plano.
 |---|---|---|
 | C1 | **Fila de aprovação** | o que aguarda decisão; para a setorial, só o próprio órgão; para a central, o plano inteiro |
 | C2 | **Decisão sobre a proposta** | aprovar, devolver com ajuste ou pactuar, com justificativa registrada |
-| C3 | **Histórico da tramitação** | quem fez o quê e quando; o `store` já registra eventos, falta a tela |
+| C3 | **Histórico da tramitação** | quem fez o quê e quando; o `store` registra os eventos (`eventosDeAuditoria`), sem tela por ora. A tela avulsa foi removida em 23/11/2026; virá como componente de tramitação da aprovação (status e o que foi feito em cada passo) |
 
 ### Bloco D · Órgãos de controle
 

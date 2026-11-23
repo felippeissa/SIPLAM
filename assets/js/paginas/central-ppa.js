@@ -120,8 +120,8 @@ function linhas() {
                     const podeEditar = !leitura && situacaoPpa(p.situacao).editavel;
                     return `
                 <a href="${url(`central-ppa/editar.html?id=${encodeURIComponent(p.id)}`)}"
-                   class="btn btn-sm ${podeEditar ? "btn-outline-primary" : "btn-light"}">
-                    ${podeEditar ? "Editar" : "Ver"}
+                   class="btn btn-sm btn-icon btn-terciario" title="${podeEditar ? "Editar" : "Visualizar"}" aria-label="${podeEditar ? "Editar" : "Visualizar"} ${esc(p.nome)}">
+                    <i class="ti ${podeEditar ? "ti-pencil" : "ti-eye"} fs-16"></i>
                 </a>`;
                 })()}
             </td>

@@ -94,7 +94,7 @@ export const marcador = {
             </div>
             <div class="mb-3">
                 <label class="form-label" for="f-tipo">Tipo do marcador <span class="text-danger">*</span></label>
-                <select class="form-select" id="f-tipo" ${leitura || !edicao.dimensao ? "disabled" : ""}>${opcoesDeTipo(edicao.dimensao, edicao.tipo)}</select>
+                <select class="form-select" id="f-tipo" ${leitura ? "" : "data-mantem-campo"}${leitura || !edicao.dimensao ? "disabled" : ""}>${opcoesDeTipo(edicao.dimensao, edicao.tipo)}</select>
                 ${campoErro("f-tipo")}
             </div>
             <div class="mb-3">
@@ -354,7 +354,7 @@ export function abrirJanelaDeMarcadores({ titulo, selecionados, observacoes, est
                     </span>
                     ${
                         meu
-                            ? `<button type="button" class="btn btn-sm btn-light btn-icon flex-shrink-0" data-tirar="${esc(i.id)}"
+                            ? `<button type="button" class="btn btn-sm btn-icon btn-terciario flex-shrink-0" data-tirar="${esc(i.id)}"
                             title="Tirar este marcador" aria-label="Tirar o marcador ${esc(m.nome)}"><i class="ti ti-x"></i></button>`
                             : `<span class="text-muted flex-shrink-0 px-2" title="Marcador de outra pessoa: só quem pode usá-lo o tira"><i class="ti ti-lock"></i></span>`
                     }

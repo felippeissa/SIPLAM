@@ -17,6 +17,7 @@ import { esc } from "./ui.js";
 import { mostrarAvisosPendentes } from "./toast.js";
 import { confirmarAcao } from "./confirmar.js";
 import { instalarBusca } from "./busca.js";
+import { ligarCamposEstaticos } from "./campo-estatico.js";
 import { instalarAtena } from "./atena.js";
 import { instalarChat } from "./chat.js";
 import { instalarNotificacoes } from "./notificacoes.js";
@@ -37,8 +38,9 @@ const MENU_SETORIAL = [
  * Dois níveis: a **seção** (Cadastros, Planejamento, Gestão, Relatórios) e a
  * **tela** dentro dela. Reorganizado em 05/11/2026: as seções subiram para o
  * primeiro nível e Iniciativas saiu de Cadastros para Planejamento. O desenho
- * em três níveis (módulo › grupo › tela) continua aceito, se voltar a ser útil. A Visão Geral e a Visão por Programas saíram do
- * menu em 08/10/2026; os endereços delas continuam respondendo.
+ * em três níveis (módulo › grupo › tela) continua aceito, se voltar a ser útil. A Visão Geral saiu do
+ * menu em 08/10/2026 e o endereço dela continua respondendo. A Visão por Programas, Entregas do PPA, Análise
+ * financeira, Cobertura das causas e Órgãos foram removidas em 23/11/2026.
  *
  * O menu do setorial segue plano: ainda não foi reorganizado.
  */
@@ -50,7 +52,7 @@ const MENU_CENTRAL = [
         itens: [
             { href: "central-ppa.html", rotulo: "PPA", icone: "ti-calendar-stats" },
             { href: "central-eixo.html", rotulo: "Eixos", icone: "ti-layout-columns" },
-            { href: "central-objetivo.html", rotulo: "Objetivos Estratégicos", icone: "ti-target-arrow" },
+            { href: "central-objetivo.html", rotulo: "Objetivos estratégicos", icone: "ti-target-arrow" },
             { href: "central-causa.html", rotulo: "Causas", icone: "ti-binary-tree" },
             { href: "central-indicador.html", rotulo: "Indicadores", icone: "ti-chart-dots" },
             { href: "central-problema.html", rotulo: "Problemas", icone: "ti-alert-triangle" },
@@ -68,8 +70,8 @@ const MENU_CENTRAL = [
         itens: [
             { href: "central-usuarios.html", rotulo: "Usuários", icone: "ti-users" },
             { href: "central-marcador.html", rotulo: "Marcadores", icone: "ti-tag" },
-            // Histórico fica fora do menu: não entra nesta etapa. A tela central-historico.html continua no projeto.
-            // { href: "central-historico.html", rotulo: "Histórico", icone: "ti-history" },
+            // Não há tela de histórico: o store registra quem fez o quê (eventosDeAuditoria), sem mostrar ao usuário.
+            // O componente de tramitação da aprovação virá depois, e lê esse mesmo registro.
         ],
     },
     {
@@ -725,6 +727,7 @@ export function montarShell() {
     // O aviso de uma ação que terminou na tela anterior (salvou e voltou, excluiu e voltou).
     mostrarAvisosPendentes();
 
+    ligarCamposEstaticos();
     return { estado, visao };
 }
 
@@ -740,12 +743,8 @@ const TRILHAS = {
     // adiante. O endereço continua respondendo, com trilha, para quem tiver o
     // link guardado.
     "central-diagnostico.html": { rotulo: "Diagnóstico" },
-    "central-entregas.html": { rotulo: "Entregas do PPA" },
-    "central-financeira.html": { rotulo: "Análise Financeira" },
     "central-ipofs.html": { rotulo: "IPOFs" },
-    "central-orgaos.html": { rotulo: "Órgãos participantes" },
     "central-projetos.html": { rotulo: "Projetos GOMAP" },
-    "central-causas.html": { rotulo: "Cobertura das Causas" },
     // Fichas de um registro. O rótulo aqui é só o que aparece quando a ficha
     // não diz de quem é — abertas de verdade, quem nomeia a trilha é o registro.
     "central-iniciativa.html": { rotulo: "Iniciativa" },

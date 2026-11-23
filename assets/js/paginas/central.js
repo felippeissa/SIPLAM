@@ -108,7 +108,7 @@ function linhaIniciativa(i) {
         <td class="num">${marca("em_analise")}</td>
         <td class="num">${marca("devolvida")}</td>
         <td class="num">${marca("validada")}</td>
-        <td><a href="central-iniciativa.html?id=${i.id}" class="btn btn-sm btn-outline-primary">${rotulo}</a></td>
+        <td><a href="central-iniciativa.html?id=${i.id}" class="btn btn-sm btn-icon btn-terciario" title="${rotulo}" aria-label="${rotulo}: ${esc(i.nome)}"><i class="ti ${i.status === "enviada" || i.status === "em_analise" ? "ti-checklist" : "ti-eye"} fs-16"></i></a></td>
     </tr>`;
 }
 

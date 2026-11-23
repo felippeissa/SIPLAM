@@ -124,23 +124,20 @@ function linhaPrograma(l) {
             }
         </td>
         <td>${selosDeMarcadores(p.marcadorIds, estado, p.marcadorObs)}</td>
-        <td class="codigo text-muted">${esc(p.codigo)}</td>
         <td>
-            <div class="d-flex align-items-start gap-2">
+            <div class="d-flex align-items-center gap-2">
                 ${seloDoIcone(p)}
                 <div>
                     <a href="programa.html?id=${p.id}" class="fw-medium">${esc(p.nome)}</a>
-                    <div class="fs-12 text-muted">${esc(p.eixo)}</div>
+                    <div class="fs-12 text-muted"><span class="codigo">${esc(p.codigo)}</span> · ${esc(p.eixo)}</div>
                 </div>
             </div>
             ${semCausas ? `<div class="fs-12 text-warning mt-1">Programa sem causas cadastradas — não é possível concluir uma Iniciativa nele.</div>` : ""}
         </td>
         <td>${chip(PARTICIPACAO_LABEL[l.participacao], TOM_PARTICIPACAO[l.participacao])}</td>
         <td class="num">${l.inis.length || "—"}</td>
-        <td class="num">${l.entregas || "—"}</td>
         <td>${l.inis.length ? chipsPendencias(l.resumo) : "—"}</td>
         <td class="num">${l.financeiro.previsto ? moedaCurta(l.financeiro.previsto) : "—"}</td>
-        <td class="num">${pct(l.financeiro.percentual)}</td>
         <td>
             <div class="d-flex gap-1">
                 ${somenteLeitura() ? "" : `<button class="btn btn-sm btn-primary" data-nova="${p.id}" title="Nova Iniciativa"><i class="ti ti-plus"></i></button>`}
@@ -165,7 +162,7 @@ function linhaPrograma(l) {
     </tr>
     ${
         aberto
-            ? `<tr class="linha-filha"><td></td><td colspan="10" class="py-3">
+            ? `<tr class="linha-filha"><td></td><td colspan="7" class="py-3">
         <table class="table table-sm tabela-aninhada mb-0">
             <thead><tr>
                 <th>Iniciativa</th><th style="width:11rem">Status</th><th class="num" style="width:6rem">Entregas</th>
@@ -218,14 +215,11 @@ function montar() {
                     <tr>
                         <th></th>
                         <th style="width:9rem">Marcador</th>
-                        <th style="width:5rem">Código</th>
                         <th>Programa</th>
                         <th style="width:12rem">Participação</th>
                         <th class="num" style="width:6rem">Iniciativas</th>
-                        <th class="num" style="width:6rem">Entregas</th>
                         <th style="width:14rem">Pendências</th>
                         <th class="num" style="width:8rem">Previsto</th>
-                        <th class="num" style="width:5rem">%</th>
                         <th style="width:7rem">Ações</th>
                     </tr>
                 </thead>
@@ -256,7 +250,7 @@ function render() {
     );
     document.getElementById("corpo-programas").innerHTML =
         ls.length === 0
-            ? '<tr><td colspan="11" class="text-center text-muted py-4 fs-12">Nenhum Programa corresponde ao filtro.</td></tr>'
+            ? '<tr><td colspan="8" class="text-center text-muted py-4 fs-12">Nenhum Programa corresponde ao filtro.</td></tr>'
             : ls.map(linhaPrograma).join("");
     document.getElementById("ordem").value = ordem;
 
