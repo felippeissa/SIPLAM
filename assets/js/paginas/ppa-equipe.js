@@ -69,7 +69,7 @@ function montar() {
     document.getElementById("conteudo").innerHTML = `
     ${barraTitulo("Equipe do plano", [esc(ppa.nome)])}
     <div class="card">
-        <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2 p-3">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 p-3">
             <div>
                 <h4 class="card-title mb-1">Equipe do plano</h4>
                 <p class="text-muted mb-0 fs-13">Quem trabalha no ${esc(ppa.nome)} e com que função.</p>

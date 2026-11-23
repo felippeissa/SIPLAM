@@ -257,7 +257,7 @@ export const indicador = {
 
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <h6 class="rotulo-secao mb-0">Metas</h6>
-                <button type="button" class="btn btn-sm btn-light" id="meta-nova"><i class="ti ti-plus me-1"></i>Adicionar meta</button>
+                <button type="button" class="btn btn-terciario" id="meta-nova"><i class="ti ti-plus me-1"></i>Adicionar meta</button>
             </div>
             <div class="mb-2">
                 <label class="form-label" for="f-indicadorVinculado">Indicador vinculado <span class="text-danger">*</span></label>

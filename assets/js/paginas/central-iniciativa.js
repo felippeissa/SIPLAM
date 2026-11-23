@@ -98,7 +98,7 @@ function inexistente() {
     <div class="text-center py-5">
         <h4 class="fw-bold">Iniciativa não encontrada</h4>
         <p class="text-muted">O endereço aponta para uma Iniciativa que não existe neste protótipo.</p>
-        <a href="central.html" class="btn btn-primary">Voltar à Visão Geral</a>
+        <a href="central.html" class="btn btn-primary">Voltar à visão geral</a>
     </div>`;
 }
 
@@ -250,7 +250,7 @@ function render() {
         { rotulo: ini.nome },
     ])}
     <div class="ilha p-3 mb-2">
-        <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
             <div>
                 <h4 class="fw-bold mb-1">${esc(ini.nome)}</h4>
                 <div class="d-flex flex-wrap align-items-center gap-2 fs-13 text-muted">

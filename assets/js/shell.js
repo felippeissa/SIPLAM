@@ -18,6 +18,7 @@ import { mostrarAvisosPendentes } from "./toast.js";
 import { confirmarAcao } from "./confirmar.js";
 import { instalarBusca } from "./busca.js";
 import { ligarCamposEstaticos } from "./campo-estatico.js";
+import { ligarCelulasLongas } from "./celula-longa.js";
 import { instalarAtena } from "./atena.js";
 import { instalarChat } from "./chat.js";
 import { instalarNotificacoes } from "./notificacoes.js";
@@ -728,6 +729,7 @@ export function montarShell() {
     mostrarAvisosPendentes();
 
     ligarCamposEstaticos();
+    ligarCelulasLongas();
     return { estado, visao };
 }
 
@@ -739,10 +741,6 @@ export function montarShell() {
  * não lista — as consultas transversais e as fichas de um registro.
  */
 const TRILHAS = {
-    // Fora do menu por ora: o Diagnóstico sai da vez e a tela será refeita
-    // adiante. O endereço continua respondendo, com trilha, para quem tiver o
-    // link guardado.
-    "central-diagnostico.html": { rotulo: "Diagnóstico" },
     "central-ipofs.html": { rotulo: "IPOFs" },
     "central-projetos.html": { rotulo: "Projetos GOMAP" },
     // Fichas de um registro. O rótulo aqui é só o que aparece quando a ficha

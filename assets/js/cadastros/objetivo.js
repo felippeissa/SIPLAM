@@ -53,7 +53,7 @@ export const objetivo = {
     colecao: "objetivos",
     pasta: "central-objetivo",
     listagem: "central-objetivo.html",
-    titulo: "Cadastro de Objetivos Estratégicos",
+    titulo: "Cadastro de objetivos estratégicos",
     subtitulo: "O que cada eixo se propõe a alcançar.",
     novoRotulo: "Novo objetivo estratégico",
     singular: "Objetivo estratégico",

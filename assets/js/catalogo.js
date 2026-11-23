@@ -45,6 +45,8 @@ export function catalogo(cfg) {
     let escolhidos = [];
     let termo = "";
     let aberto = false;
+    // Visualização: sem busca e sem ações — só a tabela do que está vinculado (GESIS 8: ver é ler, não preencher).
+    let leitura = false;
     // O clique fora é ouvido no documento, que sobrevive ao redesenho do
     // formulário. Sem esta trava, cada redesenho somaria mais um ouvinte.
     let ouvindoForaDaTela = false;
@@ -92,9 +94,11 @@ export function catalogo(cfg) {
 
     function linhas() {
         if (!escolhidos.length) {
-            return `<tr><td colspan="${campos.length + extras.length + 2}" class="text-center text-muted py-3 fs-12">
+            return `<tr><td colspan="${campos.length + extras.length + (leitura ? 1 : 2)}" class="text-center text-muted py-3 fs-12">
                 ${
-                    cfg.unico
+                    leitura
+                        ? `Nenhum${artigo === "a" ? "a" : ""} ${singular.toLowerCase()} vinculad${artigo}.`
+                        : cfg.unico
                         ? `Nenhum${artigo === "a" ? "a" : ""} ${singular.toLowerCase()} escolhid${artigo}.`
                         : `Nenhum${artigo === "a" ? "a" : ""} ${singular.toLowerCase()} vinculad${artigo}. Busque acima ou cadastre ${artigo === "a" ? "uma" : "um"} nov${artigo}.`
                 }
@@ -110,7 +114,7 @@ export function catalogo(cfg) {
                 <td class="fw-medium">${esc(r.nome)}</td>
                 ${campos.map((c) => `<td class="fs-13 text-muted">${esc(r[c.id] || "—")}</td>`).join("")}
                 ${extras.map((c) => `<td class="fs-13 text-muted">${c.valor(r, estado())}</td>`).join("")}
-                <td class="text-end align-top text-nowrap">
+                ${leitura ? "" : `<td class="text-end align-top text-nowrap">
                     ${
                         cfg.semCriar
                             ? ""
@@ -121,7 +125,7 @@ export function catalogo(cfg) {
                     <button type="button" class="btn btn-sm btn-icon btn-terciario" data-${px}-tirar="${id}" title="Desvincular" aria-label="Desvincular">
                         <i class="ti ti-x fs-16"></i>
                     </button>
-                </td>
+                </td>`}
             </tr>`;
             })
             .join("");
@@ -158,7 +162,8 @@ export function catalogo(cfg) {
         );
     }
 
-    function html(selecionados = []) {
+    function html(selecionados = [], opcoes = {}) {
+        leitura = !!opcoes.leitura;
         escolhidos = [...selecionados];
         termo = "";
         aberto = false;
@@ -173,7 +178,7 @@ export function catalogo(cfg) {
                 e convidaria a cadastrar antes de procurar — que é como nasce
                 duplicata.
             -->
-            <div class="position-relative mb-2 ${cfg.unico && escolhidos.length ? "d-none" : ""}" id="${px}-caixa">
+            <div class="position-relative mb-2 ${leitura || (cfg.unico && escolhidos.length) ? "d-none" : ""}" id="${px}-caixa">
                 <input type="text" class="form-control pe-5" id="${px}-busca" autocomplete="off"
                        placeholder="Digite e selecione" />
                 <i class="ti ti-search position-absolute top-50 end-0 translate-middle-y me-3 text-muted" style="pointer-events:none"></i>
@@ -189,7 +194,7 @@ export function catalogo(cfg) {
                             <th style="width:16rem">Nome</th>
                             ${campos.map((c) => `<th>${esc(c.rotulo)}</th>`).join("")}
                             ${extras.map((c) => `<th>${esc(c.rotulo)}</th>`).join("")}
-                            <th style="width:6rem"></th>
+                            ${leitura ? "" : '<th style="width:6rem"></th>'}
                         </tr>
                     </thead>
                     <tbody id="${px}-corpo">${linhas()}</tbody>

@@ -324,8 +324,8 @@ export function montarFormularioPrograma({ novo }) {
         <div class="row g-3">
             <div class="col-md-4">${campoTexto("f-nome", "Nome do programa", edicao.nome, { obrigatorio: true })}</div>
             <div class="col-md-2">${campoDeIcone(edicao.icone, leitura)}</div>
-            <div class="col-md-3">${campoDeMarcadores(edicao.marcadorIds, estado, leitura)}</div>
-            <div class="col-md-3">
+            <div class="col-md-4">${campoDeMarcadores(edicao.marcadorIds, estado, leitura)}</div>
+            <div class="col-md-2">
                 <div class="mb-3">
                     <label class="form-label" for="f-status">Status <span class="text-danger">*</span></label>
                     <select class="form-select" id="f-status" ${leitura ? "disabled" : ""}>
@@ -340,15 +340,15 @@ export function montarFormularioPrograma({ novo }) {
         ${campoTexto("f-resultadoEsperado", "Resultado esperado do programa", edicao.resultadoEsperado, { linhas: 2 })}
 
         <div class="row g-3">
-            <div class="col-md-6">${catalogoEixo.html(edicao.eixoId ? [edicao.eixoId] : [])}</div>
-            <div class="col-md-6">${catalogoObjetivo.html(edicao.objetivoId ? [edicao.objetivoId] : [])}</div>
+            <div class="col-md-6">${catalogoEixo.html(edicao.eixoId ? [edicao.eixoId] : [], { leitura })}</div>
+            <div class="col-md-6">${catalogoObjetivo.html(edicao.objetivoId ? [edicao.objetivoId] : [], { leitura })}</div>
         </div>
 
-        ${catalogoProblema.html(problemaInicial ? [problemaInicial] : [])}
-        ${catalogoPopulacao.html(populacaoInicial)}
-        ${catalogoCausas.html(causasIniciais)}
-        ${catalogoIndicadores.html(indicadoresIniciais)}
-        ${catalogoIniciativas.html(iniciativasIniciais)}`;
+        ${catalogoProblema.html(problemaInicial ? [problemaInicial] : [], { leitura })}
+        ${catalogoPopulacao.html(populacaoInicial, { leitura })}
+        ${catalogoCausas.html(causasIniciais, { leitura })}
+        ${catalogoIndicadores.html(indicadoresIniciais, { leitura })}
+        ${catalogoIniciativas.html(iniciativasIniciais, { leitura })}`;
     }
 
     function ligarCatalogos(escopo) {
@@ -383,18 +383,18 @@ export function montarFormularioPrograma({ novo }) {
 
     function render() {
         document.getElementById("conteudo").innerHTML = `
-        ${barraTitulo(novo ? "Novo Programa" : `Editar Programa ${esc(edicao.codigo)}`, [novo ? "Novo" : "Editar"])}
+        ${barraTitulo(novo ? "Novo Programa" : `${leitura ? "Visualizar" : "Editar"} Programa ${esc(edicao.codigo)}`, [novo ? "Novo" : leitura ? "Visualizar" : "Editar"])}
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2 p-3">
+                    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 p-3">
                         <div>
                         <h4 class="card-title mb-1">Programa</h4>
                         <p class="text-muted mb-0 fs-13">Identidade, vínculos e situação do Programa.</p></div>
                         <div class="d-flex gap-2 align-items-center">
             ${
                 leitura
-                    ? `<a href="${voltar}" class="btn btn-outline-primary">Voltar</a>`
+                    ? `<a href="${voltar}" class="btn btn-primary">Voltar</a>`
                     : `<a href="${voltar}" class="btn btn-outline-primary" data-cancelar="${novo ? "cadastro" : "edicao"}">Cancelar</a>
                        <button type="button" class="btn btn-primary" id="salvar">Salvar</button>`
             }</div>

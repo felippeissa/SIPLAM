@@ -62,7 +62,10 @@ export const marcador = {
     rotuloNome: "Nome do marcador",
     exemplo: "Revisar com o órgão",
     podeExcluir: true,
-    filtros: [],
+    filtros: [
+        { tipo: "texto", id: "dimensao", rotulo: "Dimensão", campo: "dimensao", opcoes: () => Object.entries(DIMENSOES).map(([valor, d]) => ({ valor, rotulo: d.rotulo })) },
+        { tipo: "texto", id: "tipo", rotulo: "Tipo", campo: "tipo", opcoes: () => [...new Set(Object.values(DIMENSOES).flatMap((d) => d.tipos))].map((t) => ({ valor: t, rotulo: t })) },
+    ],
 
     visivel,
     leituraDoItem: soLeitura,
@@ -210,6 +213,20 @@ const resumoDeMarcadores = (marcadores) =>
 export function campoDeMarcadores(selecionados, estado, leitura) {
     const todos = marcadoresVisiveis(estado);
     const marcados = todos.filter((m) => (selecionados ?? []).includes(m.id));
+    // Visualização (GESIS 8): rótulo e texto, não um dropdown travado. Cada marcador com a sua cor.
+    if (leitura) {
+        return `
+    <div class="mb-3">
+        <label class="form-label">Marcadores</label>
+        <div class="form-control-plaintext campo-estatico${marcados.length ? "" : " text-muted"}">${
+            marcados.length
+                ? marcados
+                      .map((m) => `<span class="d-inline-flex align-items-center me-3"><span class="badge rounded-pill me-1" style="background:${esc(m.cor ?? CORES[0])}">&nbsp;</span>${esc(m.nome)}</span>`)
+                      .join("")
+                : "—"
+        }</div>
+    </div>`;
+    }
     return `
     <div class="mb-3">
         <label class="form-label" for="f-marcadores-botao">Marcadores</label>

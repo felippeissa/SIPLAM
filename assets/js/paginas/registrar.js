@@ -221,7 +221,7 @@ function listaDeAnexos() {
             <i class="ti ti-paperclip text-muted"></i>
             <span class="fs-13 text-truncate">${esc(a.nome)}</span>
             <span class="fs-12 text-muted ms-auto">${esc(tamanhoLegivel(a.tamanho))}</span>
-            <button type="button" class="btn btn-sm btn-light" data-tirar="${n}" aria-label="Remover ${esc(a.nome)}">
+            <button type="button" class="btn btn-sm btn-icon btn-terciario" data-tirar="${n}" aria-label="Remover ${esc(a.nome)}">
                 <i class="ti ti-x"></i>
             </button>
         </li>`
@@ -359,7 +359,7 @@ function confirmacao(nome, perfil) {
             <strong>${esc(escolhido?.nome ?? perfil)}</strong>. Um administrador central vai analisar
             e confirmar o acesso. Você será avisado por e-mail quando houver resposta.
         </p>
-        <a href="index.html" class="btn btn-outline-primary">Voltar para a entrada</a>
+        <a href="index.html" class="btn btn-primary">Voltar para a entrada</a>
     </div>`;
 }
 

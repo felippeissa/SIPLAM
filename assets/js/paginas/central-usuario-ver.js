@@ -61,6 +61,19 @@ function render() {
     const podeAprovar = pendente;
     const podeReprovar = pendente;
 
+    // Ações no topo do cartão, como nos demais formulários e telas de visualização.
+    const acoes = `
+        ${(() => {
+            const podeEditar = !leitura && !pendente && u.situacao !== "reprovado";
+            // Voltar é a única ação quando não há mais nada a fazer na tela: aí é o botão primário.
+            const unica = !podeEditar && !podeReprovar && !podeAprovar;
+            return `<a href="${voltar}" class="btn ${unica ? "btn-primary" : "btn-outline-primary"}">Voltar</a>` +
+                (podeEditar ? `<a href="${url(`central-usuarios/editar.html?id=${encodeURIComponent(u.id)}`)}" class="btn btn-outline-primary">Editar</a>` : "");
+        })()}
+        ${podeReprovar ? '<button type="button" class="btn btn-outline-danger" id="reprovar">Reprovar</button>' : ""}
+        ${podeAprovar ? '<button type="button" class="btn btn-primary" id="aprovar">Aprovar</button>' : ""}
+    `;
+
     document.getElementById("conteudo").innerHTML = `
     ${barraTitulo(esc(u.nome), ["Visualizar"])}
 
@@ -73,7 +86,7 @@ function render() {
                             <h4 class="card-title mb-1">Usuário</h4>
                             <p class="text-muted mb-0 fs-13">Solicitado em ${esc(u.criadoEm ?? "—")}${u.decididoEm ? ` · decidido em ${esc(u.decididoEm)}${u.decididoPor ? ` por ${esc(u.decididoPor)}` : ""}` : ""}</p>
                         </div>
-                        ${chip(s.rotulo, s.tom)}
+                        <div class="d-flex align-items-center gap-16">${chip(s.rotulo, s.tom)}${acoes}</div>
                     </div>
                 </div>
                 <div class="card-body">
@@ -126,13 +139,7 @@ function render() {
             </div>
         </div>
     </div>
-
-    <div class="mt-1 mb-4 d-flex justify-content-end gap-2 align-items-center">
-        <a href="${voltar}" class="btn btn-outline-primary">Voltar</a>
-        ${!leitura && !pendente && u.situacao !== "reprovado" ? `<a href="${url(`central-usuarios/editar.html?id=${encodeURIComponent(u.id)}`)}" class="btn btn-outline-primary"><i class="ti ti-pencil me-1"></i>Editar</a>` : ""}
-        ${podeReprovar ? '<button type="button" class="btn btn-outline-danger" id="reprovar">Reprovar</button>' : ""}
-        ${podeAprovar ? '<button type="button" class="btn btn-primary" id="aprovar">Aprovar</button>' : ""}
-    </div>`;
+`;
 
     // Decidir recarrega a tela: a situação mudou, e com ela os botões que cabem.
     document.getElementById("aprovar")?.addEventListener("click", () => abrirAprovacao(u, render));

@@ -157,7 +157,7 @@ export function montarFormulario(cfg) {
 
     function acoes() {
         if (leitura) {
-            return `<a href="${voltar}" class="btn btn-outline-primary">Voltar</a>`;
+            return `<a href="${voltar}" class="btn btn-primary">Voltar</a>`;
         }
         const excluir =
             novo || !cfg.podeExcluir
@@ -174,11 +174,11 @@ export function montarFormulario(cfg) {
 
     function render() {
         document.getElementById("conteudo").innerHTML = `
-        ${barraTitulo(novo ? esc(cfg.novoRotulo) : `Editar ${esc(cfg.singular.toLowerCase())}`, [novo ? "Novo" : "Editar"])}
+        ${barraTitulo(novo ? esc(cfg.novoRotulo) : `${leitura ? "Visualizar" : "Editar"} ${esc(cfg.singular.toLowerCase())}`, [novo ? "Novo" : leitura ? "Visualizar" : "Editar"])}
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2 p-3">
+                    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 p-3">
                         <div>
                         <h4 class="card-title mb-1">${esc(cfg.titulo)}</h4>
                         <p class="text-muted mb-0 fs-13">${esc(cfg.subtitulo)}</p></div>

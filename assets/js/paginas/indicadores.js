@@ -172,7 +172,7 @@ function modal() {
                 <div class="row g-2">
                     ${ANOS.map(
                         (a) => `
-                    <div class="col-6 col-md-3">
+                    <div class="col-6 col-md-2">
                         <label class="form-label" for="i-meta-${a}">${a}</label>
                         <input type="text" class="form-control" id="i-meta-${a}" data-meta="${a}" value="${esc(ind.metas?.[a] ?? "")}" />
                     </div>`

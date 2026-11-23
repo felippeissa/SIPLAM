@@ -388,7 +388,7 @@ export function montarListaDeIniciativas({ visao }) {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">${listaPendencias(pendDe(ini), { linkEntrega: false })}</div>
-            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar</button></div>
+            <div class="modal-footer"><button type="button" class="btn btn-primary" data-bs-dismiss="modal">Fechar</button></div>
         </div></div>
     </div>`
         );

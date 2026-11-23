@@ -55,7 +55,7 @@ if (!p) {
     document.getElementById("conteudo").innerHTML = `
     ${barraTitulo(esc(p.nome), [`${esc(p.codigo)} — ${esc(p.nome)}`])}
     <div class="my-3">
-        <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
             <div class="d-flex align-items-start gap-3">
                 <span class="icone-programa icone-programa-grande" title="Ícone do programa">${seloDoIcone(p).match(/<i .*<\/i>/)[0]}</span>
                 <div>

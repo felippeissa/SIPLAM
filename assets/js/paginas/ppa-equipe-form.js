@@ -36,7 +36,7 @@ function montar() {
     const detalhe = (u) => `${(u.perfis ?? []).map(nomeDoPerfil).join(", ") || "Sem perfil"}${u.orgao ? ` · ${u.orgao}` : ""}`;
 
     const acoes = leitura
-        ? `<a href="${voltar}" class="btn btn-outline-primary">Voltar</a>`
+        ? `<a href="${voltar}" class="btn btn-primary">Voltar</a>`
         : `${novo ? "" : '<button type="button" class="btn btn-danger" id="excluir">Excluir</button>'}
            <a href="${voltar}" class="btn btn-outline-primary" data-cancelar="${novo ? "cadastro" : "edicao"}">Cancelar</a>
            <button type="button" class="btn btn-primary" id="salvar">Salvar</button>`;
@@ -51,9 +51,9 @@ function montar() {
            <input type="text" class="form-control" id="f-nome" value="${esc(atual.nome)}" disabled />`;
 
     document.getElementById("conteudo").innerHTML = `
-    ${barraTitulo(novo ? "Novo membro" : `Editar ${esc(atual.nome)}`, [novo ? "Novo" : "Editar"])}
+    ${barraTitulo(novo ? "Novo membro" : `${leitura ? "Visualizar" : "Editar"} ${esc(atual.nome)}`, [novo ? "Novo" : leitura ? "Visualizar" : "Editar"])}
     <div class="row"><div class="col-12"><div class="card">
-        <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2 p-3">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 p-3">
             <div>
                 <h4 class="card-title mb-1">Equipe do plano</h4>
                 <p class="text-muted mb-0 fs-13">${novo ? "Quem entra na equipe e com que função." : "A função desta pessoa no plano."}</p>

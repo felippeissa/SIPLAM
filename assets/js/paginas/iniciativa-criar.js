@@ -44,7 +44,7 @@ function render() {
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2 p-3">
+                <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 p-3">
                     <div>
                         <h4 class="card-title mb-1">Iniciativa</h4>
                         <p class="text-muted mb-0 fs-13">A contribuição do órgão para um Programa.</p>

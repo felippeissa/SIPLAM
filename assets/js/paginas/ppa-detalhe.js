@@ -108,8 +108,8 @@ function render() {
         leitura
             ? ""
             : `<td class="text-end coluna-acoes"><div class="d-inline-flex gap-1">
-                <button type="button" class="btn btn-sm btn-icon btn-terciario" data-marcar="${esc(p.id)}" title="Adicionar marcadores" aria-label="Adicionar marcadores a ${esc(p.nome)}"><i class="ti ti-tag-plus fs-16"></i></button>
                 <a href="${url(`central-programas/editar.html?id=${encodeURIComponent(p.id)}`)}" class="btn btn-sm btn-icon btn-terciario" title="Editar" aria-label="Editar"><i class="ti ti-pencil fs-16"></i></a>
+                <button type="button" class="btn btn-sm btn-icon btn-terciario" data-marcar="${esc(p.id)}" title="Adicionar marcadores" aria-label="Adicionar marcadores a ${esc(p.nome)}"><i class="ti ti-tag-plus fs-16"></i></button>
             </div></td>`;
     const abaProgramas = tabela(
         ["Marcador", "Programa", "Eixo", "Iniciativas", "Previsto"],
@@ -209,7 +209,7 @@ function render() {
             </div>
         </div>`;
 
-    const meta = (r, v) => `<div class="col-md-4 col-xl-3"><h6 class="mb-1 text-muted text-uppercase">${r}</h6><p class="fw-medium mb-0">${v}</p></div>`;
+    const meta = (r, v) => `<div class="col-md-4 col-xl-2"><h6 class="mb-1 text-muted text-uppercase">${r}</h6><p class="fw-medium mb-0">${v}</p></div>`;
 
     document.getElementById("conteudo").innerHTML = `
     ${barraTitulo("Página inicial", [])}
@@ -246,7 +246,7 @@ function render() {
                             </ul>
                         </div>`
                         }
-                        ${leitura ? "" : `<a href="${url(`central-ppa/editar.html?id=${encodeURIComponent(ppa.id)}`)}" class="btn btn-light"><i class="ti ti-pencil me-1"></i>Editar</a>`}
+                        ${leitura ? "" : `<a href="${url(`central-ppa/editar.html?id=${encodeURIComponent(ppa.id)}`)}" class="btn btn-terciario"><i class="ti ti-pencil me-1"></i>Editar</a>`}
                     </div>
                 </div>
                 <div class="card-body px-4">

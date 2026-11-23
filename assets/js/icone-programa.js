@@ -39,6 +39,18 @@ export function seloDoIcone(p) {
 /** Botão que mostra o ícone escolhido e abre a janela de escolha. */
 export function campoDeIcone(valor, leitura) {
     const c = iconeDoPrograma({ icone: valor });
+    // Visualização (GESIS 8): rótulo e texto, não um botão travado.
+    if (leitura) {
+        return `
+    <div class="mb-3">
+        <label class="form-label">Ícone do programa</label>
+        <input type="hidden" id="f-icone" value="${esc(valor ?? "")}" />
+        <div class="form-control-plaintext campo-estatico d-flex align-items-center gap-2">
+            <span class="icone-programa"><i class="ti ${c}"></i></span>
+            <span>${valor ? esc(nomeDoIcone(c)) : "Ícone padrão"}</span>
+        </div>
+    </div>`;
+    }
     return `
     <div class="mb-3">
         <label class="form-label" for="f-icone-botao">Ícone do programa</label>
@@ -98,7 +110,7 @@ function abrirSeletorDeIcone(atual, aoEscolher) {
                     <p class="text-muted fs-13 mb-0 d-none" id="icone-vazio">Nenhum ícone para essa busca.</p>
                 </div>
                 <div class="modal-footer justify-content-between">
-                    <button type="button" class="btn btn-light" id="icone-padrao">Usar o ícone padrão</button>
+                    <button type="button" class="btn btn-terciario" id="icone-padrao"><i class="ti ti-restore me-1"></i>Usar o ícone padrão</button>
                     <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </div>

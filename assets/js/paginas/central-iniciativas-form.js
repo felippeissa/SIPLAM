@@ -163,15 +163,15 @@ export function montarFormularioIniciativa({ novo }) {
             <textarea class="form-control" id="f-descricao" rows="3"${dis}>${esc(edicao.descricao ?? "")}</textarea>
         </div>
 
-        ${catalogoPrograma.html(edicao.programaId ? [edicao.programaId] : [])}
+        ${catalogoPrograma.html(edicao.programaId ? [edicao.programaId] : [], { leitura })}
 
-        ${catalogoCausas.html(causasDaIniciativa())}
+        ${catalogoCausas.html(causasDaIniciativa(), { leitura })}
 
-        ${catalogoIndicadores.html(edicao.indicadorIds ?? [])}`;
+        ${catalogoIndicadores.html(edicao.indicadorIds ?? [], { leitura })}`;
     }
 
     function acoes() {
-        if (leitura) return `<a href="${voltar}" class="btn btn-outline-primary">Voltar</a>`;
+        if (leitura) return `<a href="${voltar}" class="btn btn-primary">Voltar</a>`;
         const excluir = novo
             ? ""
             : `<button type="button" class="btn btn-danger" id="excluir"
@@ -197,11 +197,11 @@ export function montarFormularioIniciativa({ novo }) {
 
     function render() {
         document.getElementById("conteudo").innerHTML = `
-        ${barraTitulo(novo ? "Nova Iniciativa" : "Editar iniciativa", [novo ? "Novo" : "Editar"])}
+        ${barraTitulo(novo ? "Nova Iniciativa" : leitura ? "Visualizar iniciativa" : "Editar iniciativa", [novo ? "Novo" : leitura ? "Visualizar" : "Editar"])}
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2 p-3">
+                    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 p-3">
                         <div>
                             <h4 class="card-title mb-1">Cadastro de Iniciativas</h4>
                             <p class="text-muted mb-0 fs-13">A contribuição de um órgão para um Programa do plano.</p>

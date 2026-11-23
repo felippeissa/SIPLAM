@@ -91,20 +91,15 @@ export function criarFiltros(cfg) {
     /** Ícone do campo, escolhido pelo que ele filtra. */
     const icone = (c) => c.icone ?? "ti-filter";
 
-    function html() {
-        return `
-        <div class="card-header border-light filtros" id="barra-filtros">
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                ${cfg.livre ? `                <div class="filtro-campo">
+    const livreHtml = () => `<div class="filtro-campo">
                     ${rotulo("filtro-livre", cfg.livre.rotulo)}
                     <div class="app-search">
                         <input type="search" id="filtro-livre" class="form-control"
                                placeholder="${dica(cfg.livre.rotulo, "Digite")}" aria-label="Filtrar por ${esc(cfg.livre.rotulo)}" />
                         <i class="ti ti-search app-search-icon text-muted"></i>
                     </div>
-                </div>` : ""}
-                ${campos
-                    .map((c) => {
+                </div>`;
+    const campoHtml = (c) => {
                         if (tipoDe(c) === "texto") {
                             return `
                 <div class="filtro-campo">
@@ -133,8 +128,8 @@ export function criarFiltros(cfg) {
                 </div>`;
                         }
 
+                        // O filtro declarado aparece sempre, mesmo sem opções ainda: a tela não muda de forma conforme os dados.
                         const lista = opcoes.get(c.id);
-                        if (!lista.length) return "";
                         return `
                 <div class="filtro-campo">
                     ${rotulo(`filtro-${c.id}`, c.rotulo)}
@@ -147,17 +142,26 @@ export function criarFiltros(cfg) {
                         <i class="ti ${esc(icone(c))} app-search-icon text-muted"></i>
                     </div>
                 </div>`;
-                    })
-                    .join("")}
+                    };
 
-            </div>
+    function html() {
+        // GESIS 6.1: passou de uma linha (6 filtros), o resto fica recolhido em "Mais filtros".
+        const todos = [...(cfg.livre ? [livreHtml()] : []), ...campos.map(campoHtml)];
+        const primeiros = todos.slice(0, 6);
+        const resto = todos.slice(6);
+        const colunas = (n) => `style="--filtros-colunas:${Math.min(6, n) || 1}"`;
+        return `
+        <div class="card-header border-light filtros" id="barra-filtros">
+            <div class="grade-filtros" ${colunas(primeiros.length)}>${primeiros.join("")}</div>
+            ${resto.length ? `<div class="collapse" id="filtros-mais"><div class="grade-filtros mt-3" ${colunas(resto.length)}>${resto.join("")}</div></div>` : ""}
 
             <!-- GESIS 6.4: os botões ficam abaixo dos filtros, nunca na mesma linha; só o terciário leva ícone. -->
             <div class="filtro-botoes d-flex flex-wrap align-items-center gap-16 mt-3">
+                <div class="d-flex align-items-center gap-16 me-auto">
                 ${
                     cfg.exportar
                         ? `
-                <div class="dropdown me-auto">
+                <div class="dropdown">
                     <button class="btn btn-terciario dropdown-toggle drop-arrow-none" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="ti ti-download me-1"></i> Exportar <i class="ti ti-chevron-down align-middle ms-1"></i>
                     </button>
@@ -166,7 +170,13 @@ export function criarFiltros(cfg) {
                         <li><button class="dropdown-item" type="button" data-exportar="xls">Exportar como Excel</button></li>
                     </ul>
                 </div>`
-                        : '<span class="me-auto"></span>'
+                        : ""
+                }
+                </div>
+                ${
+                    resto.length
+                        ? `<button type="button" class="btn btn-terciario" id="filtro-mais-botao" data-bs-toggle="collapse" data-bs-target="#filtros-mais" aria-expanded="false" aria-controls="filtros-mais"><i class="ti ti-adjustments-horizontal me-1"></i><span>Mais filtros</span></button>`
+                        : ""
                 }
                 <button type="button" class="btn btn-outline-primary" id="filtro-limpar">Limpar</button>
                 <button type="button" class="btn btn-primary" id="filtro-buscar">Filtrar</button>
@@ -182,6 +192,14 @@ export function criarFiltros(cfg) {
     function ligar(aoMudar) {
         const barra = document.getElementById("barra-filtros");
         if (!barra) return;
+
+        const maisBotao = barra.querySelector("#filtro-mais-botao");
+        const maisArea = barra.querySelector("#filtros-mais");
+        if (maisBotao && maisArea) {
+            const texto = (aberto) => (maisBotao.querySelector("span").textContent = aberto ? "Menos filtros" : "Mais filtros");
+            maisArea.addEventListener("show.bs.collapse", () => texto(true));
+            maisArea.addEventListener("hide.bs.collapse", () => texto(false));
+        }
 
         // O Choices vem no vendors.min.js do template; sem ele o campo continua
         // sendo um `select multiple` que funciona, só mais feio.

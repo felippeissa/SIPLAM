@@ -91,7 +91,7 @@ function render() {
         { rotulo: e.nome || "Nova Entrega" },
     ])}
     <div class="my-3">
-        <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
             <div>
                 <h4 class="fw-bold mb-1">${esc(e.nome || "Nova Entrega")}</h4>
                 <div class="d-flex flex-wrap align-items-center gap-2 fs-13 text-muted">
@@ -100,7 +100,7 @@ function render() {
                     <span id="aviso-salvo" class="d-none">${chip("alterações salvas", "ok")}</span>
                 </div>
             </div>
-            <a href="iniciativa.html?id=${ini?.id}" class="btn btn-sm btn-light"><i class="ti ti-arrow-left me-1"></i>Voltar à Iniciativa</a>
+            <a href="iniciativa.html?id=${ini?.id}" class="btn btn-terciario"><i class="ti ti-arrow-left me-1"></i>Voltar à Iniciativa</a>
         </div>
     </div>
 
@@ -126,14 +126,14 @@ function render() {
                     <textarea class="form-control" id="f-descricao" rows="2"${dis}>${esc(e.descricao)}</textarea>
                 </div>
                 <div class="row g-3">
-                    <div class="col-md-5">
+                    <div class="col-md-4">
                         <label class="form-label" for="f-unidade">Unidade de medida ${marca("unidade")}</label>
                         <select class="form-select" id="f-unidade"${dis}>
                             <option value="">Selecione</option>
                             ${UNIDADES.map((u) => `<option value="${esc(u)}"${u === e.unidadeMedida ? " selected" : ""}>${esc(u)}</option>`).join("")}
                         </select>
                     </div>
-                    <div class="col-md-7">
+                    <div class="col-md-8">
                         <label class="form-label" for="f-comprovacao">Método de comprovação ${marca("comprovacao")}</label>
                         <input type="text" class="form-control" id="f-comprovacao" value="${esc(e.metodoComprovacao)}"${dis} />
                     </div>
@@ -146,7 +146,7 @@ function render() {
                 <div class="row g-2 mb-3">
                     ${ANOS.map(
                         (a) => `
-                    <div class="col-6 col-md-3">
+                    <div class="col-6 col-md-2">
                         <label class="form-label" for="meta-${a}">${a}</label>
                         <input type="number" class="form-control" id="meta-${a}" data-meta="${a}" value="${e.metas[a] ?? ""}" placeholder="—"${dis} />
                     </div>`

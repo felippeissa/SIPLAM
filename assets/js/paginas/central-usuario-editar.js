@@ -74,15 +74,24 @@ function render() {
                 }
             </div>`;
 
+    // Ações no topo do cartão, como nos demais formulários.
+    const acoes = `
+        ${editavel ? `<a href="${voltar}" class="btn btn-outline-primary" data-cancelar="edicao">Cancelar</a>` : `<a href="${voltar}" class="btn btn-primary">Voltar</a>`}
+        ${editavel ? '<button type="button" class="btn btn-primary" id="salvar">Salvar</button>' : ""}
+    `;
+
     document.getElementById("conteudo").innerHTML = `
     ${barraTitulo(esc(u.nome), ["Editar"])}
 
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header d-block p-3">
-                    <h4 class="card-title mb-1">Usuário</h4>
-                    <p class="text-muted mb-0 fs-13">Nome, e-mail, login e órgão vêm da base funcional e não se editam aqui.</p>
+                <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 p-3">
+                    <div>
+                        <h4 class="card-title mb-1">Usuário</h4>
+                        <p class="text-muted mb-0 fs-13">Nome, e-mail, login e órgão vêm da base funcional e não se editam aqui.</p>
+                    </div>
+                    <div class="d-flex gap-16 align-items-center">${acoes}</div>
                 </div>
                 <div class="card-body" id="formulario">
                     <div class="row">
@@ -129,11 +138,7 @@ function render() {
             </div>
         </div>
     </div>
-
-    <div class="mt-1 mb-4 d-flex justify-content-end gap-2 align-items-center">
-        <a href="${voltar}" class="btn btn-light">${editavel ? "Cancelar" : "Voltar"}</a>
-        ${editavel ? '<button type="button" class="btn btn-primary" id="salvar">Salvar</button>' : ""}
-    </div>`;
+`;
 
     if (editavel) ligar(u);
 }

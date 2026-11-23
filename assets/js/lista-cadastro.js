@@ -50,7 +50,8 @@ export function montarLista(cfg) {
             return {
                 id: f.id,
                 rotulo: f.rotulo,
-                opcoes: () => opcoesDe(itens(), (i) => i[f.campo]),
+                // `f.opcoes` fixa a lista quando ela vem do próprio cadastro (como as dimensões); sem ela, vêm dos registros.
+                opcoes: f.opcoes ?? (() => opcoesDe(itens(), (i) => i[f.campo])),
                 valorDe: (i) => (i[f.campo] ? [String(i[f.campo])] : []),
             };
         }
