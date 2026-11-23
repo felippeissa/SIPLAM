@@ -26,7 +26,8 @@ import {
 import { ANOS } from "../dados/seed.js";
 import { ppaCorrente } from "../dados/store.js";
 import { linhasDoPrograma } from "../dados/financeiro.js";
-import { montarShell, cabecalhoPagina } from "../shell.js";
+import { montarShell, barraTitulo, cabecalhoPagina } from "../shell.js";
+import { criarFiltros } from "../filtros.js";
 import { chip, statusChip, esc, faixaIndicadores, secao, medidor, faisca } from "../ui.js";
 
 const { estado } = montarShell();
@@ -35,7 +36,6 @@ const { estado } = montarShell();
 const params = new URLSearchParams(location.search);
 let programaId = params.get("programa");
 let aba = params.get("aba") || "geral";
-let busca = "";
 
 /* ---------- consultas do Programa ---------- */
 
@@ -66,24 +66,52 @@ const previstoPorAno = (pid) => {
 
 /* ---------- escolha do Programa ---------- */
 
-function listaProgramas() {
-    const termo = busca.trim().toLowerCase();
-    // Um PPA por vez: só os Programas do plano escolhido no cabeçalho.
+/** Os Programas do plano escolhido no cabeçalho — um PPA por vez. */
+function programasDoPlano() {
     const plano = ppaCorrente(estado);
-    const programas = estado.programas.filter(
-        (p) => (!p.ppaId || !plano || p.ppaId === plano.id) && (!termo || p.nome.toLowerCase().includes(termo) || p.codigo.includes(termo) || p.eixo.toLowerCase().includes(termo))
-    );
+    return estado.programas.filter((p) => !p.ppaId || !plano || p.ppaId === plano.id);
+}
 
+// O mesmo componente de filtros das demais telas. É refeito a cada vez que a lista aparece: voltar do Programa
+// para a lista traz os campos vazios, e o que estava valendo precisa voltar vazio junto.
+let filtrosLista = null;
+const novosFiltros = () =>
+    criarFiltros({
+        livre: { rotulo: "Programa", texto: (p) => `${p.codigo} ${p.nome} ${p.eixo ?? ""}` },
+        exportar: "visao-por-programas",
+    });
+
+function corpoLista() {
+    const programas = programasDoPlano().filter((p) => filtrosLista.passa(p));
+    if (programas.length === 0) {
+        return `<tr><td colspan="6" class="text-center text-muted py-4 fs-12">Nenhum Programa corresponde ao filtro.</td></tr>`;
+    }
+    return programas
+        .map((p) => {
+            const inis = iniciativasDo(p.id);
+            const ents = entregasDo(p.id);
+            return `
+                <tr class="cursor-pointer" data-abrir="${p.id}">
+                    <td class="codigo">${esc(p.codigo)}</td>
+                    <td>
+                        <div class="fw-medium">${esc(p.nome)}</div>
+                        <div class="fs-12 text-muted">${esc(p.eixo)}</div>
+                    </td>
+                    <td class="fs-13">${esc(p.orgaoCoordenador || "—")}</td>
+                    <td class="num">${inis.length || "—"}</td>
+                    <td class="num">${ents.length || "—"}</td>
+                    <td>${chip(APTIDAO_LABEL[p.aptidao], p.aptidao === "apto" ? "ok" : "alerta")}</td>
+                </tr>`;
+        })
+        .join("");
+}
+
+function listaProgramas() {
+    filtrosLista = novosFiltros();
     return `
-${cabecalhoPagina(
-    "Visão por Programas",
-    "Escolha um Programa para ver tudo o que pende dele num lugar só.",
-    `<div class="app-search">
-        <input type="search" id="busca" class="form-control form-control-sm" placeholder="Buscar Programa" value="${esc(busca)}" />
-        <i class="ti ti-search app-search-icon text-muted"></i>
-    </div>`
-)}
-<div class="card">
+${barraTitulo("Visão por Programas")}
+<div class="card mt-3">
+    ${filtrosLista.html()}
     <div class="table-responsive">
         <table class="table table-hover mb-0">
             <thead>
@@ -96,30 +124,7 @@ ${cabecalhoPagina(
                     <th style="width:11rem">Aptidão</th>
                 </tr>
             </thead>
-            <tbody>
-            ${
-                programas.length === 0
-                    ? `<tr><td colspan="6" class="text-center text-muted py-4 fs-12">Nenhum Programa corresponde à busca.</td></tr>`
-                    : programas
-                          .map((p) => {
-                              const inis = iniciativasDo(p.id);
-                              const ents = entregasDo(p.id);
-                              return `
-                <tr class="cursor-pointer" data-abrir="${p.id}">
-                    <td class="codigo">${esc(p.codigo)}</td>
-                    <td>
-                        <div class="fw-medium">${esc(p.nome)}</div>
-                        <div class="fs-12 text-muted">${esc(p.eixo)}</div>
-                    </td>
-                    <td class="fs-13">${esc(p.orgaoCoordenador || "—")}</td>
-                    <td class="num">${inis.length || "—"}</td>
-                    <td class="num">${ents.length || "—"}</td>
-                    <td>${chip(APTIDAO_LABEL[p.aptidao], p.aptidao === "apto" ? "ok" : "alerta")}</td>
-                </tr>`;
-                          })
-                          .join("")
-            }
-            </tbody>
+            <tbody id="corpo-lista">${corpoLista()}</tbody>
         </table>
     </div>
 </div>`;
@@ -289,7 +294,7 @@ function abaIniciativas(p) {
                         }
                     </td>
                     <td class="fs-13 text-muted">${esc(i.atualizadoEm)}</td>
-                    <td><a class="btn btn-sm btn-outline-primary" href="central-iniciativa.html?id=${i.id}">Abrir</a></td>
+                    <td><a class="btn btn-sm btn-icon btn-terciario" href="central-iniciativa.html?id=${i.id}" title="Visualizar" aria-label="Visualizar iniciativa"><i class="ti ti-eye fs-16"></i></a></td>
                 </tr>`;
                 })
                 .join("")}
@@ -533,6 +538,7 @@ function desenharGrafico(p) {
 function render() {
     const p = programaId ? estado.programas.find((x) => x.id === programaId) : null;
     document.getElementById("conteudo").innerHTML = p ? hub(p) : listaProgramas();
+    if (!p) filtrosLista.ligar(() => (document.getElementById("corpo-lista").innerHTML = corpoLista()));
     if (p && aba === "geral") desenharGrafico(p);
     else if (grafico) { grafico.destroy(); grafico = null; }
 }
@@ -551,18 +557,6 @@ document.addEventListener("click", (e) => {
         aba = t.dataset.aba;
         history.replaceState(null, "", `central-hub.html?programa=${programaId}&aba=${aba}`);
         return render();
-    }
-});
-
-document.addEventListener("input", (e) => {
-    if (e.target.id === "busca") {
-        busca = e.target.value;
-        render();
-        // O campo é recriado a cada tecla: sem devolver o cursor ao fim, o
-        // texto digitado sai embaralhado.
-        const campo = document.getElementById("busca");
-        campo.focus();
-        campo.setSelectionRange(campo.value.length, campo.value.length);
     }
 });
 

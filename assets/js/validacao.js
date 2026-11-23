@@ -1,3 +1,5 @@
+import { avisar } from "./toast.js";
+
 /**
  * Validação dos formulários, no padrão do template.
  *
@@ -40,6 +42,8 @@ export function validar(escopo, regras) {
     const falha = regras.find((r) => !r.valido);
     if (!falha) return true;
     acusar(falha.campo, falha.mensagem);
+    // GESIS Padrões UX 8.1.3: além de marcar o campo, o toast de erro avisa que há pendência.
+    avisar("Campos obrigatórios não preenchidos.", "erro");
 
     // Campo de calendário é readonly e abre o flatpickr ao receber foco, que
     // cobre justamente a mensagem de erro. Nesses, só trazemos o campo à vista.

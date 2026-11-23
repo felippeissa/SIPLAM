@@ -16,6 +16,7 @@ import { addIniciativa, updIniciativa, ppaCorrente } from "../dados/store.js";
 import { montarShell, barraTitulo, url } from "../shell.js";
 import { esc } from "../ui.js";
 import { avisar, avisarDepois } from "../toast.js";
+import "../confirmar.js"; // liga a confirmação do Cancelar
 import { camposDaIniciativa, blocoDeCausas, catalogoIndicadores, aoMudarIndicadores } from "../iniciativa-campos.js";
 import { limparAoDigitar } from "../validacao.js";
 import { ligarCampoDeMarcadores, lerCampoDeMarcadores } from "../cadastros/marcador.js";
@@ -48,9 +49,9 @@ function render() {
                         <h4 class="card-title mb-1">Iniciativa</h4>
                         <p class="text-muted mb-0 fs-13">A contribuição do órgão para um Programa.</p>
                     </div>
-                    <div class="d-flex gap-2 align-items-center">
-                        <a href="${voltar}" class="btn btn-light">Cancelar</a>
-                        <button type="button" class="btn btn-primary" id="criar">Cadastrar</button>
+                    <div class="d-flex gap-16 align-items-center">
+                        <a href="${voltar}" class="btn btn-outline-primary" data-cancelar="cadastro">Cancelar</a>
+                        <button type="button" class="btn btn-primary" id="criar">Salvar</button>
                     </div>
                 </div>
                 <div class="card-body" id="formulario">

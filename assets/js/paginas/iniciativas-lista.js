@@ -139,7 +139,7 @@ export function montarListaDeIniciativas({ visao }) {
         acao: () =>
             central || leitura
                 ? ""
-                : `<a href="${url("iniciativa/criar.html")}" class="btn btn-primary"><i class="ti ti-plus me-1"></i>Criar iniciativa</a>`,
+                : `<a href="${url("iniciativa/criar.html")}" class="btn btn-primary">Criar iniciativa</a>`,
     });
     
     const linhas = () => iniciativasDoPlano().filter((i) => filtros.passa(i));
@@ -222,7 +222,7 @@ export function montarListaDeIniciativas({ visao }) {
             .join("");
         // A tabela rola dentro do cartão: sem a estratégia "fixed" o menu seria cortado nas últimas linhas.
         return `<div class="dropdown">
-            <button type="button" class="btn btn-sm btn-light btn-icon" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}'
+            <button type="button" class="btn btn-sm btn-terciario btn-icon" title="Mais ações" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}'
                     aria-expanded="false" aria-label="Ações de ${esc(i.nome)}"><i class="ti ti-dots-vertical"></i></button>
             <ul class="dropdown-menu dropdown-menu-end fs-13">${itens}</ul>
         </div>`;
@@ -231,7 +231,7 @@ export function montarListaDeIniciativas({ visao }) {
     function corpo() {
         const ls = linhas();
         if (ls.length === 0) {
-            return `<tr><td colspan="${central ? 10 : 9}" class="text-center text-muted py-4 fs-12">${
+            return `<tr><td colspan="${central ? 6 : 5}" class="text-center text-muted py-4 fs-12">${
                 iniciativasDoPlano().length === 0
                     ? `Nenhuma Iniciativa neste plano.${central ? "" : " Comece por “Criar iniciativa”."}`
                     : "Nenhuma Iniciativa corresponde ao filtro."
@@ -240,7 +240,6 @@ export function montarListaDeIniciativas({ visao }) {
         return paginacao
             .fatia(ls)
             .map((i) => {
-                            const qtdEntregas = entregasDaIniciativa(estado, i.id).length;
                 return `
             <tr${i.status === "inativa" ? ' class="linha-inativa"' : ""}>
                 <td>${selosDeMarcadores(i.marcadorIds, estado, i.marcadorObs)}</td>
@@ -250,21 +249,11 @@ export function montarListaDeIniciativas({ visao }) {
                 <td class="fs-13 text-nowrap">${
                     programaDe(i) ? `${esc(programaDe(i).codigo)}-${esc(programaDe(i).nome)}` : '<span class="text-muted">—</span>'
                 }</td>
-                <td class="fs-13 text-muted">${
-                    problemaDe(i)
-                        ? textoLongo(problemaDe(i).nome, 1, "24rem")
-                        : "—"
-                }</td>
-                <td class="fs-13">${
-                    causasDe(i).length ? textoLongo(causasDe(i).map((c) => c.nome), 1, "20rem") : '<span class="text-muted">—</span>'
-                }</td>
-                <td class="text-center" style="font-variant-numeric:tabular-nums">${indicadoresDe(i).length}</td>
                 ${central ? `<td class="fs-13 text-muted text-nowrap">${esc(i.orgao ?? "—")}</td>` : ""}
                 <td>
                     ${statusChip(i.status)}
                     ${i.status === "divergencia" && i.motivo ? `<div class="fs-12 text-muted mt-1" title="${esc(rotuloMotivo(i.motivo))}">Motivo: ${esc(rotuloMotivo(i.motivo, 60))}</div>` : ""}
                 </td>
-                <td class="text-center" style="font-variant-numeric:tabular-nums">${qtdEntregas}</td>
                 <td class="text-end coluna-acoes">${menuDeAcoes(i)}</td>
             </tr>`;
             })
@@ -284,12 +273,8 @@ export function montarListaDeIniciativas({ visao }) {
                             <th style="width:9rem">Marcador</th>
                             <th>Iniciativa</th>
                             <th>Programa</th>
-                            <th>Problema</th>
-                            <th>Causas</th>
-                            <th class="text-center" style="width:6rem">Indicadores</th>
                             ${central ? `<th>Órgão</th>` : ""}
                             <th style="width:9rem">Status</th>
-                            <th class="text-center" style="width:5rem">Entregas</th>
                             <th class="text-end coluna-acoes" style="width:5rem">Ações</th>
                         </tr>
                     </thead>

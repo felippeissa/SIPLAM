@@ -18,6 +18,7 @@ import { situacaoUsuario, updItem } from "../dados/store.js";
 import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { esc } from "../ui.js";
 import { avisar, avisarDepois } from "../toast.js";
+import { confirmarSalvarEdicao } from "../confirmar.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
 import { PERFIS } from "../usuarios-decisao.js";
 
@@ -147,7 +148,7 @@ function ligar(u) {
     const mudou = () => select.value !== u.situacao;
     select.addEventListener("change", () => bloco.classList.toggle("d-none", !mudou()));
 
-    document.getElementById("salvar").addEventListener("click", () => {
+    document.getElementById("salvar").addEventListener("click", async () => {
         const situacao = select.value;
         const perfis = [...escopo.querySelectorAll("[data-perfil]:checked")].map((c) => c.value);
         const justificativa = document.getElementById("e-justificativa").value.trim();
@@ -157,6 +158,7 @@ function ligar(u) {
             { campo: "e-justificativa", valido: !mudou() || !!justificativa, mensagem: "Explique por que a situação está mudando." },
         ]);
         if (!ok) return;
+        if (!(await confirmarSalvarEdicao())) return;
 
         const patch = { perfis, situacao };
         if (mudou()) {
@@ -167,7 +169,7 @@ function ligar(u) {
 
         avisarDepois(
             !mudou()
-                ? "Usuário editado com sucesso."
+                ? "Usuário atualizado com sucesso."
                 : situacao === "inativo"
                   ? "Usuário inativado. O acesso ao SIPLAM foi suspenso."
                   : "Usuário reativado com acesso ao SIPLAM."

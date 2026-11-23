@@ -15,25 +15,29 @@ import {
     situacaoEntrega,
     STATUS_CURTO,
 } from "../dados/regras.js";
-import { montarShell, cabecalhoPagina } from "../shell.js";
+import { montarShell, barraTitulo } from "../shell.js";
+import { criarFiltros } from "../filtros.js";
 import { chip, statusChip, esc, faixaIndicadores } from "../ui.js";
 
 const { estado } = montarShell();
 
-let busca = "";
-let mostrarSilenciosos = true;
 const abertos = new Set();
 const programasAbertos = new Set();
 const iniciativasAbertas = new Set();
 
-function linhas() {
-    const q = busca.trim().toLowerCase();
+const linhasBase = () => ORGAOS.map((o) => resumoOrgao(estado, o));
 
-    return ORGAOS.filter((o) => !q || o.toLowerCase().includes(q))
-        .map((o) => resumoOrgao(estado, o))
-        .filter((r) => mostrarSilenciosos || r.inis.length > 0)
+const linhas = () =>
+    linhasBase()
+        .filter((r) => filtros.passa(r))
         .sort((a, b) => b.inis.length - a.inis.length || a.orgao.localeCompare(b.orgao));
-}
+
+// O mesmo componente de filtros das demais telas: campos com rótulo, e o filtro só vale ao clicar em Filtrar.
+const filtros = criarFiltros({
+    livre: { rotulo: "Órgão", texto: (r) => r.orgao },
+    campos: [{ id: "contribuicao", rotulo: "Contribuição", tipo: "booleano", sim: "Com contribuição", nao: "Sem contribuição", valorDe: (r) => [r.inis.length > 0 ? "sim" : "nao"] }],
+    exportar: "orgaos-participantes",
+});
 
 function chipsSituacao(r) {
     const partes = [];
@@ -154,40 +158,13 @@ function linhaOrgao(r) {
     }`;
 }
 
-function render() {
-    const ls = linhas();
-    const comContribuicao = ls.filter((r) => r.inis.length > 0);
-    const silenciosos = ls.length - comContribuicao.length;
-
+/** Monta a tela uma vez: a barra de filtros fica de pé, e só a faixa e o corpo da tabela se refazem. */
+function montar() {
     document.getElementById("conteudo").innerHTML = `
-    ${cabecalhoPagina(
-        "Órgãos participantes",
-        "Situação das contribuições de cada órgão ao plano.",
-        `
-        <div class="app-search">
-            <input type="search" id="busca" class="form-control form-control-sm" placeholder="Buscar órgão" value="${esc(busca)}" />
-            <i class="ti ti-search app-search-icon text-muted"></i>
-        </div>
-        <div class="form-check form-check-inline mb-0">
-            <input class="form-check-input" type="checkbox" id="silenciosos" ${mostrarSilenciosos ? "checked" : ""} />
-            <label class="form-check-label fs-13" for="silenciosos">Mostrar órgãos sem contribuição</label>
-        </div>`
-    )}
-    ${faixaIndicadores(
-        [
-            { valor: comContribuicao.length, rotulo: "Órgãos com contribuição" },
-            { valor: silenciosos, rotulo: "Sem contribuição" },
-            { valor: comContribuicao.reduce((s, r) => s + r.inis.length, 0), rotulo: "Iniciativas" },
-            { valor: comContribuicao.reduce((s, r) => s + r.entregas, 0), rotulo: "Entregas" },
-            {
-                valor: comContribuicao.reduce((s, r) => s + r.enviadas + r.emAnalise, 0),
-                rotulo: "Aguardando análise",
-            },
-            { valor: moedaCurta(comContribuicao.reduce((s, r) => s + r.previsto, 0)), rotulo: "Previsto" },
-        ],
-        "A execução é financeira, apurada no SIAFIC, e não indica desempenho físico."
-    )}
+    ${barraTitulo("Órgãos participantes")}
+    <div id="faixa" class="mt-3"></div>
     <div class="card">
+        ${filtros.html()}
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
@@ -203,18 +180,36 @@ function render() {
                         <th class="num" style="width:5rem">%</th>
                     </tr>
                 </thead>
-                <tbody>
-                ${
-                    ls.length === 0
-                        ? '<tr><td colspan="9" class="text-center text-muted py-4 fs-12">Nenhum órgão corresponde ao filtro.</td></tr>'
-                        : ls.map(linhaOrgao).join("")
-                }
-                </tbody>
+                <tbody id="corpo-orgaos"></tbody>
             </table>
         </div>
     </div>`;
+    filtros.ligar(() => render());
+}
 
-    document.getElementById("busca").value = busca;
+function render() {
+    const ls = linhas();
+    const comContribuicao = ls.filter((r) => r.inis.length > 0);
+    const silenciosos = ls.length - comContribuicao.length;
+
+    document.getElementById("faixa").innerHTML = faixaIndicadores(
+        [
+            { valor: comContribuicao.length, rotulo: "Órgãos com contribuição" },
+            { valor: silenciosos, rotulo: "Sem contribuição" },
+            { valor: comContribuicao.reduce((s, r) => s + r.inis.length, 0), rotulo: "Iniciativas" },
+            { valor: comContribuicao.reduce((s, r) => s + r.entregas, 0), rotulo: "Entregas" },
+            {
+                valor: comContribuicao.reduce((s, r) => s + r.enviadas + r.emAnalise, 0),
+                rotulo: "Aguardando análise",
+            },
+            { valor: moedaCurta(comContribuicao.reduce((s, r) => s + r.previsto, 0)), rotulo: "Previsto" },
+        ],
+        "A execução é financeira, apurada no SIAFIC, e não indica desempenho físico."
+    );
+    document.getElementById("corpo-orgaos").innerHTML =
+        ls.length === 0
+            ? '<tr><td colspan="9" class="text-center text-muted py-4 fs-12">Nenhum órgão corresponde ao filtro.</td></tr>'
+            : ls.map(linhaOrgao).join("");
 }
 
 const conteudo = document.getElementById("conteudo");
@@ -240,23 +235,5 @@ conteudo.addEventListener("click", (e) => {
     }
 });
 
-conteudo.addEventListener("input", (e) => {
-    if (e.target.id === "busca") {
-        busca = e.target.value;
-        render();
-        // O campo é recriado a cada tecla: sem devolver o cursor ao fim, o
-        // texto digitado sai embaralhado.
-        const campo = document.getElementById("busca");
-        campo.focus();
-        campo.setSelectionRange(campo.value.length, campo.value.length);
-    }
-});
-
-conteudo.addEventListener("change", (e) => {
-    if (e.target.id === "silenciosos") {
-        mostrarSilenciosos = e.target.checked;
-        render();
-    }
-});
-
+montar();
 render();

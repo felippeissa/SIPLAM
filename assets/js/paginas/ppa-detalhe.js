@@ -160,26 +160,29 @@ function render() {
         <div class="filtros mb-3" data-filtros="${idAba}">
             <div class="d-flex flex-wrap align-items-center gap-2">
                 <div class="filtro-campo">
+                    <label class="form-label">Buscar</label>
                     <div class="app-search">
-                        <input type="search" class="form-control" data-busca placeholder="Buscar" aria-label="Buscar nesta aba" />
+                        <input type="search" class="form-control" data-busca placeholder="Digite" aria-label="Buscar nesta aba" />
                         <i class="ti ti-search app-search-icon text-muted"></i>
                     </div>
                 </div>
                 ${
                     idAba === "t-programas"
                         ? `<div class="filtro-campo">
+                    <label class="form-label">Eixo</label>
                     <div class="app-search">
                         <select class="form-select form-control" data-eixo aria-label="Filtrar por eixo">
-                            <option value="">Eixo</option>
+                            <option value="">Selecione</option>
                             ${eixosDosProgramas.map((e) => `<option value="${esc(e)}">${esc(e)}</option>`).join("")}
                         </select>
                         <i class="ti ti-layout-grid app-search-icon text-muted"></i>
                     </div>
                 </div>
                 <div class="filtro-campo">
+                    <label class="form-label">Marcador</label>
                     <div class="app-search">
                         <select class="form-select form-control" data-marcador aria-label="Filtrar por marcador">
-                            <option value="">Marcador</option>
+                            <option value="">Selecione</option>
                             ${marcadoresParaFiltro(programas, estado)
                                 .map((m) => `<option value="${esc(m.id)}">${esc(m.nome)}</option>`)
                                 .join("")}
@@ -189,26 +192,27 @@ function render() {
                 </div>`
                         : ""
                 }
-                <div class="filtro-botoes d-flex align-items-center gap-2">
-                    <div class="dropdown">
-                        <button class="btn btn-default dropdown-toggle drop-arrow-none" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="ti ti-download me-1"></i> Exportar <i class="ti ti-chevron-down align-middle ms-1"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><button class="dropdown-item" type="button" data-exportar="csv">Exportar como CSV</button></li>
-                            <li><button class="dropdown-item" type="button" data-exportar="xls">Exportar como Excel</button></li>
-                        </ul>
-                    </div>
-                    <button type="button" class="btn btn-light" data-limpar>Limpar</button>
-                    <button type="button" class="btn btn-primary" data-buscar><i class="ti ti-search me-1"></i>Buscar</button>
+            </div>
+            <!-- GESIS 6.4: botões abaixo dos filtros; só o terciário leva ícone. -->
+            <div class="filtro-botoes d-flex flex-wrap align-items-center gap-16 mt-3">
+                <div class="dropdown me-auto">
+                    <button class="btn btn-terciario dropdown-toggle drop-arrow-none" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="ti ti-download me-1"></i> Exportar <i class="ti ti-chevron-down align-middle ms-1"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-start">
+                        <li><button class="dropdown-item" type="button" data-exportar="csv">Exportar como CSV</button></li>
+                        <li><button class="dropdown-item" type="button" data-exportar="xls">Exportar como Excel</button></li>
+                    </ul>
                 </div>
+                <button type="button" class="btn btn-outline-primary" data-limpar>Limpar</button>
+                <button type="button" class="btn btn-primary" data-buscar>Filtrar</button>
             </div>
         </div>`;
 
     const meta = (r, v) => `<div class="col-md-4 col-xl-3"><h6 class="mb-1 text-muted text-uppercase">${r}</h6><p class="fw-medium mb-0">${v}</p></div>`;
 
     document.getElementById("conteudo").innerHTML = `
-    ${barraTitulo("Home", [])}
+    ${barraTitulo("Página inicial", [])}
     <div class="row g-2">
         <div class="col-xl-9">
             <div class="ilhas">
@@ -227,7 +231,7 @@ function render() {
                             leitura
                                 ? ""
                                 : `<div class="dropdown">
-                            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="ti ti-plus me-1"></i>Adicionar</button>
+                            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Adicionar</button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 ${[
                                     ["central-programas", "Programa", "ti-stack-2"],
@@ -470,7 +474,7 @@ function render() {
                         ${d.dados ? "" : '<div class="form-text text-warning">Passa de 1 MB: só o registro é guardado, sem o arquivo para baixar.</div>'}</div>`
                     )
                     .join("")}</div>
-                <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="salvar-documento">Adicionar</button></div>
+                <div class="modal-footer"><button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="salvar-documento">Adicionar</button></div>
             </div></div></div>`
         );
         const el = document.getElementById("modal-documento");

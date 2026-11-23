@@ -7,9 +7,10 @@
  */
 import { obterEstado } from "../dados/store.js";
 import { ANOS } from "../dados/seed.js";
-import { moedaCurta, moeda, pct, eixos, objetivos, executadoDaEntrega } from "../dados/regras.js";
+import { moedaCurta, moeda, pct, executadoDaEntrega } from "../dados/regras.js";
 import { linhasFinanceiras, DIMENSAO_LABEL } from "../dados/financeiro.js";
-import { montarShell, cabecalhoPagina } from "../shell.js";
+import { montarShell, barraTitulo } from "../shell.js";
+import { criarFiltros, opcoesDe } from "../filtros.js";
 import { esc, faixaIndicadores } from "../ui.js";
 import { quadroFinanceiro } from "../ui-financeiro.js";
 
@@ -29,77 +30,56 @@ const DETALHE = {
 };
 
 let dimensao = "fonte";
-let ano = "todos";
-let eixo = "todos";
-let objetivo = "todos";
-let programa = "todos";
-let orgao = "todos";
-let fonte = "todas";
 
-function recorte() {
-    return linhasFinanceiras(estado).filter((l) => {
-        if (programa !== "todos" && l.programaId !== programa) return false;
-        if (orgao !== "todos" && l.orgao !== orgao) return false;
-        if (fonte !== "todas" && l.fonte !== fonte) return false;
-        if (eixo !== "todos" || objetivo !== "todos") {
-            const p = estado.programas.find((x) => x.id === l.programaId);
-            if (eixo !== "todos" && p?.eixo !== eixo) return false;
-            if (objetivo !== "todos" && p?.objetivoEstrategico !== objetivo) return false;
-        }
-        if (ano !== "todos" && !(l.anos[ano] > 0)) return false;
-        return true;
-    });
-}
+const programaDe = (l) => estado.programas.find((x) => x.id === l.programaId);
 
-function filtros() {
-    const todosOrgaos = [...new Set(linhasFinanceiras(estado).map((l) => l.orgao))].sort((a, b) => a.localeCompare(b));
-    const todasFontes = [...new Set(linhasFinanceiras(estado).map((l) => l.fonte))].sort((a, b) => a.localeCompare(b));
+// O mesmo componente de filtros das demais telas: campos com rótulo, e o filtro só vale ao clicar em Filtrar.
+// Sem busca livre: esta tela nunca teve, e ela somaria um sétimo campo à linha.
+const filtros = criarFiltros({
+    livre: null,
+    campos: [
+        { id: "ano", rotulo: "Ano", opcoes: () => ANOS.map((a) => ({ valor: String(a), rotulo: String(a) })), valorDe: (l) => ANOS.filter((a) => l.anos[a] > 0).map(String) },
+        { id: "eixo", rotulo: "Eixo", opcoes: () => opcoesDe(estado.programas, (p) => p.eixo), valorDe: (l) => (programaDe(l)?.eixo ? [programaDe(l).eixo] : []) },
+        {
+            id: "objetivo",
+            rotulo: "Objetivo estratégico",
+            opcoes: () => opcoesDe(estado.programas, (p) => p.objetivoEstrategico),
+            valorDe: (l) => (programaDe(l)?.objetivoEstrategico ? [programaDe(l).objetivoEstrategico] : []),
+        },
+        {
+            id: "programa",
+            rotulo: "Programa",
+            opcoes: () => estado.programas.map((p) => ({ valor: p.id, rotulo: `${p.codigo} — ${p.nome}` })),
+            valorDe: (l) => (l.programaId ? [l.programaId] : []),
+        },
+        { id: "orgao", rotulo: "Órgão", opcoes: () => opcoesDe(linhasFinanceiras(estado), (l) => l.orgao), valorDe: (l) => (l.orgao ? [l.orgao] : []) },
+        { id: "fonte", rotulo: "Fonte", opcoes: () => opcoesDe(linhasFinanceiras(estado), (l) => l.fonte), valorDe: (l) => (l.fonte ? [l.fonte] : []) },
+    ],
+    exportar: "analise-financeira",
+});
 
-    const opcoes = (lista, atual, rotuloTodos, valorTodos) =>
-        `<option value="${valorTodos}">${rotuloTodos}</option>` +
-        lista
-            .map((v) => {
-                const val = typeof v === "string" ? v : v.id;
-                const rot = typeof v === "string" ? v : v.rotulo;
-                return `<option value="${esc(val)}"${val === atual ? " selected" : ""}>${esc(rot)}</option>`;
-            })
-            .join("");
+const recorte = () => linhasFinanceiras(estado).filter((l) => filtros.passa(l));
 
-    return `
-    <select class="form-select form-select-sm w-auto" id="dimensao">
-        ${DIMENSOES.map(
-            (d) => `<option value="${d}"${d === dimensao ? " selected" : ""}>Agrupar por ${esc(DIMENSAO_LABEL[d])}</option>`
-        ).join("")}
-    </select>
-    <select class="form-select form-select-sm w-auto" id="ano">
-        <option value="todos">Todos os anos</option>
-        ${ANOS.map((a) => `<option value="${a}"${a === ano ? " selected" : ""}>${a}</option>`).join("")}
-    </select>
-    <select class="form-select form-select-sm w-auto" id="eixo">${opcoes(eixos(estado.programas), eixo, "Todos os Eixos", "todos")}</select>
-    <select class="form-select form-select-sm w-auto" id="objetivo">${opcoes(objetivos(estado.programas, eixo), objetivo, "Todos os Objetivos", "todos")}</select>
-    <select class="form-select form-select-sm w-auto" id="programa">${opcoes(
-        estado.programas.map((p) => ({ id: p.id, rotulo: `${p.codigo} — ${p.nome}` })),
-        programa,
-        "Todos os Programas",
-        "todos"
-    )}</select>
-    <select class="form-select form-select-sm w-auto" id="orgao">${opcoes(todosOrgaos, orgao, "Todos os órgãos", "todos")}</select>
-    <select class="form-select form-select-sm w-auto" id="fonte">${opcoes(todasFontes, fonte, "Todas as fontes", "todas")}</select>`;
+/** Os anos marcados no filtro: com algum marcado, o total do recorte soma só esses anos. */
+const anosEscolhidos = () => [...(document.getElementById("filtro-ano")?.selectedOptions ?? [])].map((o) => o.value);
+
+function montar() {
+    document.getElementById("conteudo").innerHTML = `
+    ${barraTitulo("Análise Financeira")}
+    <div id="faixa" class="mt-3"></div>
+    <div class="card mb-3">${filtros.html()}</div>
+    <div id="quadro"></div>`;
+    filtros.ligar(() => render());
 }
 
 function render() {
     const linhas = recorte();
-    const total = linhas.reduce((s, l) => s + (ano === "todos" ? l.total : l.anos[ano] || 0), 0);
+    const anos = anosEscolhidos();
+    const total = linhas.reduce((s, l) => s + (anos.length ? anos.reduce((t, a) => t + (l.anos[a] || 0), 0) : l.total), 0);
     const entregas = [...new Set(linhas.map((l) => l.entregaId))];
     const executado = entregas.reduce((s, id) => s + executadoDaEntrega(id), 0);
 
-    document.getElementById("conteudo").innerHTML = `
-    ${cabecalhoPagina(
-        "Análise Financeira",
-        "Quadro plurianual do PPA, derivado das Ações Orçamentárias vinculadas às Entregas.",
-        filtros()
-    )}
-    ${faixaIndicadores(
+    document.getElementById("faixa").innerHTML = faixaIndicadores(
         [
             { valor: moedaCurta(total), rotulo: "Previsto no recorte" },
             { valor: moedaCurta(executado), rotulo: "Executado (SIAFIC)" },
@@ -109,11 +89,20 @@ function render() {
             { valor: entregas.length, rotulo: "Entregas com recursos" },
         ],
         "Nenhum valor é digitado: tudo vem das parcelas do IPOF, pela Ação vinculada a cada Entrega. A execução é financeira e não indica desempenho físico."
-    )}
+    );
+    document.getElementById("quadro").innerHTML = `
     <div class="card">
-        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <h6 class="rotulo-secao mb-0">Quadro plurianual por ${esc(DIMENSAO_LABEL[dimensao])}</h6>
-            <span class="fs-12 text-muted">${linhas.length} linha(s) no recorte · expanda para ver por ${esc(DIMENSAO_LABEL[DETALHE[dimensao]])}</span>
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h6 class="rotulo-secao mb-0">Quadro plurianual por ${esc(DIMENSAO_LABEL[dimensao])}</h6>
+                <span class="fs-12 text-muted">${linhas.length} linha(s) no recorte · expanda para ver por ${esc(DIMENSAO_LABEL[DETALHE[dimensao]])}</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <label class="form-label mb-0 text-nowrap" for="dimensao">Agrupar por</label>
+                <select class="form-select form-select-sm" style="width:14rem" id="dimensao">
+                    ${DIMENSOES.map((d) => `<option value="${d}"${d === dimensao ? " selected" : ""}>${esc(DIMENSAO_LABEL[d])}</option>`).join("")}
+                </select>
+            </div>
         </div>
         <div class="card-body p-0">
             ${quadroFinanceiro(linhas, { dimensao, detalhe: DETALHE[dimensao], curto: false, vazio: "Nenhum recurso no recorte escolhido." })}
@@ -124,18 +113,10 @@ function render() {
 const conteudo = document.getElementById("conteudo");
 
 conteudo.addEventListener("change", (e) => {
-    const id = e.target.id;
-    if (id === "dimensao") dimensao = e.target.value;
-    else if (id === "ano") ano = e.target.value;
-    else if (id === "eixo") {
-        eixo = e.target.value;
-        objetivo = "todos";
-    } else if (id === "objetivo") objetivo = e.target.value;
-    else if (id === "programa") programa = e.target.value;
-    else if (id === "orgao") orgao = e.target.value;
-    else if (id === "fonte") fonte = e.target.value;
-    else return;
+    if (e.target.id !== "dimensao") return;
+    dimensao = e.target.value;
     render();
 });
 
+montar();
 render();

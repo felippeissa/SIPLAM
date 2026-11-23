@@ -35,7 +35,11 @@ export function statusChip(status) {
 }
 
 /** Faixa horizontal de indicadores — nunca cards soltos. */
-export function faixaIndicadores(itens, rodape = "") {
+/**
+ * Faixa de números grandes. Sem rodapé explicativo: o texto sob os números saiu de todas as telas (19/11/2026). Um segundo
+ * argumento, se alguém ainda o passar, é ignorado.
+ */
+export function faixaIndicadores(itens) {
     const celulas = itens
         .map(
             (i) => `
@@ -49,7 +53,6 @@ export function faixaIndicadores(itens, rodape = "") {
     return `
 <div class="card mb-3">
     <div class="faixa-indicadores">${celulas}</div>
-    ${rodape ? `<div class="faixa-rodape">${rodape}</div>` : ""}
 </div>`;
 }
 
@@ -116,7 +119,7 @@ export function menuDeAcoes(itens) {
         )
         .join("");
     return `<div class="dropdown">
-        <button type="button" class="btn btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="menu-acoes">Ações</button>
+        <button type="button" class="btn btn-terciario dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="menu-acoes"><i class="ti ti-dots me-1"></i>Ações</button>
         <ul class="dropdown-menu dropdown-menu-end fs-13">${li}</ul>
     </div>`;
 }

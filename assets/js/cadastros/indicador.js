@@ -110,7 +110,7 @@ function seletorDeVinculo(tipo, atual, estado) {
     return `
     <label class="form-label" for="f-vinculo">Vinculação hierárquica${alvo ? ` (${alvo})` : ""}</label>
     <select class="form-select" id="f-vinculo">
-        <option value="">${alvo ? `Selecione ${alvo === "Programa" ? "o Programa" : "a Iniciativa"}` : "Escolha antes o tipo do indicador"}</option>
+        <option value="">Selecione</option>
         ${opcoes.map((o) => `<option value="${esc(o.valor)}"${o.valor === atual ? " selected" : ""}>${esc(o.rotulo)}</option>`).join("")}
     </select>`;
 }

@@ -20,7 +20,7 @@ export function seletorDeAno({ id, valor = "", desabilitado = false, rotulo = "A
     <div class="seletor-ano" data-seletor-ano="${id}">
         <div class="input-group">
             <input type="text" class="form-control" id="${id}" value="${valor}" readonly
-                   placeholder="aaaa" aria-label="${rotulo}" ${desabilitado ? "disabled" : ""} />
+                   placeholder="AAAA" aria-label="${rotulo}" ${desabilitado ? "disabled" : ""} />
             <button type="button" class="btn btn-light" data-abrir-ano aria-label="Escolher o ano" ${desabilitado ? "disabled" : ""}>
                 <i class="ti ti-calendar"></i>
             </button>

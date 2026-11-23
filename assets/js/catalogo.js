@@ -174,8 +174,9 @@ export function catalogo(cfg) {
                 duplicata.
             -->
             <div class="position-relative mb-2 ${cfg.unico && escolhidos.length ? "d-none" : ""}" id="${px}-caixa">
-                <input type="text" class="form-control" id="${px}-busca" autocomplete="off"
-                       placeholder="Busque ${artigo === "a" ? "uma" : "um"} ${singular.toLowerCase()}${cfg.semCriar ? "" : ", ou digite para cadastrar"}…" />
+                <input type="text" class="form-control pe-5" id="${px}-busca" autocomplete="off"
+                       placeholder="Digite e selecione" />
+                <i class="ti ti-search position-absolute top-50 end-0 translate-middle-y me-3 text-muted" style="pointer-events:none"></i>
                 <div class="list-group position-absolute w-100 shadow-sm d-none" id="${px}-sugestoes"
                      style="z-index:5; max-height:16rem; overflow:auto"></div>
             </div>
@@ -249,7 +250,7 @@ export function catalogo(cfg) {
                         .join("")}
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="${px}-salvar">Salvar</button>
                 </div>
             </div>
@@ -282,12 +283,12 @@ export function catalogo(cfg) {
 
             if (registro) {
                 updItem(colecao, registro.id, { nome, ...preenchidos });
-                avisar(`${singular} atualizad${artigo}.`);
+                avisar(`${singular} atualizad${artigo} com sucesso.`);
             } else {
                 const novo = addItem(colecao, { nome, ...preenchidos, ...(cfg.aoCriar?.() ?? {}) });
                 if (cfg.unico) escolhidos = [novo.id];
                 else escolhidos.push(novo.id);
-                avisar(`${singular} cadastrad${artigo} e vinculad${artigo}.`);
+                avisar(`${singular} criad${artigo} e vinculad${artigo} com sucesso.`);
             }
 
             modal.hide();

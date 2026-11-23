@@ -8,19 +8,17 @@
  * continua no Cadastro de Programa, que é de quem o define.
  */
 import { avisar } from "../toast.js";
+import { confirmarExclusao } from "../confirmar.js";
 import { obterEstado, updIniciativa, noPlano } from "../dados/store.js";
 import { ANOS } from "../dados/seed.js";
-import { eixos, objetivos, podeEditar } from "../dados/regras.js";
-import { montarShell, cabecalhoPagina , somenteLeitura } from "../shell.js";
+import { podeEditar } from "../dados/regras.js";
+import { montarShell, barraTitulo, somenteLeitura } from "../shell.js";
+import { criarFiltros, opcoesDe } from "../filtros.js";
 import { chip, esc, faixaIndicadores } from "../ui.js";
 
 const { estado } = montarShell();
 const orgao = estado.orgaoAtual;
 
-let busca = "";
-let nivel = "todos";
-let eixo = "todos";
-let objetivo = "todos";
 let edicao = null;
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -41,8 +39,7 @@ function novoIndicador() {
     };
 }
 
-function linhas() {
-    const q = busca.trim().toLowerCase();
+function linhasBase() {
     const out = [];
 
     for (const p of noPlano(estado).programas) {
@@ -65,14 +62,51 @@ function linhas() {
         }
     }
 
-    return out.filter((l) => {
-        if (q && !l.indicador.nome.toLowerCase().includes(q)) return false;
-        if (nivel !== "todos" && l.nivel !== nivel) return false;
-        if (eixo !== "todos" && l.programa?.eixo !== eixo) return false;
-        if (objetivo !== "todos" && l.programa?.objetivoEstrategico !== objetivo) return false;
-        return true;
-    });
+    return out;
 }
+
+const linhas = () => linhasBase().filter((l) => filtros.passa(l));
+
+const minhasIniciativas = () => estado.iniciativas.filter((i) => i.orgao === orgao && noPlano(estado).iniciativa(i));
+
+// O mesmo componente de filtros das demais telas: campos com rótulo, e o filtro só vale ao clicar em Filtrar.
+const filtros = criarFiltros({
+    livre: { rotulo: "Indicador", texto: (l) => l.indicador.nome ?? "" },
+    campos: [
+        {
+            id: "nivel",
+            rotulo: "Nível",
+            opcoes: () => [
+                { valor: "Programa", rotulo: "Indicador de Programa" },
+                { valor: "Iniciativa", rotulo: "Indicador de Iniciativa" },
+            ],
+            valorDe: (l) => [l.nivel],
+        },
+        { id: "eixo", rotulo: "Eixo", opcoes: () => opcoesDe(linhasBase(), (l) => l.programa?.eixo), valorDe: (l) => (l.programa?.eixo ? [l.programa.eixo] : []) },
+        {
+            id: "objetivo",
+            rotulo: "Objetivo estratégico",
+            opcoes: () => opcoesDe(linhasBase(), (l) => l.programa?.objetivoEstrategico),
+            valorDe: (l) => (l.programa?.objetivoEstrategico ? [l.programa.objetivoEstrategico] : []),
+        },
+    ],
+    exportar: "indicadores",
+    // A ação da tela mora junto dos botões do filtro, como nas listas da Central.
+    acao: () => {
+        if (somenteLeitura()) return "";
+        const editaveis = minhasIniciativas().filter((i) => podeEditar(i.status));
+        return `<div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">Novo indicador</button>
+            <ul class="dropdown-menu dropdown-menu-end fs-13">
+                ${
+                    editaveis.length === 0
+                        ? '<li><span class="dropdown-item-text fs-12 text-muted">Nenhuma Iniciativa editável.</span></li>'
+                        : editaveis.map((i) => `<li><button class="dropdown-item" data-nova-ini="${i.id}">${esc(i.nome)}</button></li>`).join("")
+                }
+            </ul>
+        </div>`;
+    },
+});
 
 function modal() {
     const ind = edicao.indicador;
@@ -151,7 +185,7 @@ function modal() {
                         ? ""
                         : '<button type="button" class="btn btn-danger me-auto" id="excluir-ind">Excluir indicador</button>'
                 }
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="salvar-ind">Salvar indicador</button>
             </div>
         </div>
@@ -159,57 +193,13 @@ function modal() {
 </div>`;
 }
 
-function render() {
-    const ls = linhas();
-    const minhasIniciativas = estado.iniciativas.filter((i) => i.orgao === orgao && noPlano(estado).iniciativa(i));
-    const semIndicador = minhasIniciativas.filter((i) => (i.indicadores ?? []).length === 0).length;
-
+/** Monta a tela uma vez: a barra de filtros fica de pé, e só a faixa e o corpo da tabela se refazem. */
+function montar() {
     document.getElementById("conteudo").innerHTML = `
-    ${cabecalhoPagina(
-        "Indicadores",
-        "Indicadores de resultado dos Programas e os que o órgão definiu para suas Iniciativas.",
-        `
-        <div class="app-search">
-            <input type="search" id="busca" class="form-control form-control-sm" placeholder="Buscar indicador" value="${esc(busca)}" />
-            <i class="ti ti-search app-search-icon text-muted"></i>
-        </div>
-        <select class="form-select form-select-sm" id="nivel">
-            <option value="todos">Todos os níveis</option>
-            <option value="Programa"${nivel === "Programa" ? " selected" : ""}>Indicador de Programa</option>
-            <option value="Iniciativa"${nivel === "Iniciativa" ? " selected" : ""}>Indicador de Iniciativa</option>
-        </select>
-        <select class="form-select form-select-sm" id="eixo">
-            <option value="todos">Todos os Eixos</option>
-            ${eixos(noPlano(estado).programas).map((e) => `<option value="${esc(e)}"${e === eixo ? " selected" : ""}>${esc(e)}</option>`).join("")}
-        </select>
-        <select class="form-select form-select-sm" id="objetivo">
-            <option value="todos">Todos os Objetivos</option>
-            ${objetivos(noPlano(estado).programas, eixo).map((o) => `<option value="${esc(o)}"${o === objetivo ? " selected" : ""}>${esc(o)}</option>`).join("")}
-        </select>
-        <div class="dropdown ${somenteLeitura() ? "d-none" : ""}">
-            <button class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown"><i class="ti ti-plus me-1"></i>Novo indicador</button>
-            <ul class="dropdown-menu dropdown-menu-end fs-13">
-                ${
-                    minhasIniciativas.filter((i) => podeEditar(i.status)).length === 0
-                        ? '<li><span class="dropdown-item-text fs-12 text-muted">Nenhuma Iniciativa editável.</span></li>'
-                        : minhasIniciativas
-                              .filter((i) => podeEditar(i.status))
-                              .map((i) => `<li><button class="dropdown-item" data-nova-ini="${i.id}">${esc(i.nome)}</button></li>`)
-                              .join("")
-                }
-            </ul>
-        </div>`
-    )}
-    ${faixaIndicadores(
-        [
-            { valor: ls.length, rotulo: "Indicadores no recorte" },
-            { valor: ls.filter((l) => l.nivel === "Programa").length, rotulo: "De Programa" },
-            { valor: ls.filter((l) => l.nivel === "Iniciativa").length, rotulo: "De Iniciativa" },
-            { valor: semIndicador, rotulo: "Iniciativas sem indicador" },
-        ],
-        "O indicador de Programa é definido pela Área Central; o de Iniciativa, pelo órgão que a propõe."
-    )}
+    ${barraTitulo("Indicadores")}
+    <div id="faixa" class="mt-3"></div>
     <div class="card">
+        ${filtros.html()}
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
@@ -223,15 +213,35 @@ function render() {
                         <th style="width:6rem">Ações</th>
                     </tr>
                 </thead>
-                <tbody>
-                ${
-                    ls.length === 0
-                        ? `<tr><td colspan="${ANOS.length + 6}" class="text-center text-muted py-4 fs-12">Nenhum indicador corresponde ao filtro.</td></tr>`
-                        : ls
-                              .map((l) => {
-                                  const ind = l.indicador;
-                                  const metas = ind.metas ?? {};
-                                  return `
+                <tbody id="corpo-indicadores"></tbody>
+            </table>
+        </div>
+    </div>
+    <div id="area-modal"></div>`;
+    filtros.ligar(() => render());
+}
+
+function render() {
+    const ls = linhas();
+    const semIndicador = minhasIniciativas().filter((i) => (i.indicadores ?? []).length === 0).length;
+
+    document.getElementById("faixa").innerHTML = faixaIndicadores(
+        [
+            { valor: ls.length, rotulo: "Indicadores no recorte" },
+            { valor: ls.filter((l) => l.nivel === "Programa").length, rotulo: "De Programa" },
+            { valor: ls.filter((l) => l.nivel === "Iniciativa").length, rotulo: "De Iniciativa" },
+            { valor: semIndicador, rotulo: "Iniciativas sem indicador" },
+        ],
+        "O indicador de Programa é definido pela Área Central; o de Iniciativa, pelo órgão que a propõe."
+    );
+    document.getElementById("corpo-indicadores").innerHTML =
+        ls.length === 0
+            ? `<tr><td colspan="${ANOS.length + 6}" class="text-center text-muted py-4 fs-12">Nenhum indicador corresponde ao filtro.</td></tr>`
+            : ls
+                  .map((l) => {
+                      const ind = l.indicador;
+                      const metas = ind.metas ?? {};
+                      return `
                     <tr>
                         <td>
                             <div class="fw-medium">${esc(ind.nome)}</div>
@@ -245,22 +255,15 @@ function render() {
                         <td>
                             ${
                                 l.editavel && !somenteLeitura()
-                                    ? `<button class="btn btn-sm btn-outline-primary" data-editar="${l.iniciativa.id}:${ind.id}">Editar</button>`
-                                    : `<a href="${l.nivel === "Programa" ? `programa.html?id=${l.programa.id}` : `iniciativa.html?id=${l.iniciativa.id}`}" class="btn btn-sm btn-light">Ver</a>`
+                                    ? `<button class="btn btn-sm btn-icon btn-terciario" data-editar="${l.iniciativa.id}:${ind.id}" title="Editar" aria-label="Editar indicador"><i class="ti ti-pencil fs-16"></i></button>`
+                                    : `<a href="${l.nivel === "Programa" ? `programa.html?id=${l.programa.id}` : `iniciativa.html?id=${l.iniciativa.id}`}" class="btn btn-sm btn-icon btn-terciario" title="Visualizar" aria-label="Visualizar indicador"><i class="ti ti-eye fs-16"></i></a>`
                             }
                         </td>
-                    </tr>`;
-                              })
-                              .join("")
-                }
-                </tbody>
-            </table>
-        </div>
-    </div>
-    ${edicao ? modal() : ""}`;
+                    </tr>`
+                  })
+                  .join("");
 
-    document.getElementById("busca").value = busca;
-
+    document.getElementById("area-modal").innerHTML = edicao ? modal() : "";
     if (edicao) {
         const el = document.getElementById("modal-indicador");
         new bootstrap.Modal(el).show();
@@ -307,7 +310,8 @@ document.addEventListener("click", (e) => {
     if (e.target.closest("#salvar-ind")) {
         const dados = lerModal();
         if (!dados.nome) {
-            alert("Informe o nome do indicador.");
+            avisar("Campos obrigatórios não preenchidos.", "erro");
+            document.getElementById("i-nome").classList.add("is-invalid");
             return;
         }
         const ini = edicao.iniciativa;
@@ -319,41 +323,22 @@ document.addEventListener("click", (e) => {
         bootstrap.Modal.getInstance(document.getElementById("modal-indicador")).hide();
         edicao = null;
         render();
-        return avisar(idx >= 0 ? "Indicador editado com sucesso." : "Indicador criado com sucesso.");
+        return avisar(idx >= 0 ? "Indicador atualizado com sucesso." : "Indicador criado com sucesso.");
     }
 
     if (e.target.closest("#excluir-ind")) {
         const ini = edicao.iniciativa;
-        if (!confirm(`Excluir o indicador “${edicao.indicador.nome}”?`)) return;
-        updIniciativa(ini.id, { indicadores: (ini.indicadores ?? []).filter((x) => x.id !== edicao.indicador.id) });
-        bootstrap.Modal.getInstance(document.getElementById("modal-indicador")).hide();
-        edicao = null;
-        render();
-        avisar("Indicador excluído com sucesso.");
+        const indicador = edicao.indicador;
+        confirmarExclusao({ titulo: "Excluir indicador", texto: `O indicador “${indicador.nome}” será removido. A exclusão fica registrada no histórico.` }).then((justificativa) => {
+            if (!justificativa) return;
+            updIniciativa(ini.id, { indicadores: (ini.indicadores ?? []).filter((x) => x.id !== indicador.id) });
+            bootstrap.Modal.getInstance(document.getElementById("modal-indicador"))?.hide();
+            edicao = null;
+            render();
+            avisar("Indicador excluído com sucesso.");
+        });
     }
 });
 
-document.addEventListener("input", (e) => {
-    if (e.target.id === "busca") {
-        busca = e.target.value;
-        render();
-        // O campo é recriado a cada tecla: sem devolver o cursor ao fim, o
-        // texto digitado sai embaralhado.
-        const campo = document.getElementById("busca");
-        campo.focus();
-        campo.setSelectionRange(campo.value.length, campo.value.length);
-    }
-});
-
-document.addEventListener("change", (e) => {
-    const id = e.target.id;
-    if (id === "nivel") nivel = e.target.value;
-    else if (id === "eixo") {
-        eixo = e.target.value;
-        objetivo = "todos";
-    } else if (id === "objetivo") objetivo = e.target.value;
-    else return;
-    render();
-});
-
+montar();
 render();

@@ -104,7 +104,7 @@ export function abrirAprovacao(u, aoDecidir) {
         ${escolhaDePerfis(u, "a")}
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
         <button type="button" class="btn btn-primary" id="conceder">Conceder</button>
     </div>`;
 
@@ -139,7 +139,7 @@ export function abrirReprovacao(u, aoDecidir) {
         </p>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
         <button type="button" class="btn btn-danger" id="confirmar-reprovacao">Reprovar</button>
     </div>`;
 

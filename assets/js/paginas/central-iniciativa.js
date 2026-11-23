@@ -264,10 +264,11 @@ function render() {
                     <span>atualizada em ${esc(ini.atualizadoEm)}</span>
                 </div>
             </div>
-            <div class="d-flex flex-wrap gap-2 align-items-center">${acoesCabecalho}${
-                // O Salvar fica fora do menu, à vista: guarda a avaliação em andamento para continuar depois.
-                avaliavel(ini) ? `<button type="button" class="btn btn-light" id="salvar-rascunho"><i class="ti ti-device-floppy me-1"></i>Salvar</button>` : ""
-            }${menuDeAcoes(acoesDaFicha(ini))}</div>
+            <div class="d-flex flex-wrap gap-16 align-items-center">${acoesCabecalho}${menuDeAcoes(acoesDaFicha(ini))}${
+                // GESIS 5.4: terciário < secundário < primário, da esquerda para a direita. O Salvar fica fora do menu,
+                // à vista e por último: guarda a avaliação em andamento para continuar depois.
+                avaliavel(ini) ? `<button type="button" class="btn btn-primary" id="salvar-rascunho">Salvar</button>` : ""
+            }</div>
         </div>
     </div>
 
@@ -339,7 +340,7 @@ function modalApontamento(ini) {
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="registrar">Registrar</button>
             </div>
         </div>

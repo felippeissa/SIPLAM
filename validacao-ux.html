@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="pt-BR" data-skin="minimal" data-bs-theme="light" data-topbar-color="light" data-menu-color="gray" data-sidenav-size="default" data-layout-width="fluid">
+    <head>
+        <meta charset="utf-8" />
+        <title>Validação de UX | SIPLAM</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="shortcut icon" href="inspinia/assets/images/favicon.ico" />
+        <script src="inspinia/assets/js/config.js"></script>
+        <link href="inspinia/assets/css/vendors.min.css" rel="stylesheet" type="text/css" />
+        <link id="app-style" href="inspinia/assets/css/app.min.css" rel="stylesheet" type="text/css" />
+        <link href="assets/css/siplam.css" rel="stylesheet" type="text/css" />
+        <style>
+            .bloco h2 { font-size: 16px; }
+            .regra { font-size: 13px; color: var(--theme-secondary-color, #6c757d); }
+            .lado { border: 1px solid var(--theme-border-color, #dee2e6); border-radius: 6px; padding: 12px; height: 100%; }
+            .lado > .rotulo { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; margin-bottom: 8px; }
+            .lado.hoje > .rotulo { color: #dc3545; }
+            .lado.padrao > .rotulo { color: #198754; }
+            /* GESIS Padrões UX 5.3 / 8.1.4: 16 px entre botões. O gap-3 do tema vale 20 px e o modal-footer ainda soma margem. */
+            .gap-16 { gap: 16px !important; }
+            .modal-footer.gap-16 > * { margin: 0; }
+            .ok { color: #198754; font-weight: 600; }
+            .fora { color: #dc3545; font-weight: 600; }
+            .indice a { font-size: 12px; margin-right: 10px; white-space: nowrap; }
+            /* Botão terciário do guia: só texto e ícone à esquerda, na cor principal. */
+            .btn-terciario { background: none; border: 1px solid transparent; color: var(--theme-primary, #1ab394); }
+            .btn-terciario:hover { background: rgba(26, 179, 148, .1); color: var(--theme-primary, #1ab394); }
+        </style>
+    </head>
+    <body class="p-4">
+        <!--
+            Bancada de validação dos padrões do guia "GESIS - Padrões UX".
+            Fica fora do sistema: sem menu, sem cabeçalho, sem link vindo de outra tela.
+            O que se aprova aqui é depois aplicado ao sistema, um item por vez.
+        -->
+        <div class="container" style="max-width: 980px">
+            <h1 class="fs-20 mb-1">Validação de UX</h1>
+            <p class="text-muted fs-13 mb-2">Os 12 itens do guia GESIS. Cada bloco mostra o padrão funcionando; onde fez sentido, ao lado do que o sistema faz hoje.</p>
+            <div class="indice mb-4" id="indice"></div>
+
+            <!-- 1 -->
+            <section class="card mb-3 bloco" id="i1"><div class="card-body">
+                <h2 class="mb-1">1 · Toast: duração</h2>
+                <p class="regra">Padrão (3.2.1): <strong>3000 ms</strong> na tela, e não pode ser menor.</p>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <button type="button" class="btn btn-primary" id="t-ok">Mostrar toast</button>
+                </div>
+                <div class="border rounded p-3 fs-13">
+                    Tempo na tela: <strong id="t-medido" class="fs-16">—</strong>
+                    <div class="progress mt-2" style="height: 6px"><div class="progress-bar" id="t-barra" style="width: 0"></div></div>
+                    <div class="mt-2" id="t-veredito">Clique no botão para medir.</div>
+                </div>
+            </div></section>
+
+            <!-- 2 -->
+            <section class="card mb-3 bloco" id="i2"><div class="card-body">
+                <h2 class="mb-1">2 · Toast: estrutura</h2>
+                <p class="regra">Padrão: <strong>título + descrição</strong>. Título numa linha, até 34 caracteres ("Sucesso", "Informação", "Atenção" ou "Erro"). Descrição em até 2 linhas, até 81 caracteres. Largura fixa de 350 px.</p>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <button type="button" class="btn btn-primary" data-toast="ok">Sucesso</button>
+                    <button type="button" class="btn btn-outline-primary" data-toast="info">Informação</button>
+                    <button type="button" class="btn btn-outline-primary" data-toast="alerta">Atenção</button>
+                    <button type="button" class="btn btn-outline-primary" data-toast="erro">Erro</button>
+                    <button type="button" class="btn btn-outline-primary" data-toast="longo">Descrição de 2 linhas</button>
+                    <button type="button" class="btn btn-outline-primary" data-toast="pilha">3 em sequência</button>
+                </div>
+                <div class="border rounded p-3 fs-13" id="e-medidas">Clique num botão para conferir as medidas.</div>
+            </div></section>
+
+            <!-- 3 -->
+            <section class="card mb-3 bloco" id="i3"><div class="card-body">
+                <h2 class="mb-1">3 · Toast: textos padronizados</h2>
+                <p class="regra">Padrão: <strong>&lt;Registro&gt; criado / atualizado / excluído com sucesso.</strong> E nenhuma descrição passa de 81 caracteres.</p>
+                <div class="row g-3">
+                    <div class="col-md-6"><div class="lado hoje"><div class="rotulo">Hoje</div>
+                        <table class="table table-sm fs-12 mb-0" id="t3-hoje"></table></div></div>
+                    <div class="col-md-6"><div class="lado padrao"><div class="rotulo">Padrão</div>
+                        <table class="table table-sm fs-12 mb-2" id="t3-padrao"></table>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-t3="Usuário criado com sucesso.">Criar</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-t3="Usuário atualizado com sucesso.">Editar</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-t3="Usuário excluído com sucesso.">Excluir</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-t3="Plano vinculado a 3 Programas. Desfaça os vínculos para excluir." data-tom="erro">Exclusão bloqueada</button>
+                        </div></div></div>
+                </div>
+            </div></section>
+
+            <!-- 4 -->
+            <section class="card mb-3 bloco" id="i4"><div class="card-body">
+                <h2 class="mb-1">4 · Validação: toast de erro + campos marcados</h2>
+                <p class="regra">Padrão (8.1.3): em formulário com muitos campos, ao tentar salvar mostrar o <strong>toast de erro</strong> "Campos obrigatórios não preenchidos" <em>e</em> sinalizar cada campo pendente.</p>
+                <form id="f4" novalidate class="row g-3">
+                    <div class="col-md-4"><label class="form-label" for="f4-nome">Nome <span class="text-danger">*</span></label>
+                        <input class="form-control" id="f4-nome" placeholder="Digite" />
+                        <div class="invalid-feedback">Informe o nome.</div></div>
+                    <div class="col-md-4"><label class="form-label" for="f4-orgao">Órgão <span class="text-danger">*</span></label>
+                        <select class="form-select" id="f4-orgao"><option value="">Selecione</option><option>SEDI</option><option>SES</option></select>
+                        <div class="invalid-feedback">Escolha o órgão.</div></div>
+                    <div class="col-md-4"><label class="form-label" for="f4-email">E-mail <span class="text-danger">*</span></label>
+                        <input class="form-control" id="f4-email" placeholder="email@goias.gov.br" />
+                        <div class="invalid-feedback">Informe o e-mail.</div></div>
+                    <div class="col-12 d-flex justify-content-end gap-16">
+                        <button type="button" class="btn btn-outline-primary" id="f4-limpar">Limpar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div></section>
+
+            <!-- 5 -->
+            <section class="card mb-3 bloco" id="i5"><div class="card-body">
+                <h2 class="mb-1">5 · Confirmações (dialog)</h2>
+                <p class="regra">Padrão (3.3.1): modal <strong>obrigatório</strong> para confirmar edição, cancelar cadastro, cancelar edição e confirmar exclusão. Dialog <em>basic</em>: 350 px, título curto (1 linha) + descrição, botões <strong>secundário e primário</strong>, sem terciário. Confirmar cadastro é opcional.</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-primary" data-conf="edicao">Salvar edição</button>
+                    <button type="button" class="btn btn-outline-primary" data-conf="cancelar-cadastro">Cancelar cadastro</button>
+                    <button type="button" class="btn btn-outline-primary" data-conf="cancelar-edicao">Cancelar edição</button>
+                    <button type="button" class="btn btn-outline-primary" data-conf="exclusao">Excluir</button>
+                </div>
+                <div class="fs-12 text-muted mt-2" id="i5-resultado"></div>
+            </div></section>
+
+            <!-- 6 -->
+            <section class="card mb-3 bloco" id="i6"><div class="card-body">
+                <h2 class="mb-1">6 · Botões de formulário</h2>
+                <p class="regra">Padrão (5 e 8.1.4): <strong>Salvar</strong> (primário) e <strong>Cancelar</strong> (secundário: borda na cor principal, sem preenchimento), à direita, 16 px entre eles, <strong>sem ícones</strong>. <strong>Voltar</strong> é secundário e à direita. Ordem: terciário &lt; secundário &lt; primário, da esquerda para a direita.</p>
+                <div class="row g-3">
+                    <div class="col-md-6"><div class="lado hoje"><div class="rotulo">Hoje</div>
+                        <div class="fs-12 text-muted mb-1">Tela de cadastro / edição</div>
+                        <div class="d-flex justify-content-end gap-2 mb-3 pb-3 border-bottom"><a href="#" class="btn btn-light">Cancelar</a><button type="button" class="btn btn-primary">Cadastrar</button></div>
+                        <div class="fs-12 text-muted mb-1">Tela de visualização</div>
+                        <div class="d-flex justify-content-end"><a href="#" class="btn btn-light">Voltar</a></div></div></div></div>
+                    <div class="col-md-6"><div class="lado padrao"><div class="rotulo">Padrão</div>
+                        <div class="fs-12 text-muted mb-1">Tela de cadastro / edição</div>
+                        <div class="d-flex justify-content-end gap-16 mb-3 pb-3 border-bottom"><button type="button" class="btn btn-outline-primary">Cancelar</button><button type="button" class="btn btn-primary">Salvar</button></div>
+                        <div class="fs-12 text-muted mb-1">Tela de visualização</div>
+                        <div class="d-flex justify-content-end"><button type="button" class="btn btn-outline-primary">Voltar</button></div></div></div></div>
+                </div>
+            </div></section>
+
+            <!-- 7 -->
+            <section class="card mb-3 bloco" id="i7"><div class="card-body">
+                <h2 class="mb-1">7 · Botão terciário</h2>
+                <p class="regra">Padrão (5.2): o terciário é <strong>só texto na cor principal, com ícone à esquerda</strong>. Sem ícone apenas em exceção justificada pelo designer. Primário e secundário não levam ícone.</p>
+                <div class="row g-3">
+                    <div class="col-md-4"><div class="lado hoje"><div class="rotulo">Hoje (sem ícone)</div>
+                        <div class="dropdown"><button type="button" class="btn btn-default dropdown-toggle" data-bs-toggle="dropdown">Ações</button>
+                        <ul class="dropdown-menu"><li><button class="dropdown-item" type="button">Iniciar revisão</button></li><li><button class="dropdown-item" type="button">Inativar</button></li></ul></div></div></div>
+                    <div class="col-md-4"><div class="lado padrao"><div class="rotulo">Padrão (terciário com ícone)</div>
+                        <div class="dropdown"><button type="button" class="btn btn-terciario dropdown-toggle" data-bs-toggle="dropdown"><i class="ti ti-dots me-1"></i>Ações</button>
+                        <ul class="dropdown-menu"><li><button class="dropdown-item" type="button">Iniciar revisão</button></li><li><button class="dropdown-item" type="button">Inativar</button></li></ul></div></div></div>
+                    <div class="col-md-4"><div class="lado padrao"><div class="rotulo">Os três níveis</div>
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <button type="button" class="btn btn-terciario"><i class="ti ti-filter me-1"></i>Mais filtros</button>
+                            <button type="button" class="btn btn-outline-primary">Secundário</button>
+                            <button type="button" class="btn btn-primary">Primário</button>
+                            <button type="button" class="btn btn-primary" disabled>Desabilitado</button></div></div></div>
+                </div>
+            </div></section>
+
+            <!-- 8 -->
+            <section class="card mb-3 bloco" id="i8"><div class="card-body">
+                <h2 class="mb-1">8 · Filtros</h2>
+                <p class="regra">Padrão (6): botões <strong>Mais filtros / Menos filtros</strong>, <strong>Limpar</strong> e <strong>Filtrar</strong>, <strong>abaixo</strong> dos filtros (nunca na mesma linha), só o "Mais filtros" com ícone. Grade de 6 colunas, 16 px. Se houver filtro obrigatório, "Filtrar" só ativa depois de preenchê-lo.</p>
+                <div class="row g-3" id="f8">
+                    <div class="col-12 col-md-4 col-xl-2"><label class="form-label" for="f8-a">Programa <span class="text-danger">*</span></label><input class="form-control" id="f8-a" placeholder="Digite" /></div>
+                    <div class="col-12 col-md-4 col-xl-2"><label class="form-label" for="f8-b">Órgão</label><select class="form-select" id="f8-b"><option value="">Selecione</option><option>SEDI</option></select></div>
+                    <div class="col-12 col-md-4 col-xl-2"><label class="form-label" for="f8-c">Status</label><select class="form-select" id="f8-c"><option value="">Selecione</option><option>Enviada</option></select></div>
+                    <div class="col-12 collapse" id="f8-mais"><div class="row g-3">
+                        <div class="col-12 col-md-4 col-xl-2"><label class="form-label" for="f8-d">Marcador</label><select class="form-select" id="f8-d"><option value="">Selecione</option></select></div>
+                        <div class="col-12 col-md-4 col-xl-2"><label class="form-label" for="f8-e">Período</label><input class="form-control" id="f8-e" placeholder="DD/MM/AAAA" /></div>
+                    </div></div>
+                    <div class="col-12 d-flex justify-content-end gap-16">
+                        <button type="button" class="btn btn-terciario me-auto" id="f8-toggle" data-bs-toggle="collapse" data-bs-target="#f8-mais"><i class="ti ti-adjustments-horizontal me-1"></i><span>Mais filtros</span></button>
+                        <button type="button" class="btn btn-outline-primary" id="f8-limpar">Limpar</button>
+                        <button type="button" class="btn btn-primary" id="f8-filtrar" disabled>Filtrar</button>
+                    </div>
+                </div>
+                <div class="fs-12 text-muted mt-2" id="f8-res">O campo Programa é obrigatório: digite nele para ativar "Filtrar".</div>
+            </div></section>
+
+            <!-- 9 -->
+            <section class="card mb-3 bloco" id="i9"><div class="card-body">
+                <h2 class="mb-1">9 · Coluna de ações da tabela</h2>
+                <p class="regra">Padrão (7.5): coluna à direita, <strong>só ícones</strong>, na ordem Edição → Visualização → Exclusão → outras. No máximo 4; acima disso, um ícone de menu com as demais.</p>
+                <div class="row g-3">
+                    <div class="col-12"><div class="lado hoje"><div class="rotulo">Hoje</div>
+                        <table class="table table-sm fs-13 mb-0"><tbody>
+                            <tr><td>Saúde Integral</td><td class="text-end"><a href="#" class="btn btn-sm btn-outline-primary">Editar</a> <button class="btn btn-sm btn-default dropdown-toggle" type="button">Ações</button></td></tr>
+                        </tbody></table></div></div>
+                    <div class="col-12"><div class="lado padrao"><div class="rotulo">Padrão</div>
+                        <table class="table table-sm fs-13 mb-0"><thead><tr><th>Programa</th><th>Órgão</th><th class="text-end">Ações</th></tr></thead><tbody id="t9"></tbody></table></div></div>
+                </div>
+            </div></section>
+
+            <!-- 10 -->
+            <section class="card mb-3 bloco" id="i10"><div class="card-body">
+                <h2 class="mb-1">10 · Placeholders e máscaras</h2>
+                <p class="regra">Padrão (4.1): o placeholder é um <strong>exemplo do formato</strong>, não repete o rótulo. Texto: "Digite". Select: "Selecione" ("Digite e selecione" quando houver busca). Zeros para números. Valor monetário alinhado à direita. Autocomplete e select levam ícone (seta ou lupa).</p>
+                <div class="row g-3" id="f10"></div>
+            </div></section>
+
+            <!-- 11 -->
+            <section class="card mb-3 bloco" id="i11"><div class="card-body">
+                <h2 class="mb-1">11 · Tags</h2>
+                <p class="regra">Padrão (7.4): <strong>no máximo 2 palavras e 25 caracteres</strong>, sem frases, com a cor condizente com a severidade. A conferência abaixo é automática.</p>
+                <table class="table table-sm fs-13 mb-0"><thead><tr><th>Tag</th><th>Palavras</th><th>Caracteres</th><th>Resultado</th></tr></thead><tbody id="t11"></tbody></table>
+            </div></section>
+
+            <!-- 12 -->
+            <section class="card mb-3 bloco" id="i12"><div class="card-body">
+                <h2 class="mb-1">12 · Texto dos itens de menu</h2>
+                <p class="regra">Padrão (2.2): <strong>só a primeira letra maiúscula</strong> (siglas à parte), sem verbo no infinitivo ("Consulta de usuários", não "Consultar usuários"), até 40 caracteres. A conferência abaixo é automática.</p>
+                <table class="table table-sm fs-13 mb-0"><thead><tr><th>Hoje</th><th>Resultado</th><th>Padrão</th><th>Resultado</th></tr></thead><tbody id="t12"></tbody></table>
+            </div></section>
+        </div>
+
+        <!-- modal de confirmação (dialog basic, 350 px) -->
+        <div class="modal fade" id="modal-conf" tabindex="-1" aria-labelledby="modal-conf-titulo" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 350px">
+                <div class="modal-content">
+                    <div class="modal-header"><h5 class="modal-title fs-15 text-truncate" id="modal-conf-titulo"></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+                    <div class="modal-body fs-13" id="modal-conf-texto"></div>
+                    <div class="modal-footer gap-16">
+                        <button type="button" class="btn btn-outline-primary" id="modal-conf-nao" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn btn-primary" id="modal-conf-sim"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="inspinia/assets/js/vendors.min.js"></script>
+        <script src="inspinia/assets/js/app.js"></script>
+        <script type="module">
+            import { avisar, LIMITE_TITULO, LIMITE_DESCRICAO } from "./assets/js/toast.js";
+            const $ = (s) => document.querySelector(s);
+            const marca = (ok) => (ok ? '<span class="ok">ok</span>' : '<span class="fora">fora</span>');
+
+            // índice
+            $("#indice").innerHTML = [...document.querySelectorAll(".bloco")]
+                .map((b) => `<a href="#${b.id}">${b.querySelector("h2").textContent.split(" · ")[0]}</a>`).join("");
+
+            /* ---------- 1 · duração ---------- */
+            const ESPERADO = 3000;
+            let inicio = 0, relogio = 0;
+            document.addEventListener("shown.bs.toast", () => {
+                inicio = performance.now();
+                $("#t-veredito").textContent = "Medindo…";
+                relogio = setInterval(() => {
+                    const t = performance.now() - inicio;
+                    $("#t-medido").textContent = `${Math.round(t)} ms`;
+                    $("#t-barra").style.width = `${Math.min(100, (t / ESPERADO) * 100)}%`;
+                }, 30);
+            });
+            document.addEventListener("hide.bs.toast", () => {
+                clearInterval(relogio);
+                const t = Math.round(performance.now() - inicio);
+                $("#t-medido").textContent = `${t} ms`;
+                $("#t-barra").style.width = "100%";
+                $("#t-veredito").innerHTML = Math.abs(t - ESPERADO) <= 150 ? `<span class="ok">Dentro do padrão</span>: ${ESPERADO} ms.` : `<span class="fora">Fora do padrão</span>: o guia pede ${ESPERADO} ms.`;
+            });
+            $("#t-ok").addEventListener("click", () => avisar("Registro criado com sucesso."));
+
+            /* ---------- 2 · estrutura ---------- */
+            const EXEMPLOS = {
+                ok: ["Usuário criado com sucesso.", "ok"],
+                info: ["Seus dados só serão salvos após o preenchimento.", "info"],
+                alerta: ["Este plano já tem um vigente. Revise antes de continuar.", "alerta"],
+                erro: ["Campos obrigatórios não preenchidos.", "erro"],
+                longo: ["Não foi possível excluir o plano: está vinculado a 3 Programas e 2 Iniciativas.", "erro"],
+            };
+            document.querySelectorAll("[data-toast]").forEach((b) => b.addEventListener("click", () => {
+                const k = b.dataset.toast;
+                if (k === "pilha") {
+                    avisar("Primeiro aviso.", "ok");
+                    setTimeout(() => avisar("Segundo aviso.", "info"), 250);
+                    setTimeout(() => avisar("Terceiro aviso.", "alerta"), 500);
+                    $("#e-medidas").textContent = "Três toasts empilhados; o usuário continua navegando enquanto eles aparecem.";
+                    return;
+                }
+                const [texto, tom] = EXEMPLOS[k];
+                avisar(texto, tom);
+                requestAnimationFrame(() => {
+                    const t = [...document.querySelectorAll("#siplam-toasts .toast")].pop();
+                    const titulo = t.querySelector(".fw-semibold").textContent;
+                    const linhas = Math.round(t.querySelector(".fs-13").getBoundingClientRect().height / 20);
+                    const w = Math.round(t.getBoundingClientRect().width);
+                    $("#e-medidas").innerHTML = `Título "<strong>${titulo}</strong>": ${titulo.length}/${LIMITE_TITULO} ${marca(titulo.length <= LIMITE_TITULO)}<br>
+                        Descrição: ${texto.length}/${LIMITE_DESCRICAO} ${marca(texto.length <= LIMITE_DESCRICAO)} · ${linhas} linha(s) ${marca(linhas <= 2)}<br>
+                        Largura: ${w} px ${marca(w === 350)}`;
+                });
+            }));
+
+            /* ---------- 3 · textos ---------- */
+            const HOJE3 = [
+                ["Iniciativa salva.", "edição"],
+                ["Indicador editado com sucesso.", "edição"],
+                ["Usuário cadastrado com acesso ativo.", "criação"],
+                ["Não foi possível excluir o plano: está vinculado a 3 Programas, 2 Iniciativas e 1 Entrega.", "exclusão"],
+                ["A Entrega está vinculada a 2 Iniciativas. Desfaça os vínculos antes de excluir.", "exclusão"],
+            ];
+            const PADRAO3 = [
+                ["Iniciativa atualizada com sucesso.", "edição"],
+                ["Indicador atualizado com sucesso.", "edição"],
+                ["Usuário criado com sucesso.", "criação"],
+                ["Plano vinculado a 3 Programas. Desfaça os vínculos para excluir.", "exclusão"],
+                ["Entrega vinculada a 2 Iniciativas. Desfaça os vínculos para excluir.", "exclusão"],
+            ];
+            const linhas3 = (l) => l.map(([t, k]) => `<tr><td>${t}</td><td class="text-muted">${k}</td><td class="text-nowrap">${t.length} ${marca(t.length <= LIMITE_DESCRICAO)}</td></tr>`).join("");
+            $("#t3-hoje").innerHTML = linhas3(HOJE3);
+            $("#t3-padrao").innerHTML = linhas3(PADRAO3);
+            document.querySelectorAll("[data-t3]").forEach((b) => b.addEventListener("click", () => avisar(b.dataset.t3, b.dataset.tom || "ok")));
+
+            /* ---------- 4 · validação ---------- */
+            $("#f4").addEventListener("submit", (e) => {
+                e.preventDefault();
+                const campos = ["#f4-nome", "#f4-orgao", "#f4-email"].map($);
+                let falta = false;
+                campos.forEach((c) => { const vazio = !c.value.trim(); c.classList.toggle("is-invalid", vazio); falta ||= vazio; });
+                if (falta) { avisar("Campos obrigatórios não preenchidos.", "erro"); campos.find((c) => c.classList.contains("is-invalid")).focus(); }
+                else avisar("Registro criado com sucesso.");
+            });
+            $("#f4-limpar").addEventListener("click", () => document.querySelectorAll("#f4 .form-control, #f4 .form-select").forEach((c) => { c.value = ""; c.classList.remove("is-invalid"); }));
+            document.querySelectorAll("#f4 .form-control, #f4 .form-select").forEach((c) => c.addEventListener("input", () => c.classList.remove("is-invalid")));
+
+            /* ---------- 5 · confirmações ---------- */
+            const CONF = {
+                edicao: { t: "Salvar edição?", d: "As alterações vão substituir os dados atuais deste registro.", sim: "Salvar", nao: "Cancelar", ok: "Registro atualizado com sucesso." },
+                "cancelar-cadastro": { t: "Cancelar cadastro?", d: "Os dados preenchidos serão perdidos.", sim: "Sim", nao: "Não", ok: "Cadastro cancelado.", tom: "info" },
+                "cancelar-edicao": { t: "Cancelar edição?", d: "As alterações feitas não serão salvas.", sim: "Sim", nao: "Não", ok: "Edição cancelada.", tom: "info" },
+                exclusao: { t: "Excluir registro?", d: "Esta ação não poderá ser desfeita.", sim: "Excluir", nao: "Cancelar", ok: "Registro excluído com sucesso." },
+            };
+            const modal = new bootstrap.Modal($("#modal-conf"));
+            let atual = null;
+            document.querySelectorAll("[data-conf]").forEach((b) => b.addEventListener("click", () => {
+                atual = CONF[b.dataset.conf];
+                $("#modal-conf-titulo").textContent = atual.t;
+                $("#modal-conf-texto").textContent = atual.d;
+                $("#modal-conf-sim").textContent = atual.sim;
+                $("#modal-conf-nao").textContent = atual.nao;
+                modal.show();
+            }));
+            $("#modal-conf-sim").addEventListener("click", () => { modal.hide(); avisar(atual.ok, atual.tom || "ok"); $("#i5-resultado").textContent = `Confirmado: ${atual.t}`; });
+            $("#modal-conf-nao").addEventListener("click", () => ($("#i5-resultado").textContent = `Desistiu: ${atual.t}`));
+
+            /* ---------- 8 · filtros ---------- */
+            const obrig = $("#f8-a"), filtrar = $("#f8-filtrar");
+            obrig.addEventListener("input", () => (filtrar.disabled = !obrig.value.trim()));
+            filtrar.addEventListener("click", () => ($("#f8-res").textContent = `Filtrando por Programa "${obrig.value.trim()}"…`));
+            $("#f8-limpar").addEventListener("click", () => { document.querySelectorAll("#f8 input, #f8 select").forEach((c) => (c.value = "")); filtrar.disabled = true; $("#f8-res").textContent = "Filtros limpos."; });
+            const mais = $("#f8-mais"), rot = $("#f8-toggle span");
+            mais.addEventListener("shown.bs.collapse", () => (rot.textContent = "Menos filtros"));
+            mais.addEventListener("hidden.bs.collapse", () => (rot.textContent = "Mais filtros"));
+
+            /* ---------- 9 · ações da tabela ---------- */
+            const icone = (i, t, extra = "") => `<button type="button" class="btn btn-sm btn-icon btn-terciario ${extra}" title="${t}" aria-label="${t}"><i class="ti ${i} fs-16"></i></button>`;
+            $("#t9").innerHTML = ["Saúde Integral", "Educação Conectada"].map((n, i) => `<tr><td>${n}</td><td>${i ? "SEDUC" : "SES"}</td>
+                <td class="text-end text-nowrap">${icone("ti-pencil", "Editar")}${icone("ti-eye", "Visualizar")}${icone("ti-trash", "Excluir")}
+                <span class="dropdown d-inline-block"><button type="button" class="btn btn-sm btn-icon btn-terciario" data-bs-toggle="dropdown" title="Mais ações" aria-label="Mais ações"><i class="ti ti-dots-vertical fs-16"></i></button>
+                <ul class="dropdown-menu dropdown-menu-end"><li><button class="dropdown-item" type="button">Marcadores</button></li><li><button class="dropdown-item" type="button">Inativar</button></li></ul></span></td></tr>`).join("");
+
+            /* ---------- 10 · placeholders ---------- */
+            const CAMPOS10 = [
+                ["Nome", "text", "Digite", ""], ["Órgão", "select", "Selecione", ""], ["Órgão (com busca)", "select", "Digite e selecione", "busca"],
+                ["Responsável", "autocomplete", "Digite e selecione", "lupa"], ["Início da vigência", "text", "DD/MM/AAAA", ""], ["CPF", "text", "000.000.000-00", ""],
+                ["Valor previsto", "text", "R$ 0,00", "direita"], ["E-mail", "text", "email@goias.gov.br", ""], ["Telefone", "text", "(00) 00000-0000", ""],
+                ["CEP", "text", "00000-000", ""], ["Hora", "text", "00:00", ""], ["Site", "text", "https://www.site.com.br", ""],
+            ];
+            $("#f10").innerHTML = CAMPOS10.map(([r, tipo, ph, ex], i) => {
+                const id = `f10-${i}`;
+                let c;
+                if (tipo === "select") c = `<select class="form-select" id="${id}"><option value="">${ph}</option><option>SEDI</option><option>SES</option></select>`;
+                else if (tipo === "autocomplete") c = `<div class="position-relative"><input class="form-control pe-5" id="${id}" placeholder="${ph}" /><i class="ti ti-search position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i></div>`;
+                else c = `<input class="form-control ${ex === "direita" ? "text-end" : ""}" id="${id}" placeholder="${ph}" />`;
+                return `<div class="col-12 col-md-4 col-xl-2"><label class="form-label" for="${id}">${r}</label>${c}</div>`;
+            }).join("");
+
+            /* ---------- 11 · tags ---------- */
+            const TAGS = [
+                ["Em preenchimento", "secondary"], ["Enviada", "info"], ["Em revisão", "warning"], ["Devolvida", "danger"], ["Validada", "success"], ["Inativa", "secondary"],
+                ["Em revisão pela Área Central", "warning"], ["Aguardando aprovação da alta gestão", "info"],
+            ];
+            $("#t11").innerHTML = TAGS.map(([t, tom]) => {
+                const p = t.trim().split(/\s+/).length;
+                const ok = p <= 2 && t.length <= 25;
+                return `<tr><td><span class="badge badge-label fs-xxs badge-soft-${tom}">${t}</span></td><td>${p} ${marca(p <= 2)}</td><td>${t.length} ${marca(t.length <= 25)}</td><td>${ok ? '<span class="ok">dentro do padrão</span>' : '<span class="fora">fora do padrão</span>'}</td></tr>`;
+            }).join("");
+
+            /* ---------- 12 · menu ---------- */
+            const INF = /^(consultar|gerir|cadastrar|criar|editar|excluir|listar|visualizar|gerenciar|analisar|emitir|registrar)\b/i;
+            const confere = (t) => {
+                const resto = t.slice(1).split(/\s+/).join(" ");
+                const maiusculas = (t.split(/\s+/).slice(1)).filter((w) => /^[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]/.test(w));
+                return { cap: maiusculas.length === 0, verbo: !INF.test(t), tam: t.length <= 40 };
+            };
+            const res12 = (t) => { const c = confere(t); const ok = c.cap && c.verbo && c.tam; return ok ? '<span class="ok">ok</span>' : `<span class="fora">fora${!c.cap ? " · maiúsculas" : ""}${!c.verbo ? " · verbo" : ""}${!c.tam ? " · tamanho" : ""}</span>`; };
+            const MENU = [
+                ["Objetivos Estratégicos", "Objetivos estratégicos"], ["Análise Financeira", "Análise financeira"], ["Consultar usuários", "Consulta de usuários"],
+                ["Relatório final da lei do PPA", "Relatório final da lei do PPA"], ["Marcadores", "Marcadores"], ["Gerir unidades orçamentárias", "Gestão de unidades orçamentárias"],
+            ];
+            $("#t12").innerHTML = MENU.map(([h, p]) => `<tr><td>${h}</td><td>${res12(h)}</td><td>${p}</td><td>${res12(p)}</td></tr>`).join("");
+        </script>
+    </body>
+</html>

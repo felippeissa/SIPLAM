@@ -99,7 +99,7 @@ function abrirSeletorDeIcone(atual, aoEscolher) {
                 </div>
                 <div class="modal-footer justify-content-between">
                     <button type="button" class="btn btn-light" id="icone-padrao">Usar o ícone padrão</button>
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>

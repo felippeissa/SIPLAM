@@ -16,13 +16,13 @@ import {
     entregaDaAcao,
     acaoPorId,
 } from "../dados/financeiro.js";
-import { montarShell, cabecalhoPagina } from "../shell.js";
+import { montarShell, barraTitulo } from "../shell.js";
+import { criarFiltros } from "../filtros.js";
 import { chip, esc, faixaIndicadores } from "../ui.js";
 
 const { estado } = montarShell();
 
-let busca = new URLSearchParams(location.search).get("q") ?? "";
-let somenteFora = false;
+const buscaInicial = new URLSearchParams(location.search).get("q") ?? "";
 const abertos = new Set();
 
 /** Quanto de um IPOF chega ao PPA: parcelas cuja Ação financia alguma Entrega. */
@@ -60,22 +60,23 @@ function reflexo(ipof) {
     return { dentro, fora, porAno, entregas: [...entregas.values()].sort((a, b) => b.total - a.total) };
 }
 
-function linhas() {
-    const q = busca.trim().toLowerCase();
-
+function linhasBase() {
     return IPOFS.map((ipof) => {
         const projeto = projetoPorIdSimples(ipof.projetoId);
         return { ipof, projeto, total: totalDoIpof(ipof), fontes: fontesDoIpof(ipof), ...reflexo(ipof) };
-    })
-        .filter(
-            (l) =>
-                !q ||
-                [l.ipof.codigo, l.ipof.nome, l.ipof.orgao, l.projeto?.codigo ?? "", ...l.fontes].some((c) =>
-                    (c ?? "").toLowerCase().includes(q)
-                )
-        )
-        .filter((l) => !somenteFora || l.fora > 0);
+    });
 }
+
+const linhas = () => linhasBase().filter((l) => filtros.passa(l));
+
+// O mesmo componente de filtros das demais telas: campos com rótulo, e o filtro só vale ao clicar em Filtrar.
+const filtros = criarFiltros({
+    livre: { rotulo: "IPOF", texto: (l) => [l.ipof.codigo, l.ipof.nome, l.ipof.orgao, l.projeto?.codigo ?? "", ...l.fontes].join(" ") },
+    campos: [
+        { id: "fora", rotulo: "Valor fora do PPA", tipo: "booleano", sim: "Com valor fora do PPA", nao: "Sem valor fora do PPA", valorDe: (l) => [l.fora > 0 ? "sim" : "nao"] },
+    ],
+    exportar: "ipofs",
+});
 
 function detalhe(l) {
     const anos = ANOS.map(
@@ -137,38 +138,13 @@ function detalhe(l) {
     </td></tr>`;
 }
 
-function render() {
-    const ls = linhas();
-    const siafic = ls.reduce((s, l) => s + l.total, 0);
-    const dentro = ls.reduce((s, l) => s + l.dentro, 0);
-    const fora = ls.reduce((s, l) => s + l.fora, 0);
-    const orfaos = ls.filter((l) => l.dentro === 0).length;
-
+/** Monta a tela uma vez: a barra de filtros fica de pé, e só a faixa e o corpo da tabela se refazem. */
+function montar() {
     document.getElementById("conteudo").innerHTML = `
-    ${cabecalhoPagina(
-        "IPOFs",
-        "Programação financeira do SIAFIC e quanto dela o PPA reflete.",
-        `
-        <div class="app-search">
-            <input type="search" id="busca" class="form-control form-control-sm" placeholder="Código, nome, fonte, órgão ou Projeto" value="${esc(busca)}" style="min-width:20rem" />
-            <i class="ti ti-search app-search-icon text-muted"></i>
-        </div>
-        <div class="form-check form-check-inline mb-0">
-            <input class="form-check-input" type="checkbox" id="fora" ${somenteFora ? "checked" : ""} />
-            <label class="form-check-label fs-13" for="fora">Só com valor fora do PPA</label>
-        </div>`
-    )}
-    ${faixaIndicadores(
-        [
-            { valor: ls.length, rotulo: "IPOFs" },
-            { valor: moedaCurta(siafic), rotulo: "Valor no SIAFIC" },
-            { valor: moedaCurta(dentro), rotulo: "Refletido no PPA" },
-            { valor: moedaCurta(fora), rotulo: "Fora do PPA" },
-            { valor: orfaos, rotulo: "Sem Entrega vinculada" },
-        ],
-        "Um valor fica fora do PPA quando a Ação da parcela não financia nenhuma Entrega do plano."
-    )}
+    ${barraTitulo("IPOFs")}
+    <div id="faixa" class="mt-3"></div>
     <div class="card">
+        ${filtros.html()}
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
@@ -183,14 +159,42 @@ function render() {
                         <th class="num" style="width:6rem">Entregas</th>
                     </tr>
                 </thead>
-                <tbody>
-                ${
-                    ls.length === 0
-                        ? '<tr><td colspan="8" class="text-center text-muted py-4 fs-12">Nenhum IPOF corresponde ao filtro.</td></tr>'
-                        : ls
-                              .map((l) => {
-                                  const aberto = abertos.has(l.ipof.id);
-                                  return `
+                <tbody id="corpo-ipofs"></tbody>
+            </table>
+        </div>
+    </div>`;
+    filtros.ligar(() => render());
+    // O link vindo de outra tela traz o termo na URL (?q=): entra no campo e já vale.
+    if (buscaInicial) {
+        document.getElementById("filtro-livre").value = buscaInicial;
+        document.getElementById("filtro-buscar").click();
+    }
+}
+
+function render() {
+    const ls = linhas();
+    const siafic = ls.reduce((s, l) => s + l.total, 0);
+    const dentro = ls.reduce((s, l) => s + l.dentro, 0);
+    const fora = ls.reduce((s, l) => s + l.fora, 0);
+    const orfaos = ls.filter((l) => l.dentro === 0).length;
+
+    document.getElementById("faixa").innerHTML = faixaIndicadores(
+        [
+            { valor: ls.length, rotulo: "IPOFs" },
+            { valor: moedaCurta(siafic), rotulo: "Valor no SIAFIC" },
+            { valor: moedaCurta(dentro), rotulo: "Refletido no PPA" },
+            { valor: moedaCurta(fora), rotulo: "Fora do PPA" },
+            { valor: orfaos, rotulo: "Sem Entrega vinculada" },
+        ],
+        "Um valor fica fora do PPA quando a Ação da parcela não financia nenhuma Entrega do plano."
+    );
+    document.getElementById("corpo-ipofs").innerHTML =
+        ls.length === 0
+            ? '<tr><td colspan="8" class="text-center text-muted py-4 fs-12">Nenhum IPOF corresponde ao filtro.</td></tr>'
+            : ls
+                  .map((l) => {
+                      const aberto = abertos.has(l.ipof.id);
+                      return `
                     <tr>
                         <td style="width:2.5rem">
                             <button class="btn-expandir" data-ipof="${l.ipof.id}" aria-expanded="${aberto}" aria-label="${aberto ? "Recolher" : "Expandir"}">
@@ -209,15 +213,8 @@ function render() {
                         <td class="num">${l.entregas.length || "—"}</td>
                     </tr>
                     ${aberto ? detalhe(l) : ""}`;
-                              })
-                              .join("")
-                }
-                </tbody>
-            </table>
-        </div>
-    </div>`;
-
-    document.getElementById("busca").value = busca;
+                  })
+                  .join("");
 }
 
 const conteudo = document.getElementById("conteudo");
@@ -231,23 +228,5 @@ conteudo.addEventListener("click", (e) => {
     }
 });
 
-conteudo.addEventListener("input", (e) => {
-    if (e.target.id === "busca") {
-        busca = e.target.value;
-        render();
-        // O campo é recriado a cada tecla: sem devolver o cursor ao fim, o
-        // texto digitado sai embaralhado.
-        const campo = document.getElementById("busca");
-        campo.focus();
-        campo.setSelectionRange(campo.value.length, campo.value.length);
-    }
-});
-
-conteudo.addEventListener("change", (e) => {
-    if (e.target.id === "fora") {
-        somenteFora = e.target.checked;
-        render();
-    }
-});
-
+montar();
 render();

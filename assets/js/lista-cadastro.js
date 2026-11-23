@@ -111,7 +111,7 @@ export function montarLista(cfg) {
             leitura
                 ? `<span class="fs-12 text-muted">${esc(cfg.avisoLeitura ?? "Perfil sem edição neste cadastro.")}</span>`
                 : `<a href="${criar}" class="btn btn-primary ${semPai() ? "disabled" : ""}">
-                    <i class="ti ti-plus me-1"></i>${esc(cfg.novoRotulo)}
+                    ${esc(cfg.novoRotulo)}
                 </a>`,
     });
 
@@ -146,9 +146,8 @@ export function montarLista(cfg) {
                 ${extras.map((c) => `<td class="fs-13 text-muted">${c.valor(i, estado)}</td>`).join("")}
                 ${cfg.semDescricao ? "" : `<td class="fs-13 text-muted">${esc(i.descricao || "—")}</td>`}
                 <td class="text-end coluna-acoes">
-                    <a href="${editar(i.id)}" class="btn btn-sm ${soVer(i) ? "btn-light" : "btn-outline-primary"}">
-                        ${soVer(i) ? "Ver" : "Editar"}
-                    </a>
+                    <a href="${editar(i.id)}" class="btn btn-sm btn-icon btn-terciario" title="${soVer(i) ? "Visualizar" : "Editar"}"
+                       aria-label="${soVer(i) ? "Visualizar" : "Editar"} ${esc(i.nome)}"><i class="ti ${soVer(i) ? "ti-eye" : "ti-pencil"} fs-16"></i></a>
                 </td>
             </tr>`
             )

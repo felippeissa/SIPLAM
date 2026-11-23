@@ -9,8 +9,6 @@ import { obterEstado, updPrograma, marcarSemContribuicao, reconsiderarParticipac
 import { confirmarExclusao } from "../confirmar.js";
 import { avisar } from "../toast.js";
 import {
-    eixos,
-    objetivos,
     iniciativasDoOrgao,
     entregasDaIniciativa,
     participacaoOrgao,
@@ -24,7 +22,8 @@ import {
     moedaCurta,
     pct,
 } from "../dados/regras.js";
-import { montarShell, cabecalhoPagina , somenteLeitura } from "../shell.js";
+import { montarShell, barraTitulo, somenteLeitura } from "../shell.js";
+import { criarFiltros, opcoesDe } from "../filtros.js";
 import { chip, statusChip, esc, faixaIndicadores } from "../ui.js";
 import { chipsPendencias } from "../ui-financeiro.js";
 import { seloDoIcone } from "../icone-programa.js";
@@ -33,11 +32,6 @@ import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro, abrirJ
 const { estado } = montarShell();
 const orgao = estado.orgaoAtual;
 
-let busca = "";
-let filtro = "todos";
-let eixo = "todos";
-let objetivo = "todos";
-let marcador = "todos";
 let ordem = "prioridade";
 const abertos = new Set();
 
@@ -47,17 +41,10 @@ const TOM_PARTICIPACAO = {
     nao_avaliado: "alerta",
 };
 
-function linhas() {
-    const q = busca.trim().toLowerCase();
-
-    const plano = noPlano(estado);
-    let ls = plano.programas
-        .filter((p) => p.disponibilizacao === "disponivel" || iniciativasDoOrgao(estado, p.id, orgao).length > 0)
-        .filter((p) => !q || p.nome.toLowerCase().includes(q) || p.codigo.includes(q))
-        .filter((p) => eixo === "todos" || p.eixo === eixo)
-        .filter((p) => objetivo === "todos" || p.objetivoEstrategico === objetivo)
-        // Marcadores: filtra por qualquer marcador posto nos Programas.
-        .filter((p) => marcador === "todos" || (p.marcadorIds ?? []).includes(marcador))
+/** Um registro por Programa visível ao órgão, com o que a tabela e os filtros precisam. */
+function linhasBase() {
+    return noPlano(estado)
+        .programas.filter((p) => p.disponibilizacao === "disponivel" || iniciativasDoOrgao(estado, p.id, orgao).length > 0)
         .map((p) => {
             const inis = iniciativasDoOrgao(estado, p.id, orgao);
             const pend = inis.flatMap((i) => pendenciasIniciativa(estado, i));
@@ -70,69 +57,55 @@ function linhas() {
                 financeiro: financeiroProgramaOrgao(estado, p.id, orgao),
                 prioridade: prioridadePrograma(estado, p.id, orgao),
             };
-        })
-        .filter((l) => {
-            switch (filtro) {
-                case "com":
-                    return l.inis.length > 0;
-                case "sem":
-                    return l.inis.length === 0;
-                case "sem_contribuicao":
-                    return l.participacao === "sem_contribuicao";
-                case "nao_avaliado":
-                    return l.participacao === "nao_avaliado";
-                case "em_preenchimento":
-                    return l.inis.some((i) => i.status === "em_preenchimento");
-                case "devolvida":
-                    return l.inis.some((i) => i.status === "devolvida");
-                default:
-                    return true;
-            }
         });
-
-    const por = {
-        prioridade: (a, b) => a.prioridade - b.prioridade || a.programa.codigo.localeCompare(b.programa.codigo),
-        codigo: (a, b) => a.programa.codigo.localeCompare(b.programa.codigo),
-        nome: (a, b) => a.programa.nome.localeCompare(b.programa.nome),
-        iniciativas: (a, b) => b.inis.length - a.inis.length,
-    };
-    return ls.sort(por[ordem]);
 }
 
-function filtros() {
-    return `
-    <div class="app-search">
-        <input type="search" id="busca" class="form-control form-control-sm" placeholder="Buscar por código ou nome" value="${esc(busca)}" />
-        <i class="ti ti-search app-search-icon text-muted"></i>
-    </div>
-    <select class="form-select form-select-sm" id="filtro">
-        <option value="todos">Todos os Programas</option>
-        <option value="com">Com Iniciativas do meu órgão</option>
-        <option value="sem">Sem Iniciativas do meu órgão</option>
-        <option value="sem_contribuicao">Marcados como sem contribuição</option>
-        <option value="nao_avaliado">Ainda não avaliados pelo órgão</option>
-        <option value="em_preenchimento">Com Iniciativa em preenchimento</option>
-        <option value="devolvida">Com Iniciativa devolvida</option>
-    </select>
-    <select class="form-select form-select-sm" id="eixo">
-        <option value="todos">Todos os Eixos</option>
-        ${eixos(noPlano(estado).programas).map((e) => `<option value="${esc(e)}">${esc(e)}</option>`).join("")}
-    </select>
-    <select class="form-select form-select-sm" id="objetivo">
-        <option value="todos">Todos os Objetivos</option>
-        ${objetivos(noPlano(estado).programas, eixo).map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join("")}
-    </select>
-    <select class="form-select form-select-sm" id="marcador">
-        <option value="todos">Todos os Marcadores</option>
-        ${marcadoresParaFiltro(noPlano(estado).programas, estado).map((m) => `<option value="${esc(m.id)}">${esc(m.nome)}</option>`).join("")}
-    </select>
-    <select class="form-select form-select-sm" id="ordem" title="A ordenação por prioridade traz primeiro o que depende de você">
-        <option value="prioridade">Ordenar por prioridade</option>
-        <option value="codigo">Ordenar por código</option>
-        <option value="nome">Ordenar por nome</option>
-        <option value="iniciativas">Ordenar por nº de Iniciativas</option>
-    </select>`;
-}
+const por = {
+    prioridade: (a, b) => a.prioridade - b.prioridade || a.programa.codigo.localeCompare(b.programa.codigo),
+    codigo: (a, b) => a.programa.codigo.localeCompare(b.programa.codigo),
+    nome: (a, b) => a.programa.nome.localeCompare(b.programa.nome),
+    iniciativas: (a, b) => b.inis.length - a.inis.length,
+};
+
+const linhas = () => linhasBase().filter((l) => filtros.passa(l)).sort(por[ordem]);
+
+const SITUACOES = [
+    { valor: "com", rotulo: "Com Iniciativas do meu órgão" },
+    { valor: "sem", rotulo: "Sem Iniciativas do meu órgão" },
+    { valor: "sem_contribuicao", rotulo: "Marcados como sem contribuição" },
+    { valor: "nao_avaliado", rotulo: "Ainda não avaliados pelo órgão" },
+    { valor: "em_preenchimento", rotulo: "Com Iniciativa em preenchimento" },
+    { valor: "devolvida", rotulo: "Com Iniciativa devolvida" },
+];
+const situacoesDe = (l) => [
+    l.inis.length > 0 ? "com" : "sem",
+    ...(l.participacao === "sem_contribuicao" ? ["sem_contribuicao"] : []),
+    ...(l.participacao === "nao_avaliado" ? ["nao_avaliado"] : []),
+    ...(l.inis.some((i) => i.status === "em_preenchimento") ? ["em_preenchimento"] : []),
+    ...(l.inis.some((i) => i.status === "devolvida") ? ["devolvida"] : []),
+];
+
+// O mesmo componente de filtros das telas da Central: campos com rótulo, e o filtro só vale ao clicar em Filtrar.
+const filtros = criarFiltros({
+    livre: { rotulo: "Programa", texto: (l) => `${l.programa.codigo} ${l.programa.nome}` },
+    campos: [
+        { id: "situacao", rotulo: "Situação", opcoes: () => SITUACOES, valorDe: situacoesDe },
+        { id: "eixo", rotulo: "Eixo", opcoes: () => opcoesDe(linhasBase(), (l) => l.programa.eixo), valorDe: (l) => (l.programa.eixo ? [l.programa.eixo] : []) },
+        {
+            id: "objetivo",
+            rotulo: "Objetivo estratégico",
+            opcoes: () => opcoesDe(linhasBase(), (l) => l.programa.objetivoEstrategico),
+            valorDe: (l) => (l.programa.objetivoEstrategico ? [l.programa.objetivoEstrategico] : []),
+        },
+        {
+            id: "marcador",
+            rotulo: "Marcador",
+            opcoes: () => marcadoresParaFiltro(linhasBase().map((l) => l.programa), estado).map((m) => ({ valor: m.id, rotulo: m.nome })),
+            valorDe: (l) => l.programa.marcadorIds ?? [],
+        },
+    ],
+    exportar: "programas",
+});
 
 function linhaPrograma(l) {
     const p = l.programa;
@@ -171,9 +144,9 @@ function linhaPrograma(l) {
         <td>
             <div class="d-flex gap-1">
                 ${somenteLeitura() ? "" : `<button class="btn btn-sm btn-primary" data-nova="${p.id}" title="Nova Iniciativa"><i class="ti ti-plus"></i></button>`}
-                ${somenteLeitura() ? "" : `<button class="btn btn-sm btn-outline-secondary btn-icon" data-marcar="${p.id}" title="Adicionar marcadores" aria-label="Adicionar marcadores a ${esc(p.nome)}"><i class="ti ti-tag-plus"></i></button>`}
+                ${somenteLeitura() ? "" : `<button class="btn btn-sm btn-terciario btn-icon" data-marcar="${p.id}" title="Adicionar marcadores" aria-label="Adicionar marcadores a ${esc(p.nome)}"><i class="ti ti-tag-plus"></i></button>`}
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-light btn-icon" data-bs-toggle="dropdown" aria-label="Mais ações"><i class="ti ti-dots-vertical"></i></button>
+                    <button class="btn btn-sm btn-terciario btn-icon" data-bs-toggle="dropdown" aria-label="Mais ações" title="Mais ações"><i class="ti ti-dots-vertical"></i></button>
                     <ul class="dropdown-menu dropdown-menu-end fs-13">
                         <li><a class="dropdown-item" href="programa.html?id=${p.id}">Ver diagnóstico</a></li>
                         ${
@@ -210,8 +183,8 @@ function linhaPrograma(l) {
                     <td>${chipsPendencias(r)}</td>
                     <td class="num">${moedaCurta(fin.previsto)}</td>
                     <td>
-                        <a href="iniciativa.html?id=${i.id}" class="btn btn-sm btn-outline-primary">Abrir</a>
-                        ${somenteLeitura() ? "" : `<button class="btn btn-sm btn-light" data-excluir="${i.id}" title="Excluir Iniciativa"><i class="ti ti-trash"></i></button>`}
+                        <a href="iniciativa.html?id=${i.id}" class="btn btn-sm btn-icon btn-terciario" title="Visualizar" aria-label="Visualizar ${esc(i.nome)}"><i class="ti ti-eye fs-16"></i></a>
+                        ${somenteLeitura() ? "" : `<button class="btn btn-sm btn-icon btn-terciario" data-excluir="${i.id}" title="Excluir" aria-label="Excluir ${esc(i.nome)}"><i class="ti ti-trash fs-16"></i></button>`}
                     </td>
                 </tr>`;
                     })
@@ -223,32 +196,22 @@ function linhaPrograma(l) {
     }`;
 }
 
-function render() {
-    const ls = linhas();
-    const inis = estado.iniciativas.filter((i) => i.orgao === orgao && noPlano(estado).iniciativa(i));
-    const entregas = inis.reduce((s, i) => s + entregasDaIniciativa(estado, i.id).length, 0);
-    const previsto = ls.reduce((s, l) => s + l.financeiro.previsto, 0);
-    const executado = ls.reduce((s, l) => s + l.financeiro.executado, 0);
-    const comContribuicao = ls.filter((l) => l.inis.length > 0).length;
-
+/** Monta a tela uma vez: a barra de filtros fica de pé, e só a faixa e o corpo da tabela se refazem. */
+function montar() {
     document.getElementById("conteudo").innerHTML = `
-    ${cabecalhoPagina("Programas do PPA", `Iniciativas e Entregas cadastradas por ${esc(orgao)}.`, filtros())}
-    ${faixaIndicadores(
-        [
-            { valor: ls.length, rotulo: "Programas do PPA" },
-            { valor: comContribuicao, rotulo: "Com contribuição do órgão" },
-            { valor: inis.length, rotulo: "Iniciativas" },
-            { valor: entregas, rotulo: "Entregas" },
-            { valor: moeda(previsto), rotulo: "Previsto no PPA" },
-            { valor: pct(previsto > 0 ? (executado / previsto) * 100 : null), rotulo: "% execução financeira" },
-        ],
-        `Os valores derivam das Ações Orçamentárias vinculadas às Entregas do órgão. ${
-            ordem === "prioridade"
-                ? "<strong>Ordenação por prioridade:</strong> primeiro o que foi devolvido, depois o que está em preenchimento, em seguida o que já foi enviado, e por último o que ainda não foi avaliado."
-                : ""
-        }`
-    )}
+    ${barraTitulo("Programas do PPA")}
+    <div id="faixa" class="mt-3"></div>
     <div class="card">
+        ${filtros.html()}
+        <div class="d-flex justify-content-end align-items-center gap-2 px-3 py-2 border-bottom">
+            <label class="form-label mb-0 text-nowrap" for="ordem">Ordenar por</label>
+            <select class="form-select form-select-sm" style="width:12rem" id="ordem" title="A ordenação por prioridade traz primeiro o que depende de você">
+                <option value="prioridade">Prioridade</option>
+                <option value="codigo">Código</option>
+                <option value="nome">Nome</option>
+                <option value="iniciativas">Nº de Iniciativas</option>
+            </select>
+        </div>
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
@@ -266,22 +229,35 @@ function render() {
                         <th style="width:7rem">Ações</th>
                     </tr>
                 </thead>
-                <tbody>
-                ${
-                    ls.length === 0
-                        ? '<tr><td colspan="11" class="text-center text-muted py-4 fs-12">Nenhum Programa corresponde ao filtro.</td></tr>'
-                        : ls.map(linhaPrograma).join("")
-                }
-                </tbody>
+                <tbody id="corpo-programas"></tbody>
             </table>
         </div>
     </div>`;
+    filtros.ligar(() => render());
+}
 
-    document.getElementById("busca").value = busca;
-    document.getElementById("filtro").value = filtro;
-    document.getElementById("eixo").value = eixo;
-    document.getElementById("objetivo").value = objetivo;
-    document.getElementById("marcador").value = marcador;
+function render() {
+    const ls = linhas();
+    const inis = estado.iniciativas.filter((i) => i.orgao === orgao && noPlano(estado).iniciativa(i));
+    const entregas = inis.reduce((s, i) => s + entregasDaIniciativa(estado, i.id).length, 0);
+    const previsto = ls.reduce((s, l) => s + l.financeiro.previsto, 0);
+    const executado = ls.reduce((s, l) => s + l.financeiro.executado, 0);
+    const comContribuicao = ls.filter((l) => l.inis.length > 0).length;
+
+    document.getElementById("faixa").innerHTML = faixaIndicadores(
+        [
+            { valor: ls.length, rotulo: "Programas do PPA" },
+            { valor: comContribuicao, rotulo: "Com contribuição do órgão" },
+            { valor: inis.length, rotulo: "Iniciativas" },
+            { valor: entregas, rotulo: "Entregas" },
+            { valor: moeda(previsto), rotulo: "Previsto no PPA" },
+            { valor: pct(previsto > 0 ? (executado / previsto) * 100 : null), rotulo: "% execução financeira" },
+        ]
+    );
+    document.getElementById("corpo-programas").innerHTML =
+        ls.length === 0
+            ? '<tr><td colspan="11" class="text-center text-muted py-4 fs-12">Nenhum Programa corresponde ao filtro.</td></tr>'
+            : ls.map(linhaPrograma).join("");
     document.getElementById("ordem").value = ordem;
 
     // A dica dos selos (nome, descrição e observação). O conteúdo é refeito a cada render: some a dica que ficou solta.
@@ -341,7 +317,7 @@ document.addEventListener("click", (e) => {
         const ini = estado.iniciativas.find((i) => i.id === excluir.dataset.excluir);
         const vinculos = vinculosDe("iniciativas", ini.id);
         if (vinculos.length) {
-            avisar(`A Iniciativa está vinculada a ${descreverVinculos(vinculos)}. Desfaça os vínculos antes de excluir.`, "erro");
+            avisar(`Iniciativa vinculada a ${descreverVinculos(vinculos)}. Desfaça os vínculos para excluir.`, "erro");
             return;
         }
         confirmarExclusao({
@@ -358,29 +334,11 @@ document.addEventListener("click", (e) => {
     }
 });
 
-document.addEventListener("input", (e) => {
-    if (e.target.id === "busca") {
-        busca = e.target.value;
-        render();
-        // O campo é recriado a cada tecla: sem devolver o cursor ao fim, o
-        // texto digitado sai embaralhado.
-        const campo = document.getElementById("busca");
-        campo.focus();
-        campo.setSelectionRange(campo.value.length, campo.value.length);
-    }
-});
-
 document.addEventListener("change", (e) => {
-    const id = e.target.id;
-    if (id === "filtro") filtro = e.target.value;
-    else if (id === "eixo") {
-        eixo = e.target.value;
-        objetivo = "todos";
-    } else if (id === "objetivo") objetivo = e.target.value;
-    else if (id === "marcador") marcador = e.target.value;
-    else if (id === "ordem") ordem = e.target.value;
-    else return;
+    if (e.target.id !== "ordem") return;
+    ordem = e.target.value;
     render();
 });
 
+montar();
 render();

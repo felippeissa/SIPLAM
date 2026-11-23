@@ -9,19 +9,17 @@ import { obterEstado } from "../dados/store.js";
 import { PROJETOS } from "../dados/seed.js";
 import { moedaCurta, moeda, descompassoProjeto } from "../dados/regras.js";
 import { linhasDoProjeto, entregasDoProjeto } from "../dados/financeiro.js";
-import { montarShell, cabecalhoPagina } from "../shell.js";
+import { montarShell, barraTitulo } from "../shell.js";
+import { criarFiltros } from "../filtros.js";
 import { chip, esc, faixaIndicadores } from "../ui.js";
 import { quadroFinanceiro } from "../ui-financeiro.js";
 
 const { estado } = montarShell();
 
-let busca = new URLSearchParams(location.search).get("q") ?? "";
-let somenteDescompasso = false;
+const buscaInicial = new URLSearchParams(location.search).get("q") ?? "";
 const abertos = new Set();
 
-function linhas() {
-    const q = busca.trim().toLowerCase();
-
+function linhasBase() {
     return PROJETOS.map((p) => {
         const linhasFin = linhasDoProjeto(estado, p.id);
         const noPpa = linhasFin.reduce((s, l) => s + l.total, 0);
@@ -39,10 +37,18 @@ function linhas() {
             ipofs: new Set(linhasFin.map((l) => l.ipof.id)).size,
             programas: new Set(linhasFin.map((l) => l.programaId)).size,
         };
-    })
-        .filter((l) => !q || [l.projeto.nome, l.projeto.codigo, l.projeto.orgao].some((c) => c.toLowerCase().includes(q)))
-        .filter((l) => !somenteDescompasso || l.proporcao > 0.3 || l.noPpa === 0);
+    });
 }
+
+const linhas = () => linhasBase().filter((l) => filtros.passa(l));
+const comDescompasso = (l) => l.proporcao > 0.3 || l.noPpa === 0;
+
+// O mesmo componente de filtros das demais telas: campos com rótulo, e o filtro só vale ao clicar em Filtrar.
+const filtros = criarFiltros({
+    livre: { rotulo: "Projeto", texto: (l) => [l.projeto.nome, l.projeto.codigo, l.projeto.orgao].join(" ") },
+    campos: [{ id: "descompasso", rotulo: "Descompasso", tipo: "booleano", sim: "Com descompasso", nao: "Sem descompasso", valorDe: (l) => [comDescompasso(l) ? "sim" : "nao"] }],
+    exportar: "projetos-gomap",
+});
 
 function linhaProjeto(l) {
     const aberto = abertos.has(l.projeto.id);
@@ -106,37 +112,13 @@ function linhaProjeto(l) {
     }`;
 }
 
-function render() {
-    const ls = linhas();
-    const global = ls.reduce((s, l) => s + l.projeto.valorGlobal, 0);
-    const noPpa = ls.reduce((s, l) => s + l.noPpa, 0);
-    const semReflexo = ls.filter((l) => l.noPpa === 0).length;
-
+/** Monta a tela uma vez: a barra de filtros fica de pé, e só a faixa e o corpo da tabela se refazem. */
+function montar() {
     document.getElementById("conteudo").innerHTML = `
-    ${cabecalhoPagina(
-        "Projetos GOMAP no PPA",
-        "Como os Projetos do GOMAP se refletem no plano — e quanto fica de fora.",
-        `
-        <div class="app-search">
-            <input type="search" id="busca" class="form-control form-control-sm" placeholder="Código, nome ou órgão do Projeto" value="${esc(busca)}" style="min-width:18rem" />
-            <i class="ti ti-search app-search-icon text-muted"></i>
-        </div>
-        <div class="form-check form-check-inline mb-0">
-            <input class="form-check-input" type="checkbox" id="descompasso" ${somenteDescompasso ? "checked" : ""} />
-            <label class="form-check-label fs-13" for="descompasso">Só com descompasso</label>
-        </div>`
-    )}
-    ${faixaIndicadores(
-        [
-            { valor: ls.length, rotulo: "Projetos" },
-            { valor: moedaCurta(global), rotulo: "Valor global no GOMAP" },
-            { valor: moedaCurta(noPpa), rotulo: "Apropriado ao PPA" },
-            { valor: moedaCurta(global - noPpa), rotulo: "Diferença" },
-            { valor: semReflexo, rotulo: "Sem reflexo no PPA" },
-        ],
-        "O valor global do Projeto nunca é o valor da Entrega: o financeiro do PPA vem das Ações Orçamentárias."
-    )}
+    ${barraTitulo("Projetos GOMAP no PPA")}
+    <div id="faixa" class="mt-3"></div>
     <div class="card">
+        ${filtros.html()}
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
@@ -152,18 +134,38 @@ function render() {
                         <th style="width:12rem">Situação</th>
                     </tr>
                 </thead>
-                <tbody>
-                ${
-                    ls.length === 0
-                        ? '<tr><td colspan="9" class="text-center text-muted py-4 fs-12">Nenhum Projeto corresponde ao filtro.</td></tr>'
-                        : ls.map(linhaProjeto).join("")
-                }
-                </tbody>
+                <tbody id="corpo-projetos"></tbody>
             </table>
         </div>
     </div>`;
+    filtros.ligar(() => render());
+    // O link vindo de outra tela traz o termo na URL (?q=): entra no campo e já vale.
+    if (buscaInicial) {
+        document.getElementById("filtro-livre").value = buscaInicial;
+        document.getElementById("filtro-buscar").click();
+    }
+}
 
-    document.getElementById("busca").value = busca;
+function render() {
+    const ls = linhas();
+    const global = ls.reduce((s, l) => s + l.projeto.valorGlobal, 0);
+    const noPpa = ls.reduce((s, l) => s + l.noPpa, 0);
+    const semReflexo = ls.filter((l) => l.noPpa === 0).length;
+
+    document.getElementById("faixa").innerHTML = faixaIndicadores(
+        [
+            { valor: ls.length, rotulo: "Projetos" },
+            { valor: moedaCurta(global), rotulo: "Valor global no GOMAP" },
+            { valor: moedaCurta(noPpa), rotulo: "Apropriado ao PPA" },
+            { valor: moedaCurta(global - noPpa), rotulo: "Diferença" },
+            { valor: semReflexo, rotulo: "Sem reflexo no PPA" },
+        ],
+        "O valor global do Projeto nunca é o valor da Entrega: o financeiro do PPA vem das Ações Orçamentárias."
+    );
+    document.getElementById("corpo-projetos").innerHTML =
+        ls.length === 0
+            ? '<tr><td colspan="9" class="text-center text-muted py-4 fs-12">Nenhum Projeto corresponde ao filtro.</td></tr>'
+            : ls.map(linhaProjeto).join("");
 }
 
 const conteudo = document.getElementById("conteudo");
@@ -177,23 +179,5 @@ conteudo.addEventListener("click", (e) => {
     }
 });
 
-conteudo.addEventListener("input", (e) => {
-    if (e.target.id === "busca") {
-        busca = e.target.value;
-        render();
-        // O campo é recriado a cada tecla: sem devolver o cursor ao fim, o
-        // texto digitado sai embaralhado.
-        const campo = document.getElementById("busca");
-        campo.focus();
-        campo.setSelectionRange(campo.value.length, campo.value.length);
-    }
-});
-
-conteudo.addEventListener("change", (e) => {
-    if (e.target.id === "descompasso") {
-        somenteDescompasso = e.target.checked;
-        render();
-    }
-});
-
+montar();
 render();

@@ -43,7 +43,7 @@ function montar() {
         acao: () =>
             leitura
                 ? '<span class="fs-12 text-muted">Perfil sem edição neste cadastro.</span>'
-                : `<a href="${criar}" class="btn btn-primary"><i class="ti ti-plus me-1"></i>Novo membro</a>`,
+                : `<a href="${criar}" class="btn btn-primary">Novo membro</a>`,
     });
 
     function linhas() {
@@ -74,7 +74,7 @@ function montar() {
                 <h4 class="card-title mb-1">Equipe do plano</h4>
                 <p class="text-muted mb-0 fs-13">Quem trabalha no ${esc(ppa.nome)} e com que função.</p>
             </div>
-            <a href="${voltar}" class="btn btn-light">Voltar ao plano</a>
+            <a href="${voltar}" class="btn btn-outline-primary">Voltar ao plano</a>
         </div>
         ${filtros.html()}
         <div class="table-responsive">

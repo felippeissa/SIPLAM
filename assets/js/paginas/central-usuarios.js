@@ -93,7 +93,7 @@ const filtros = criarFiltros({
         },
     ],
     exportar: "usuarios",
-    acao: () => (leitura ? "" : `<button class="btn btn-primary" id="novo"><i class="ti ti-plus me-1"></i>Novo usuário</button>`),
+    acao: () => (leitura ? "" : `<button class="btn btn-primary" id="novo">Novo usuário</button>`),
 });
 
 function indicadores() {
@@ -135,7 +135,7 @@ function linha(u) {
             leitura
                 ? ""
                 : `<td class="text-end coluna-acoes">
-            <a href="${url(`central-usuarios/editar.html?id=${encodeURIComponent(u.id)}`)}" class="btn btn-sm btn-outline-primary">Editar</a>
+            <a href="${url(`central-usuarios/editar.html?id=${encodeURIComponent(u.id)}`)}" class="btn btn-sm btn-icon btn-terciario" title="Editar" aria-label="Editar ${esc(u.nome)}"><i class="ti ti-pencil fs-16"></i></a>
         </td>`
         }
     </tr>`;
@@ -241,9 +241,9 @@ function corpoNovo(erro = "", cpfDigitado = "") {
         }
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
         <button type="button" class="btn btn-primary" id="salvar-novo" ${encontrado ? "" : "disabled"}>
-            Cadastrar
+            Salvar
         </button>
     </div>`;
 }
@@ -322,7 +322,7 @@ function ligarNovo() {
             decididoEm: new Date().toLocaleDateString("pt-BR"),
             decididoPor: estado.analista,
         });
-        avisar("Usuário cadastrado com acesso ativo.");
+        avisar("Usuário criado com sucesso.");
         bootstrap.Modal.getInstance(document.getElementById("modal-novo")).hide();
         render();
     });

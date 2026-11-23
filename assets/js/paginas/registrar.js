@@ -168,7 +168,7 @@ function formulario() {
         <div class="mb-3">
             <label class="form-label" for="r-orgao">Órgão<span class="text-danger">*</span></label>
             <select class="form-select" id="r-orgao">
-                <option value="">Selecione seu órgão</option>
+                <option value="">Selecione</option>
                 ${orgaos().map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join("")}
             </select>
             ${campoErro("r-orgao")}
@@ -177,7 +177,7 @@ function formulario() {
         <div class="mb-3">
             <label class="form-label" for="r-perfil">Perfil<span class="text-danger">*</span></label>
             <select class="form-select" id="r-perfil">
-                <option value="">Selecione o perfil</option>
+                <option value="">Selecione</option>
                 ${PERFIS.map((p) => `<option value="${p.id}">${esc(p.nome)}</option>`).join("")}
             </select>
             ${campoErro("r-perfil")}
@@ -359,7 +359,7 @@ function confirmacao(nome, perfil) {
             <strong>${esc(escolhido?.nome ?? perfil)}</strong>. Um administrador central vai analisar
             e confirmar o acesso. Você será avisado por e-mail quando houver resposta.
         </p>
-        <a href="index.html" class="btn btn-light">Voltar para a entrada</a>
+        <a href="index.html" class="btn btn-outline-primary">Voltar para a entrada</a>
     </div>`;
 }
 

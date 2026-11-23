@@ -15,11 +15,17 @@
  */
 import { esc } from "./ui.js";
 
+// Severidade → cor, ícone e título padrão (GESIS Padrões UX 3.2.1: Sucesso / Informação / Atenção / Erro).
 const TOM = {
-    ok: { classe: "text-bg-success", icone: "ti-circle-check" },
-    alerta: { classe: "text-bg-warning", icone: "ti-alert-triangle" },
-    erro: { classe: "text-bg-danger", icone: "ti-alert-circle" },
+    ok: { classe: "text-bg-success", icone: "ti-circle-check", titulo: "Sucesso" },
+    info: { classe: "text-bg-info", icone: "ti-info-circle", titulo: "Informação" },
+    alerta: { classe: "text-bg-warning", icone: "ti-alert-triangle", titulo: "Atenção" },
+    erro: { classe: "text-bg-danger", icone: "ti-alert-circle", titulo: "Erro" },
 };
+
+/** Limites do guia: título numa linha (34 caracteres); descrição em até duas linhas (81 caracteres). */
+export const LIMITE_TITULO = 34;
+export const LIMITE_DESCRICAO = 81;
 
 function container() {
     let el = document.getElementById("siplam-toasts");
@@ -34,27 +40,36 @@ function container() {
 }
 
 /**
- * @param {string} texto
- * @param {"ok"|"alerta"|"erro"} [tom]
+ * Toast com título + descrição, de 350 px de largura e altura que acompanha o texto.
+ * @param {string} texto  a descrição (até 81 caracteres)
+ * @param {"ok"|"info"|"alerta"|"erro"} [tom]
+ * @param {string} [titulo]  só quando precisar fugir do padrão da severidade (até 34 caracteres)
  */
-export function avisar(texto, tom = "ok") {
-    const { classe, icone } = TOM[tom] || TOM.ok;
+export function avisar(texto, tom = "ok", titulo = "") {
+    const { classe, icone, titulo: padrao } = TOM[tom] || TOM.ok;
+    const nome = titulo || padrao;
+    if (nome.length > LIMITE_TITULO) console.warn(`Toast: título com ${nome.length} caracteres (máximo ${LIMITE_TITULO}).`);
+    if (texto.length > LIMITE_DESCRICAO) console.warn(`Toast: descrição com ${texto.length} caracteres (máximo ${LIMITE_DESCRICAO}).`);
     const el = document.createElement("div");
-    el.className = `toast align-items-center shadow-lg border-0 ${classe}`;
+    el.className = `toast shadow-lg border-0 ${classe}`;
+    el.style.width = "350px";
     el.setAttribute("role", "alert");
     el.setAttribute("aria-live", "assertive");
     el.setAttribute("aria-atomic", "true");
     el.innerHTML = `
-    <div class="d-flex">
-        <div class="toast-body d-flex align-items-center gap-2 fs-13">
-            <i class="ti ${icone} fs-18"></i>${esc(texto)}
+    <div class="d-flex align-items-start gap-2 p-3">
+        <i class="ti ${icone} fs-20 flex-shrink-0"></i>
+        <div class="flex-grow-1" style="min-width:0">
+            <div class="fw-semibold fs-14 text-truncate">${esc(nome)}</div>
+            <div class="fs-13">${esc(texto)}</div>
         </div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto"
+        <button type="button" class="btn-close btn-close-white flex-shrink-0"
                 data-bs-dismiss="toast" aria-label="Fechar"></button>
     </div>`;
 
     container().appendChild(el);
-    const toast = new bootstrap.Toast(el, { delay: 4000 });
+    // GESIS Padrões UX 3.2.1: 3000 ms por padrão, e não se pode diminuir.
+    const toast = new bootstrap.Toast(el, { delay: 3000 });
     el.addEventListener("hidden.bs.toast", () => el.remove());
     toast.show();
 }

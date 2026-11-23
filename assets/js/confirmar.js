@@ -68,7 +68,7 @@ export function confirmarExclusao({ titulo, texto, confirmar = "Excluir", digita
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-danger" id="${ID}-ok">${esc(confirmar)}</button>
                 </div>
             </div>
@@ -131,3 +131,62 @@ export function confirmarExclusao({ titulo, texto, confirmar = "Excluir", digita
         modal.show();
     });
 }
+
+/**
+ * Dialog de confirmação simples (GESIS Padrões UX 3.3): 350 px, título curto + descrição, botão secundário e primário.
+ * Obrigatório ao confirmar edição e ao cancelar cadastro ou edição.
+ * @returns {Promise<boolean>}
+ */
+export function confirmarAcao({ titulo, texto, confirmar = "Sim", cancelar = "Não" }) {
+    const id = "modal-confirmar-acao";
+    document.getElementById(id)?.remove();
+    document.body.insertAdjacentHTML(
+        "beforeend",
+        `
+    <div class="modal fade" id="${id}" tabindex="-1" aria-labelledby="${id}-titulo" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:350px">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fs-15 text-truncate" id="${id}-titulo">${esc(titulo)}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body fs-13">${esc(texto)}</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">${esc(cancelar)}</button>
+                    <button type="button" class="btn btn-primary" id="${id}-ok">${esc(confirmar)}</button>
+                </div>
+            </div>
+        </div>
+    </div>`
+    );
+    const el = document.getElementById(id);
+    const modal = new bootstrap.Modal(el);
+    return new Promise((resolve) => {
+        let sim = false;
+        document.getElementById(`${id}-ok`).addEventListener("click", () => {
+            sim = true;
+            modal.hide();
+        });
+        el.addEventListener("hidden.bs.modal", () => { el.remove(); resolve(sim); }, { once: true });
+        modal.show();
+    });
+}
+
+export const confirmarSalvarEdicao = () =>
+    confirmarAcao({ titulo: "Salvar edição?", texto: "As alterações vão substituir os dados atuais deste registro.", confirmar: "Salvar", cancelar: "Cancelar" });
+
+/**
+ * Todo link "Cancelar" de formulário leva `data-cancelar="cadastro"` ou `"edicao"` e passa por aqui: o modal avisa
+ * da perda dos dados antes de sair (obrigatório no guia).
+ */
+document.addEventListener("click", async (e) => {
+    const a = e.target.closest?.("a[data-cancelar]");
+    if (!a) return;
+    e.preventDefault();
+    const cadastro = a.dataset.cancelar === "cadastro";
+    const ok = await confirmarAcao({
+        titulo: cadastro ? "Cancelar cadastro?" : "Cancelar edição?",
+        texto: cadastro ? "Os dados preenchidos serão perdidos." : "As alterações feitas não serão salvas.",
+    });
+    if (ok) window.location.href = a.href;
+});

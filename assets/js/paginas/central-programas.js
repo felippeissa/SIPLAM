@@ -110,7 +110,7 @@ const filtros = criarFiltros({
         leitura
             ? ""
             : `<a href="${url("central-programas/criar.html")}" class="btn btn-primary">
-                <i class="ti ti-plus me-1"></i>Novo Programa
+                Novo Programa
             </a>`,
 });
 
@@ -164,11 +164,11 @@ function corpo() {
             const celulaAcoes = `
             <td class="${ACOES_ESQUERDA ? "text-start" : "text-end"} coluna-acoes">${
                 leitura
-                    ? `<a href="${url(`programa.html?id=${p.id}`)}" class="btn btn-sm btn-light">Ver</a>`
+                    ? `<a href="${url(`programa.html?id=${p.id}`)}" class="btn btn-sm btn-icon btn-terciario" title="Visualizar" aria-label="Visualizar ${esc(p.nome)}"><i class="ti ti-eye fs-16"></i></a>`
                     : `<div class="d-inline-flex gap-1">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-marcar="${esc(p.id)}"
-                                title="Adicionar marcadores" aria-label="Adicionar marcadores a ${esc(p.nome)}"><i class="ti ti-tag-plus"></i></button>
-                        <a href="${url(`central-programas/editar.html?id=${p.id}`)}" class="btn btn-sm btn-outline-primary">Editar</a>
+                        <a href="${url(`central-programas/editar.html?id=${p.id}`)}" class="btn btn-sm btn-icon btn-terciario" title="Editar" aria-label="Editar ${esc(p.nome)}"><i class="ti ti-pencil fs-16"></i></a>
+                        <button type="button" class="btn btn-sm btn-icon btn-terciario" data-marcar="${esc(p.id)}"
+                                title="Adicionar marcadores" aria-label="Adicionar marcadores a ${esc(p.nome)}"><i class="ti ti-tag-plus fs-16"></i></button>
                     </div>`
             }</td>
             `;

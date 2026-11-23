@@ -15,6 +15,7 @@ import { obterEstado, ppaCorrente, situacaoPpa, selecionarPpa } from "./dados/st
 import { cartaoPlano } from "./cartao-plano.js";
 import { esc } from "./ui.js";
 import { mostrarAvisosPendentes } from "./toast.js";
+import { confirmarAcao } from "./confirmar.js";
 import { instalarBusca } from "./busca.js";
 import { instalarAtena } from "./atena.js";
 import { instalarChat } from "./chat.js";
@@ -22,7 +23,7 @@ import { instalarNotificacoes } from "./notificacoes.js";
 
 /** Menu da visão setorial — o órgão preenche e envia. */
 const MENU_SETORIAL = [
-    { href: "ppa-detalhe.html", rotulo: "Home", icone: "ti-home" },
+    { href: "ppa-detalhe.html", rotulo: "Página inicial", icone: "ti-home" },
     { href: "programas.html", rotulo: "Programas", icone: "ti-layout-grid" },
     { href: "iniciativas.html", rotulo: "Iniciativas", icone: "ti-list-check" },
     { href: "entregas.html", rotulo: "Entregas", icone: "ti-box" },
@@ -42,8 +43,7 @@ const MENU_SETORIAL = [
  * O menu do setorial segue plano: ainda não foi reorganizado.
  */
 const MENU_CENTRAL = [
-    { href: "ppa-detalhe.html", rotulo: "Home", icone: "ti-home" },
-    { href: "pagina-inicial.html", rotulo: "Dashboard", icone: "ti-layout-dashboard" },
+    { href: "ppa-detalhe.html", rotulo: "Página inicial", icone: "ti-home" },
     {
         secao: "Cadastros",
         icone: "ti-database",
@@ -448,7 +448,7 @@ function topbar(estado, visao) {
                         <div class="dropdown-header pb-1">Perfil</div>
                         ${perfisDoMenu()}
                         <div class="dropdown-divider"></div>
-                        <a href="${url("index.html")}" class="dropdown-item text-danger fw-semibold">
+                        <a href="${url("index.html")}" id="sair-sistema" class="dropdown-item text-danger fw-semibold">
                             <i class="ti ti-logout me-1 fs-lg align-middle"></i>
                             <span class="align-middle">Sair</span>
                         </a>
@@ -837,6 +837,10 @@ export function barraTitulo(titulo, elos = []) {
  * O título sobe para a barra, junto da trilha; embaixo ficam a explicação e os
  * filtros. Antes o título vinha aqui e a trilha não existia.
  */
+/**
+ * Cabeçalho da página com subtítulo e ações. Filtros NÃO moram aqui: toda lista usa a barra de `filtros.js`, com
+ * botões Limpar e Filtrar (um padrão só). Este cabeçalho é só para ações da tela, chips e seletores de visão.
+ */
 export function cabecalhoPagina(titulo, subtitulo, acoes = "", elos = []) {
     return `
 ${barraTitulo(titulo, elos)}
@@ -845,3 +849,15 @@ ${barraTitulo(titulo, elos)}
     <div class="barra-filtros">${acoes}</div>
 </div>`;
 }
+
+/**
+ * GESIS Padrões UX 2.1: o logout é obrigatório no cabeçalho e sempre vem com um modal de confirmação.
+ * Um clique só no "Sair" não leva mais ao login sem perguntar.
+ */
+document.addEventListener("click", async (e) => {
+    const link = e.target.closest?.("#sair-sistema");
+    if (!link) return;
+    e.preventDefault();
+    const sair = await confirmarAcao({ titulo: "Sair do sistema?", texto: "Você voltará para a tela de acesso.", confirmar: "Sair", cancelar: "Cancelar" });
+    if (sair) window.location.href = link.href;
+});

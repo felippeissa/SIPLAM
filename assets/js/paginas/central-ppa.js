@@ -87,7 +87,7 @@ const filtros = criarFiltros({
         leitura
             ? `<span class="fs-12 text-muted">O cadastro do PPA é exclusivo do Administrador central.</span>`
             : `<a href="${url("central-ppa/criar.html")}" class="btn btn-primary">
-                <i class="ti ti-plus me-1"></i>Novo PPA
+                Novo PPA
             </a>`,
 });
 

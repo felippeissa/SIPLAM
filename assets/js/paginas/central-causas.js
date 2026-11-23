@@ -152,7 +152,7 @@ function render() {
     document.getElementById("conteudo").innerHTML = `
     ${cabecalhoPagina(
         "Cobertura das Causas",
-        "Quais causas do diagnóstico têm Iniciativas enfrentando, e quais ficaram sem.",
+        "",
         seletor
     )}
     ${

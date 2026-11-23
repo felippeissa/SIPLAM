@@ -33,13 +33,15 @@ const normal = (t) =>
 
 /**
  * @param {object} cfg
- * @param {{rotulo: string, texto: (item: object) => string}} cfg.livre
+ * @param {{rotulo: string, texto: (item: object) => string}|null} cfg.livre  `null` tira o campo de busca livre
  * @param {Array<object>} [cfg.campos] Um por coluna filtrável. O `tipo` é o componente
  *   da aba Filtros da matriz de mapeamento:
  *     "multi"    (padrão) escolha múltipla — `opcoes()` e `valorDe(item)` devolvem listas;
  *     "texto"    campo de texto livre — `valorDe(item)` devolve o texto a procurar;
  *     "booleano" Sim/Não — `valorDe(item)` devolve ["sim"] ou ["nao"], e `sim`/`nao`
  *                dão os rótulos das duas escolhas.
+ * @param {boolean} [cfg.comRotulos=true] GESIS Padrões UX 4.1: rótulo acima de cada campo, e o placeholder deixa de repetir o
+ *   rótulo e passa a ser o padrão do tipo — "Digite" no texto, "Selecione" na escolha.
  * @param {string} [cfg.exportar] Nome do arquivo gerado; sem ele, não há botão de exportar.
  * @param {() => string} [cfg.acao] A ação da tela — "Novo…" —, que no Inspinia mora
  *   no cabeçalho do card, junto dos filtros, e não numa faixa acima dele.
@@ -57,6 +59,10 @@ export function criarFiltros(cfg) {
     let termoValendo = "";
 
     const tipoDe = (c) => c.tipo ?? "multi";
+    /** Rótulo acima do campo, só nas telas que adotaram o padrão. */
+    const rotulo = (id, texto) => (cfg.comRotulos !== false ? `<label class="form-label" for="${esc(id)}">${esc(texto)}</label>` : "");
+    /** O placeholder: o rótulo (como antes) ou o padrão do guia, conforme `comRotulos`. */
+    const dica = (texto, padrao) => esc(cfg.comRotulos !== false ? padrao : texto);
 
     // As opções saem dos próprios registros: opção que não filtra nada não
     // aparece. Calculadas uma vez, porque a barra não se redesenha.
@@ -65,7 +71,7 @@ export function criarFiltros(cfg) {
     const ativo = () => !!termoValendo.trim() || campos.some((c) => valendo.get(c.id).size > 0);
 
     function passa(item) {
-        if (termoValendo.trim() && !normal(cfg.livre.texto(item)).includes(normal(termoValendo.trim()))) return false;
+        if (cfg.livre && termoValendo.trim() && !normal(cfg.livre.texto(item)).includes(normal(termoValendo.trim()))) return false;
         for (const c of campos) {
             const escolhidos = valendo.get(c.id);
             if (escolhidos.size === 0) continue;
@@ -89,21 +95,23 @@ export function criarFiltros(cfg) {
         return `
         <div class="card-header border-light filtros" id="barra-filtros">
             <div class="d-flex flex-wrap align-items-center gap-2">
-                <div class="filtro-campo">
+                ${cfg.livre ? `                <div class="filtro-campo">
+                    ${rotulo("filtro-livre", cfg.livre.rotulo)}
                     <div class="app-search">
                         <input type="search" id="filtro-livre" class="form-control"
-                               placeholder="${esc(cfg.livre.rotulo)}" aria-label="Filtrar por ${esc(cfg.livre.rotulo)}" />
+                               placeholder="${dica(cfg.livre.rotulo, "Digite")}" aria-label="Filtrar por ${esc(cfg.livre.rotulo)}" />
                         <i class="ti ti-search app-search-icon text-muted"></i>
                     </div>
-                </div>
+                </div>` : ""}
                 ${campos
                     .map((c) => {
                         if (tipoDe(c) === "texto") {
                             return `
                 <div class="filtro-campo">
+                    ${rotulo(`filtro-${c.id}`, c.rotulo)}
                     <div class="app-search">
                         <input type="search" class="form-control" id="filtro-${esc(c.id)}" data-filtro="${esc(c.id)}"
-                               placeholder="${esc(c.rotulo)}" aria-label="Filtrar por ${esc(c.rotulo)}" />
+                               placeholder="${dica(c.rotulo, "Digite")}" aria-label="Filtrar por ${esc(c.rotulo)}" />
                         <i class="ti ${esc(icone(c))} app-search-icon text-muted"></i>
                     </div>
                 </div>`;
@@ -112,10 +120,11 @@ export function criarFiltros(cfg) {
                         if (tipoDe(c) === "booleano") {
                             return `
                 <div class="filtro-campo">
+                    ${rotulo(`filtro-${c.id}`, c.rotulo)}
                     <div class="app-search">
                         <select class="form-select form-control" id="filtro-${esc(c.id)}" data-filtro="${esc(c.id)}"
                                 aria-label="Filtrar por ${esc(c.rotulo)}">
-                            <option value="">${esc(c.rotulo)}</option>
+                            <option value="">${dica(c.rotulo, "Selecione")}</option>
                             <option value="sim">${esc(c.sim ?? "Sim")}</option>
                             <option value="nao">${esc(c.nao ?? "Não")}</option>
                         </select>
@@ -128,10 +137,11 @@ export function criarFiltros(cfg) {
                         if (!lista.length) return "";
                         return `
                 <div class="filtro-campo">
+                    ${rotulo(`filtro-${c.id}`, c.rotulo)}
                     <div class="app-search">
                         <select class="form-control" id="filtro-${esc(c.id)}" data-filtro="${esc(c.id)}"
                                 data-choices data-choices-removeItem multiple
-                                aria-label="Filtrar por ${esc(c.rotulo)}" data-placeholder="${esc(c.rotulo)}">
+                                aria-label="Filtrar por ${esc(c.rotulo)}" data-placeholder="${dica(c.rotulo, "Selecione")}">
                             ${lista.map((o) => `<option value="${esc(o.valor)}">${esc(o.rotulo)}</option>`).join("")}
                         </select>
                         <i class="ti ${esc(icone(c))} app-search-icon text-muted"></i>
@@ -140,25 +150,27 @@ export function criarFiltros(cfg) {
                     })
                     .join("")}
 
-                <div class="filtro-botoes d-flex align-items-center gap-2">
-                    ${
-                        cfg.exportar
-                            ? `
-                    <div class="dropdown">
-                        <button class="btn btn-default dropdown-toggle drop-arrow-none" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="ti ti-download me-1"></i> Exportar <i class="ti ti-chevron-down align-middle ms-1"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><button class="dropdown-item" type="button" data-exportar="csv">Exportar como CSV</button></li>
-                            <li><button class="dropdown-item" type="button" data-exportar="xls">Exportar como Excel</button></li>
-                        </ul>
-                    </div>`
-                            : ""
-                    }
-                    <button type="button" class="btn btn-light" id="filtro-limpar">Limpar</button>
-                    <button type="button" class="btn btn-primary" id="filtro-buscar"><i class="ti ti-search me-1"></i>Buscar</button>
-                    ${cfg.acao?.() ?? ""}
-                </div>
+            </div>
+
+            <!-- GESIS 6.4: os botões ficam abaixo dos filtros, nunca na mesma linha; só o terciário leva ícone. -->
+            <div class="filtro-botoes d-flex flex-wrap align-items-center gap-16 mt-3">
+                ${
+                    cfg.exportar
+                        ? `
+                <div class="dropdown me-auto">
+                    <button class="btn btn-terciario dropdown-toggle drop-arrow-none" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="ti ti-download me-1"></i> Exportar <i class="ti ti-chevron-down align-middle ms-1"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-start">
+                        <li><button class="dropdown-item" type="button" data-exportar="csv">Exportar como CSV</button></li>
+                        <li><button class="dropdown-item" type="button" data-exportar="xls">Exportar como Excel</button></li>
+                    </ul>
+                </div>`
+                        : '<span class="me-auto"></span>'
+                }
+                <button type="button" class="btn btn-outline-primary" id="filtro-limpar">Limpar</button>
+                <button type="button" class="btn btn-primary" id="filtro-buscar">Filtrar</button>
+                ${cfg.acao?.() ?? ""}
             </div>
         </div>`;
     }
@@ -184,8 +196,8 @@ export function criarFiltros(cfg) {
                         removeItemButton: true,
                         shouldSort: false,
                         searchEnabled: true,
-                        placeholderValue: c.rotulo,
-                        searchPlaceholderValue: c.rotulo,
+                        placeholderValue: cfg.comRotulos !== false ? "Selecione" : c.rotulo,
+                        searchPlaceholderValue: cfg.comRotulos !== false ? "Digite e selecione" : c.rotulo,
                         noResultsText: "Nada encontrado",
                         noChoicesText: "Nada a escolher",
                         itemSelectText: "",
@@ -225,7 +237,8 @@ export function criarFiltros(cfg) {
             }
 
             if (e.target.closest("#filtro-limpar")) {
-                barra.querySelector("#filtro-livre").value = "";
+                const livre = barra.querySelector("#filtro-livre");
+                if (livre) livre.value = "";
                 for (const c of campos) {
                     const campo = barra.querySelector(`#filtro-${c.id}`);
                     if (!campo) continue;

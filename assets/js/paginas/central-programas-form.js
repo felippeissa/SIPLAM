@@ -34,6 +34,7 @@ import { campoDeIcone, ligarCampoDeIcone, lerIcone } from "../icone-programa.js"
 import { campoDeMarcadores,ligarCampoDeMarcadores, lerCampoDeMarcadores, marcadoresVisiveis } from "../cadastros/marcador.js";
 import { esc, chip } from "../ui.js";
 import { avisar, avisarDepois } from "../toast.js";
+import { confirmarSalvarEdicao } from "../confirmar.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -393,9 +394,9 @@ export function montarFormularioPrograma({ novo }) {
                         <div class="d-flex gap-2 align-items-center">
             ${
                 leitura
-                    ? `<a href="${voltar}" class="btn btn-light">Voltar</a>`
-                    : `<a href="${voltar}" class="btn btn-light">Cancelar</a>
-                       <button type="button" class="btn btn-primary" id="salvar">${novo ? "Cadastrar Programa" : "Salvar Programa"}</button>`
+                    ? `<a href="${voltar}" class="btn btn-outline-primary">Voltar</a>`
+                    : `<a href="${voltar}" class="btn btn-outline-primary" data-cancelar="${novo ? "cadastro" : "edicao"}">Cancelar</a>
+                       <button type="button" class="btn btn-primary" id="salvar">Salvar</button>`
             }</div>
                     </div>
                     <div class="card-body" id="formulario">${corpo()}</div>
@@ -410,7 +411,7 @@ export function montarFormularioPrograma({ novo }) {
 
     /* ---------- eventos ---------- */
 
-    document.addEventListener("click", (e) => {
+    document.addEventListener("click", async (e) => {
         if (leitura || !e.target.closest("#salvar")) return;
 
         lerFormulario();
@@ -429,6 +430,7 @@ export function montarFormularioPrograma({ novo }) {
             },
         ]);
         if (!ok) return;
+        if (!novo && !(await confirmarSalvarEdicao())) return;
 
         if (novo) {
             edicao.codigo = proximoCodigo();
@@ -447,7 +449,7 @@ export function montarFormularioPrograma({ novo }) {
             if (estava === quer) continue;
             updIniciativa(ini.id, { programaId: quer ? edicao.id : "", causas: [] });
         }
-        avisarDepois(`Programa ${novo ? "criado" : "editado"} com sucesso.`);
+        avisarDepois(`Programa ${novo ? "criado" : "atualizado"} com sucesso.`);
         window.location.href = voltar;
     });
 

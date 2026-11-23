@@ -6,43 +6,47 @@ import { campoErro } from "../validacao.js";
 /**
  * Cadastro de Marcadores (Gestão).
  *
- * Um marcador é uma etiqueta que a pessoa põe nas coisas do plano para achá-las depois. Quatro campos:
- * **nome**, **área**, **descrição** e **cor**. O marcador não tem tipo: quem o põe num Programa (ou em outro cadastro) escolhe dentre os que enxerga.
+ * Um marcador é uma etiqueta que a pessoa põe nas coisas do plano para achá-las depois. Cinco campos:
+ * **nome**, **dimensão**, **tipo**, **descrição** e **cor**. A dimensão (ambiental, social ou de governança)
+ * escolhe os tipos que o segundo campo oferece. Pedido de 19/11/2026.
  *
- * A **área** diz quem enxerga o marcador:
- *
- *   - "Só para mim": só quem o criou. É a única opção de quem não é administrador.
- *   - "Todos do perfil X": o administrador marca para todo um perfil, e ele fica visível para quem tem o perfil.
- *
- * Não há identidade de usuário no protótipo, então "eu" é o perfil com que se entrou: duas pessoas com o mesmo
- * perfil enxergam os marcadores "só para mim" uma da outra. Com o login real isto passa a ser o usuário.
+ * Sem **área** (removida em 19/11/2026): todo marcador é visível para todos os perfis. Edita quem o criou e o administrador.
+ * Não há identidade de usuário no protótipo, então "quem criou" é o perfil com que se entrou.
  */
-
-export const PERFIS_DE_MARCADOR = ["setorial", "gestao-setorial", "admin-central", "gestao-central", "controle"];
 
 /** As cores que a pessoa escolhe: as do tema, escuras o bastante para o texto branco do selo. */
 export const CORES = ["#1AB394", "#1C84C6", "#E08E1B", "#ED5565", "#7266BA", "#23A6A8", "#6C757D", "#E0559A", "#8B5E3C", "#343A40"];
 
-const AREA_EU = "eu";
-const areaDoPerfil = (perfil) => `perfil:${perfil}`;
+/** Dimensões e, dentro de cada uma, os tipos de marcador. O select de tipo só oferece os da dimensão escolhida. */
+export const DIMENSOES = {
+    ambiental: {
+        rotulo: "Dimensão ambiental",
+        tipos: ["Sustentabilidade ambiental", "Mudanças climáticas", "Biodiversidade", "Gestão de resíduos", "Poluição ambiental", "Eficiência no uso de recursos"],
+    },
+    social: {
+        rotulo: "Dimensão social",
+        tipos: ["Igualdade de gênero", "Inclusão social", "Direitos humanos", "Saúde e bem-estar", "Trabalho e emprego", "Proteção a grupos vulneráveis"],
+    },
+    governanca: {
+        rotulo: "Dimensão de governança",
+        tipos: ["Governança pública", "Integridade pública", "Compliance público", "Gestão de riscos", "Transparência pública", "Controle interno", "Prestação de contas", "Políticas baseadas em evidências"],
+    },
+};
+
+const opcoesDeTipo = (dimensao, tipo) =>
+    `<option value="">Selecione</option>` +
+    (DIMENSOES[dimensao]?.tipos ?? []).map((t) => `<option value="${esc(t)}"${t === tipo ? " selected" : ""}>${esc(t)}</option>`).join("");
 
 /** Administrador: o Administrador central e a Alta gestão central, que faz tudo que ele faz. */
 export const ehAdmin = () => ["admin-central", "gestao-central"].includes(perfilAtual());
 
-/** Quem vê o marcador: o dono, no "só para mim"; o perfil inteiro, no "todos do perfil" — e o administrador, que o administra. */
-export function visivel(marcador) {
-    const eu = perfilAtual();
-    if (!marcador.area || marcador.area === AREA_EU) return marcador.dono === eu;
-    return marcador.area === areaDoPerfil(eu) || ehAdmin();
-}
+/** Todos os perfis veem todos os marcadores. */
+export const visivel = () => true;
 
-/** Edita quem criou, e o administrador edita o que foi posto para um perfil. Os demais só veem. */
+/** Edita quem criou e o administrador. Os demais só veem. */
 export function soLeitura(marcador) {
-    if (marcador.dono === perfilAtual()) return false;
-    return !(ehAdmin() && marcador.area && marcador.area !== AREA_EU);
+    return !(ehAdmin() || marcador.dono === perfilAtual());
 }
-
-const rotuloDaArea = (area) => (!area || area === AREA_EU ? "Só para mim" : `Todos: ${nomeDoPerfil(area.replace("perfil:", ""))}`);
 
 const selo = (nome, cor, previa = false) =>
     `<span class="badge fs-12 fw-medium" style="background:${esc(cor)};color:#fff"${previa ? " data-previa" : ""}>${esc(nome || "Marcador")}</span>`;
@@ -52,7 +56,7 @@ export const marcador = {
     pasta: "central-marcador",
     listagem: "central-marcador.html",
     titulo: "Cadastro de Marcadores",
-    subtitulo: "Etiquetas para achar o que importa. Cada pessoa marca para si; o administrador também marca para todo um perfil.",
+    subtitulo: "Etiquetas para achar o que importa, classificadas por dimensão e tipo.",
     novoRotulo: "Novo marcador",
     singular: "Marcador",
     rotuloNome: "Nome do marcador",
@@ -66,37 +70,32 @@ export const marcador = {
     extra: {
         colunas: [
             { rotulo: "Cor", valor: (item) => selo(item.nome, item.cor ?? CORES[0]) },
-            { rotulo: "Área", valor: (item) => esc(rotuloDaArea(item.area)) },
+            { rotulo: "Dimensão", valor: (item) => esc(DIMENSOES[item.dimensao]?.rotulo ?? "—") },
+            { rotulo: "Tipo", valor: (item) => esc(item.tipo || "—") },
         ],
 
         html: (edicao) => {
             const leitura = somenteLeitura() || (edicao.id && soLeitura(edicao));
-            const admin = ehAdmin();
-            const area = edicao.area || AREA_EU;
             const cor = edicao.cor || CORES[0];
             const dono = edicao.dono || perfilAtual();
 
-            const opcoes = [`<option value="${AREA_EU}"${area === AREA_EU ? " selected" : ""}>Só para mim</option>`];
-            if (admin) {
-                opcoes.push(
-                    `<optgroup label="Todos que têm o perfil">${PERFIS_DE_MARCADOR.map(
-                        (p) =>
-                            `<option value="${areaDoPerfil(p)}"${area === areaDoPerfil(p) ? " selected" : ""}>${esc(nomeDoPerfil(p))}</option>`
-                    ).join("")}</optgroup>`
-                );
-            }
+            const dimOpcoes =
+                `<option value="">Selecione</option>` +
+                Object.entries(DIMENSOES)
+                    .map(([id, d]) => `<option value="${id}"${edicao.dimensao === id ? " selected" : ""}>${esc(d.rotulo)}</option>`)
+                    .join("");
 
             return `
             <input type="hidden" id="f-dono" value="${esc(dono)}" />
             <div class="mb-3">
-                <label class="form-label" for="f-area">Área do marcador <span class="text-danger">*</span></label>
-                <select class="form-select" id="f-area" ${leitura || !admin ? "disabled" : ""}>${opcoes.join("")}</select>
-                ${campoErro("f-area")}
-                <div class="form-text fs-12">${
-                    admin
-                        ? "“Só para mim” é visível só para você. Escolhendo um perfil, o marcador fica visível para todos que têm esse perfil."
-                        : "Você só pode marcar para você: o marcador fica visível só para você."
-                }</div>
+                <label class="form-label" for="f-dimensao">Dimensão <span class="text-danger">*</span></label>
+                <select class="form-select" id="f-dimensao" ${leitura ? "disabled" : ""}>${dimOpcoes}</select>
+                ${campoErro("f-dimensao")}
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="f-tipo">Tipo do marcador <span class="text-danger">*</span></label>
+                <select class="form-select" id="f-tipo" ${leitura || !edicao.dimensao ? "disabled" : ""}>${opcoesDeTipo(edicao.dimensao, edicao.tipo)}</select>
+                ${campoErro("f-tipo")}
             </div>
             <div class="mb-3">
                 <label class="form-label d-block">Cor do marcador <span class="text-danger">*</span></label>
@@ -126,23 +125,27 @@ export const marcador = {
                     c.style.borderColor = c.dataset.cor.toLowerCase() === corAtual().toLowerCase() ? "#343a40" : "transparent";
                 });
             };
+            const dimensao = escopo.querySelector("#f-dimensao");
+            const tipo = escopo.querySelector("#f-tipo");
+            dimensao.addEventListener("change", () => {
+                tipo.innerHTML = opcoesDeTipo(dimensao.value, "");
+                tipo.disabled = !dimensao.value;
+            });
             nome.addEventListener("input", pintar);
             escopo.querySelectorAll('input[name="f-cor"]').forEach((r) => r.addEventListener("change", pintar));
             pintar();
         },
 
         ler: () => ({
-            area: document.getElementById("f-area")?.value || AREA_EU,
+            dimensao: document.getElementById("f-dimensao")?.value || "",
+            tipo: document.getElementById("f-tipo")?.value || "",
             cor: document.querySelector('input[name="f-cor"]:checked')?.value ?? CORES[0],
             dono: document.getElementById("f-dono")?.value || perfilAtual(),
         }),
 
         regras: (dados) => [
-            {
-                campo: "f-area",
-                valido: dados.area === AREA_EU || (ehAdmin() && PERFIS_DE_MARCADOR.includes(String(dados.area).replace("perfil:", ""))),
-                mensagem: "Escolha a área do marcador.",
-            },
+            { campo: "f-dimensao", valido: !!DIMENSOES[dados.dimensao], mensagem: "Escolha a dimensão do marcador." },
+            { campo: "f-tipo", valido: !!DIMENSOES[dados.dimensao]?.tipos.includes(dados.tipo), mensagem: "Escolha o tipo do marcador." },
         ],
     },
 
@@ -198,7 +201,7 @@ export function iniciarDicasDeMarcador(raiz = document) {
 }
 
 const resumoDeMarcadores = (marcadores) =>
-    !marcadores.length ? "Selecione…" : marcadores.length <= 2 ? marcadores.map((m) => m.nome).join(", ") : `${marcadores.length} marcadores selecionados`;
+    !marcadores.length ? "Selecione" : marcadores.length <= 2 ? marcadores.map((m) => m.nome).join(", ") : `${marcadores.length} marcadores selecionados`;
 
 /**
  * O campo "Marcadores" de um formulário: um dropdown com caixas de marcar. Só lista o que a pessoa enxerga.
@@ -307,7 +310,7 @@ export function abrirJanelaDeMarcadores({ titulo, selecionados, observacoes, est
                     }
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
                     ${meus.length ? '<button type="button" class="btn btn-primary" id="mm-salvar">Salvar marcadores</button>' : ""}
                 </div>
             </div>
@@ -328,7 +331,7 @@ export function abrirJanelaDeMarcadores({ titulo, selecionados, observacoes, est
         const pintarEscolha = () => {
             const livres = meus.filter((m) => !itens.some((i) => i.id === m.id));
             escolha.innerHTML =
-                `<option value="">${livres.length ? "Escolha um marcador…" : "Todos os seus marcadores já estão na lista"}</option>` +
+                `<option value="">${livres.length ? "Selecione" : "Todos os seus marcadores já estão na lista"}</option>` +
                 livres.map((m) => `<option value="${esc(m.id)}">${esc(m.nome)}</option>`).join("");
             escolha.disabled = !livres.length;
             previa.classList.add("d-none");

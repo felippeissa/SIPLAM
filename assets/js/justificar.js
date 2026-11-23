@@ -41,7 +41,7 @@ export function pedirJustificativa({ titulo, texto, rotulo = "Justificativa", ex
                     ${nota ? `<p class="fs-12 text-muted mt-2 mb-0">${esc(nota)}</p>` : ""}
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="${ID}-ok">${esc(confirmar)}</button>
                 </div>
             </div>

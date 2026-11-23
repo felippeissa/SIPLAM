@@ -7,7 +7,7 @@
 import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { esc } from "../ui.js";
 import { avisar, avisarDepois } from "../toast.js";
-import { confirmarExclusao } from "../confirmar.js";
+import { confirmarExclusao, confirmarSalvarEdicao } from "../confirmar.js";
 import { nomeDoPerfil } from "../usuarios-decisao.js";
 import { FUNCOES, vinculosDaEquipe, equipeDoPlano, livresParaEquipe, salvarEquipe } from "../ppa-equipe-dados.js";
 
@@ -36,15 +36,15 @@ function montar() {
     const detalhe = (u) => `${(u.perfis ?? []).map(nomeDoPerfil).join(", ") || "Sem perfil"}${u.orgao ? ` · ${u.orgao}` : ""}`;
 
     const acoes = leitura
-        ? `<a href="${voltar}" class="btn btn-light">Voltar</a>`
+        ? `<a href="${voltar}" class="btn btn-outline-primary">Voltar</a>`
         : `${novo ? "" : '<button type="button" class="btn btn-danger" id="excluir">Excluir</button>'}
-           <a href="${voltar}" class="btn btn-light">Cancelar</a>
-           <button type="button" class="btn btn-primary" id="salvar">${novo ? "Cadastrar" : "Salvar"}</button>`;
+           <a href="${voltar}" class="btn btn-outline-primary" data-cancelar="${novo ? "cadastro" : "edicao"}">Cancelar</a>
+           <button type="button" class="btn btn-primary" id="salvar">Salvar</button>`;
 
     const campoNome = novo
         ? `<label class="form-label" for="f-nome">Nome <span class="text-danger">*</span></label>
            <div class="position-relative">
-               <input type="text" class="form-control" id="f-nome" autocomplete="off" placeholder="Busque uma pessoa…" />
+               <input type="text" class="form-control" id="f-nome" autocomplete="off" placeholder="Digite e selecione" />
                <div class="list-group position-absolute w-100 shadow-sm d-none" id="f-sugestoes" style="z-index:5; max-height:16rem; overflow:auto"></div>
            </div>`
         : `<label class="form-label" for="f-nome">Nome</label>
@@ -65,7 +65,7 @@ function montar() {
             <div class="mb-3">
                 <label class="form-label" for="f-funcao">Função <span class="text-danger">*</span></label>
                 <select class="form-select" id="f-funcao" ${leitura ? "disabled" : ""}>
-                    <option value="">Escolha uma função</option>
+                    <option value="">Selecione</option>
                     ${FUNCOES.map((f) => `<option value="${esc(f)}">${esc(f)}</option>`).join("")}
                     ${atual && !FUNCOES.includes(atual.funcao) ? `<option value="${esc(atual.funcao)}">${esc(atual.funcao)}</option>` : ""}
                 </select>
@@ -108,11 +108,12 @@ function montar() {
         busca.addEventListener("blur", () => lista.classList.add("d-none"));
     }
 
-    document.getElementById("salvar")?.addEventListener("click", () => {
+    document.getElementById("salvar")?.addEventListener("click", async () => {
         const funcao = document.getElementById("f-funcao").value;
         document.getElementById("f-nome-erro").textContent = novo && !escolhida ? "Escolha uma pessoa da lista." : "";
         document.getElementById("f-funcao-erro").textContent = !funcao ? "Escolha a função." : "";
         if ((novo && !escolhida) || !funcao) return;
+        if (!novo && !(await confirmarSalvarEdicao())) return;
 
         const vinculos = vinculosDaEquipe(estado, ppa);
         if (novo) vinculos.push({ id: escolhida.id, funcao });

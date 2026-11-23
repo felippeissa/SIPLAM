@@ -24,7 +24,7 @@ import {
 } from "../dados/regras.js";
 import { ANOS } from "../dados/seed.js";
 import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
-import { confirmarExclusao } from "../confirmar.js";
+import { confirmarExclusao, confirmarAcao, confirmarSalvarEdicao } from "../confirmar.js";
 import { avisar } from "../toast.js";
 import { chip, statusChip, esc, secao, menuDeAcoes } from "../ui.js";
 import { listaPendencias, chipsPendencias } from "../ui-financeiro.js";
@@ -119,9 +119,9 @@ function render() {
                     <span id="aviso-salvo" class="${Object.keys(rascunho).length ? "" : "d-none"}">${chip("alterações não salvas", "alerta")}</span>
                 </div>
             </div>
-            <div class="d-flex flex-wrap gap-2 align-items-center">
-                ${editavel ? `<button type="button" class="btn btn-light" id="salvar-edicao"><i class="ti ti-device-floppy me-1"></i>Salvar</button>` : ""}
+            <div class="d-flex flex-wrap gap-16 align-items-center">
                 ${menuDeAcoes(acoesDaFicha(ini, editavel, resumo))}
+                ${editavel ? `<button type="button" class="btn btn-primary" id="salvar-edicao">Salvar</button>` : ""}
                 ${editavel ? "" : `<span class="fs-12 text-muted align-self-center">${esc(STATUS_LABEL[ini.status])} — edição bloqueada</span>`}
             </div>
         </div>
@@ -235,7 +235,7 @@ function modalEnvio(ini, pendencias, resumo) {
                 ${pendencias.length ? listaPendencias(pendencias) : ""}
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Voltar</button>
+                <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Voltar</button>
                 <button type="button" class="btn btn-primary" id="confirmar-envio"${bloqueia ? " disabled" : ""}>
                     Confirmar envio para análise
                 </button>
@@ -287,19 +287,22 @@ document.addEventListener("change", (e) => {
     }
 });
 
-document.addEventListener("click", (e) => {
+document.addEventListener("click", async (e) => {
     // Cancelar desfaz o que foi alterado nesta ficha e volta para a lista.
     if (e.target.closest("#cancelar-edicao")) {
+        const sair = await confirmarAcao({ titulo: "Cancelar edição?", texto: "As alterações feitas não serão salvas." });
+        if (!sair) return;
         rascunho = {};
         location.href = url("iniciativas.html");
         return;
     }
     if (e.target.closest("#salvar-edicao")) {
+        if (!(await confirmarSalvarEdicao())) return;
         // Fica na ficha: o que foi salvo passa a ser o novo ponto de volta do Cancelar.
         if (Object.keys(rascunho).length) updIniciativa(id, rascunho);
         rascunho = {};
         render();
-        avisar("Iniciativa salva.");
+        avisar("Iniciativa atualizada com sucesso.");
         return;
     }
     if (e.target.closest("#abrir-envio")) {
@@ -323,7 +326,7 @@ document.addEventListener("click", (e) => {
         const entrega = estado.entregas.find((x) => x.id === excluir.dataset.excluirEntrega);
         const vinculos = vinculosDe("entregas", entrega.id);
         if (vinculos.length) {
-            avisar(`A Entrega está vinculada a ${descreverVinculos(vinculos)}. Desfaça os vínculos antes de excluir.`, "erro");
+            avisar(`Entrega vinculada a ${descreverVinculos(vinculos)}. Desfaça os vínculos para excluir.`, "erro");
             return;
         }
         confirmarExclusao({

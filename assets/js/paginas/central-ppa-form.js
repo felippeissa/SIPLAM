@@ -35,7 +35,7 @@ import {
 } from "../dados/store.js";
 import { montarShell, barraTitulo, somenteLeitura, perfilAtual, url } from "../shell.js";
 import { esc, chip } from "../ui.js";
-import { confirmarExclusao } from "../confirmar.js";
+import { confirmarExclusao, confirmarSalvarEdicao } from "../confirmar.js";
 import { avisar, avisarDepois } from "../toast.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
 import { seletorDeAno, ligarSeletoresDeAno } from "../seletor-ano.js";
@@ -122,7 +122,7 @@ export function montarFormularioPpa({ novo }) {
                         <div class="d-flex gap-2 align-items-center">
             ${
                 doPerfil
-                    ? `<a href="${voltar}" class="btn btn-light">Voltar</a>`
+                    ? `<a href="${voltar}" class="btn btn-outline-primary">Voltar</a>`
                     : `
             ${
                 novo || leitura
@@ -132,8 +132,8 @@ export function montarFormularioPpa({ novo }) {
                     Excluir plano
                 </button>`
             }
-            <a href="${voltar}" class="btn btn-light">Cancelar</a>
-            <button type="button" class="btn btn-primary" id="salvar">${novo ? "Cadastrar" : "Salvar"}</button>`
+            <a href="${voltar}" class="btn btn-outline-primary" data-cancelar="${novo ? "cadastro" : "edicao"}">Cancelar</a>
+            <button type="button" class="btn btn-primary" id="salvar">Salvar</button>`
             }</div>
                     </div>
                     <div class="card-body" id="formulario">
@@ -224,7 +224,7 @@ export function montarFormularioPpa({ novo }) {
             ultimo.dispatchEvent(new Event("change", { bubbles: true }));
         });
 
-        document.getElementById("salvar")?.addEventListener("click", () => {
+        document.getElementById("salvar")?.addEventListener("click", async () => {
             const dados = ler();
             const escopo = document.getElementById("formulario");
             document.getElementById("f-vigencia-erro").textContent = "";
@@ -287,17 +287,18 @@ export function montarFormularioPpa({ novo }) {
                 },
             ]);
             if (!ok) return;
+            if (!novo && !(await confirmarSalvarEdicao())) return;
 
             if (novo) addPpa(dados);
             else updPpa(dados.id, dados);
-            avisarDepois(`Plano plurianual ${novo ? "criado" : "editado"} com sucesso.`);
+            avisarDepois(`Plano plurianual ${novo ? "criado" : "atualizado"} com sucesso.`);
             window.location.href = voltar;
         });
 
         document.getElementById("excluir")?.addEventListener("click", async () => {
             if (vinculos.length) {
                 // O botão fica clicável de propósito: o clique explica por que não dá para excluir.
-                return avisar(`Não foi possível excluir o plano: está vinculado a ${descreverVinculos(vinculos)}.`, "erro");
+                return avisar(`Plano vinculado a ${descreverVinculos(vinculos)}. Desfaça os vínculos para excluir.`, "erro");
             }
             const justificativa = await confirmarExclusao({
                 titulo: "Excluir plano plurianual",

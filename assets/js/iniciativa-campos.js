@@ -189,7 +189,7 @@ export function camposDaIniciativa({ ini, estado, visao, travado, liberados = nu
     <div class="mb-3">
         <label class="form-label" for="f-programa">Programa</label>
         <select class="form-select" id="f-programa"${d("programa")}>
-            <option value="">Selecione o Programa</option>
+            <option value="">Selecione</option>
             ${programasDoPlano(estado)
                 .map((p) => `<option value="${p.id}"${p.id === ini.programaId ? " selected" : ""}>${esc(p.codigo)} — ${esc(p.nome)}</option>`)
                 .join("")}

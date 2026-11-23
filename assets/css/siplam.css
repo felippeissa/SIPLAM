@@ -175,8 +175,8 @@
 .barra-filtros {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem;
+    align-items: flex-end;
+    gap: 1rem;
 }
 .barra-filtros > * {
     flex: 0 0 auto;
@@ -554,14 +554,38 @@ tr.linha-clicavel {
 
 /* ---------- Menu lateral ---------- */
 
-/* Sem animação: o grupo da tela atual abre de uma vez ao carregar, e a seta não
-   gira para o lado errado no meio do caminho. */
+/* Abertura animada, só quando a pessoa clica: o grupo da tela atual já nasce aberto (a classe `show` vem no HTML), então
+   nada anima ao carregar. A altura desliza, a seta gira, e os filhos entram um a um, da esquerda. Ao fechar, só a altura. */
 .sidenav-menu .collapsing {
-    transition: none !important;
+    transition: height 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidenav-menu .menu-arrow {
-    transition: none;
+    transition: transform 0.25s ease;
+}
+
+.sidenav-menu .side-nav-link {
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+@keyframes menu-filho-entra {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: none; }
+}
+.sidenav-menu .side-nav-link:not(.collapsed) ~ .collapsing .sub-menu .side-nav-item {
+    animation: menu-filho-entra 0.28s ease both;
+}
+.sidenav-menu .side-nav-link:not(.collapsed) ~ .collapsing .sub-menu .side-nav-item:nth-child(2) { animation-delay: 0.03s; }
+.sidenav-menu .side-nav-link:not(.collapsed) ~ .collapsing .sub-menu .side-nav-item:nth-child(3) { animation-delay: 0.06s; }
+.sidenav-menu .side-nav-link:not(.collapsed) ~ .collapsing .sub-menu .side-nav-item:nth-child(4) { animation-delay: 0.09s; }
+.sidenav-menu .side-nav-link:not(.collapsed) ~ .collapsing .sub-menu .side-nav-item:nth-child(5) { animation-delay: 0.12s; }
+.sidenav-menu .side-nav-link:not(.collapsed) ~ .collapsing .sub-menu .side-nav-item:nth-child(n+6) { animation-delay: 0.15s; }
+
+@media (prefers-reduced-motion: reduce) {
+    .sidenav-menu .collapsing,
+    .sidenav-menu .menu-arrow,
+    .sidenav-menu .side-nav-link { transition: none; }
+    .sidenav-menu .side-nav-link:not(.collapsed) ~ .collapsing .sub-menu .side-nav-item { animation: none; }
 }
 
 /* A página em que se está: o marcador verde de fundo e o texto em verde — o
@@ -726,3 +750,41 @@ html[data-skin][data-bs-theme="light"][data-menu-color="light"] { --theme-sidena
 /* Linha de Iniciativa inativa: esmaece só as células de dados. A opacidade na linha inteira criaria um plano de
    empilhamento próprio e prenderia o menu de Ações dentro dela, por baixo das linhas seguintes. */
 .linha-inativa > td:not(.coluna-acoes) { opacity: .65; }
+
+/* ---------- GESIS Padrões UX: botões ---------- */
+/* 16 px entre botões (5.3 / 8.1.4). O `gap-3` do tema vale 20 px; o rodapé do modal ainda soma margem em cada botão. */
+.gap-16 { gap: 16px !important; }
+.modal-footer { gap: 16px; }
+.modal-footer > * { margin: 0; }
+/* Terciário (5.1): só texto e ícone à esquerda, na cor principal. */
+.btn-terciario { background: none; border: 1px solid transparent; color: var(--theme-primary, #1ab394); }
+.btn-terciario:hover, .btn-terciario:focus, .btn-terciario.show, .btn-terciario:active {
+    background: color-mix(in srgb, var(--theme-primary, #1ab394) 12%, transparent);
+    color: var(--theme-primary, #1ab394);
+    border-color: transparent;
+}
+
+/* Campo de filtro com rótulo acima (GESIS 4.1) nas barras avulsas das telas. */
+.campo-filtro { display: inline-flex; flex-direction: column; }
+.campo-filtro .form-label { margin-bottom: 0.25rem; }
+
+/* ---------- Menu lateral: grupo expandido ---------- */
+/* Os filhos começam na mesma margem do pai (ganham largura: "Objetivos estratégicos" deixa de ser cortado) e ficam numa
+   área marcada por um fundo cinza suave. Sem recuo nem borda: eles tirariam largura e o corte voltaria. */
+/* Sem isso a margem do `ul` vaza para fora do painel quando ele termina de abrir, e o conteúdo dá um tranco de 2 px. */
+#sidenav-menu .collapse.show,
+#sidenav-menu .collapsing {
+    display: flow-root;
+}
+
+/* `collapse` e `collapsing`: durante a animação o painel tem a segunda classe, e a área precisa estar pronta desde o
+   primeiro quadro — senão fundo e espaçamento só aparecem no fim e o menu dá um salto. */
+#sidenav-menu :is(.collapse, .collapsing) > .sub-menu {
+    margin: 2px 0 6px;
+    padding: 4px 0;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--theme-secondary-color, #6c757d) 10%, transparent);
+}
+#sidenav-menu :is(.collapse, .collapsing) > .sub-menu .side-nav-link {
+    padding-left: 10px;
+}

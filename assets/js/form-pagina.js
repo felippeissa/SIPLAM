@@ -20,7 +20,7 @@
 import { obterEstado, addItem, updItem, removeItem, vinculosDe, descreverVinculos } from "./dados/store.js";
 import { montarShell, barraTitulo, somenteLeitura, url } from "./shell.js";
 import { esc } from "./ui.js";
-import { confirmarExclusao } from "./confirmar.js";
+import { confirmarExclusao, confirmarSalvarEdicao } from "./confirmar.js";
 import { avisar, avisarDepois } from "./toast.js";
 import { campoErro, validar, limparAoDigitar } from "./validacao.js";
 
@@ -157,7 +157,7 @@ export function montarFormulario(cfg) {
 
     function acoes() {
         if (leitura) {
-            return `<a href="${voltar}" class="btn btn-light">Voltar</a>`;
+            return `<a href="${voltar}" class="btn btn-outline-primary">Voltar</a>`;
         }
         const excluir =
             novo || !cfg.podeExcluir
@@ -168,8 +168,8 @@ export function montarFormulario(cfg) {
                 </button>`;
         return `
         ${excluir}
-        <a href="${voltar}" class="btn btn-light">Cancelar</a>
-        <button type="button" class="btn btn-primary" id="salvar">${novo ? "Cadastrar" : "Salvar"}</button>`;
+        <a href="${voltar}" class="btn btn-outline-primary" data-cancelar="${novo ? "cadastro" : "edicao"}">Cancelar</a>
+        <button type="button" class="btn btn-primary" id="salvar">Salvar</button>`;
     }
 
     function render() {
@@ -182,7 +182,7 @@ export function montarFormulario(cfg) {
                         <div>
                         <h4 class="card-title mb-1">${esc(cfg.titulo)}</h4>
                         <p class="text-muted mb-0 fs-13">${esc(cfg.subtitulo)}</p></div>
-                        <div class="d-flex gap-2 align-items-center">${acoes()}</div>
+                        <div class="d-flex gap-16 align-items-center">${acoes()}</div>
                     </div>
                     <div class="card-body" id="formulario">${camposPrincipais()}</div>
                 </div>
@@ -206,7 +206,7 @@ export function montarFormulario(cfg) {
     }
 
     function ligar() {
-        document.getElementById("salvar")?.addEventListener("click", () => {
+        document.getElementById("salvar")?.addEventListener("click", async () => {
             const dados = ler();
             const escopo = document.getElementById("formulario");
 
@@ -227,17 +227,18 @@ export function montarFormulario(cfg) {
                 ...(cfg.extra?.regras?.(dados) ?? []),
             ]);
             if (!ok) return;
+            if (!novo && !(await confirmarSalvarEdicao())) return;
 
             const salvo = novo ? addItem(cfg.colecao, dados) : (updItem(cfg.colecao, dados.id, dados), dados);
             cfg.extra?.aoSalvar?.(salvo, estado);
-            avisarDepois(`${cfg.singular} ${novo ? "criad" : "editad"}${fim} com sucesso.`);
+            avisarDepois(`${cfg.singular} ${novo ? "criad" : "atualizad"}${fim} com sucesso.`);
             window.location.href = voltar;
         });
 
         document.getElementById("excluir")?.addEventListener("click", async () => {
             if (usos > 0) {
                 // O botão fica clicável de propósito: o clique explica por que não dá para excluir.
-                return avisar(`Não foi possível excluir ${fim} ${cfg.singular.toLowerCase()}: está vinculad${fim} a ${descreverVinculos(vinculos)}.`, "erro");
+                return avisar(`${cfg.singular} vinculad${fim} a ${descreverVinculos(vinculos)}. Desfaça os vínculos para excluir.`, "erro");
             }
             const justificativa = await confirmarExclusao({
                 titulo: `Excluir ${cfg.singular.toLowerCase()}`,

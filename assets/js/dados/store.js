@@ -1281,7 +1281,7 @@ function podeExcluir(colecao, registro, justificativa) {
     const texto = String(justificativa ?? "").trim();
     if (texto.length < 20) return { ok: false, motivo: "Justifique a exclusão com ao menos 20 caracteres." };
     const v = vinculosDe(colecao, registro.id);
-    if (v.length) return { ok: false, motivo: `Não pode ser excluído: está vinculado a ${descreverVinculos(v)}.`, vinculos: v };
+    if (v.length) return { ok: false, motivo: `Vinculado a ${descreverVinculos(v)}. Desfaça os vínculos para excluir.`, vinculos: v };
     return { ok: true, texto };
 }
 
@@ -1330,7 +1330,7 @@ export function avaliarReversao(evento) {
     if (evento.antes === null) {
         if (!atual) return { ok: false, motivo: "O registro criado por este evento já não existe." };
         const quem = vinculosDe(evento.colecao, atual.id);
-        if (quem.length) return { ok: false, motivo: `Há registros que apontam para ele (${descreverVinculos(quem)}). Remova esses vínculos antes.` };
+        if (quem.length) return { ok: false, motivo: `Em uso por ${descreverVinculos(quem)}. Remova os vínculos para excluir.` };
     } else if (evento.depois === null) {
         if (atual) return { ok: false, motivo: "O registro excluído por este evento já foi recriado." };
     } else {

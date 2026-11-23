@@ -10,45 +10,52 @@
  */
 import { obterEstado, noPlano } from "../dados/store.js";
 import { entregasDaIniciativa, STATUS_CURTO } from "../dados/regras.js";
-import { montarShell, cabecalhoPagina } from "../shell.js";
+import { montarShell, barraTitulo } from "../shell.js";
+import { criarFiltros, opcoesDe } from "../filtros.js";
 import { chip, statusChip, esc, faixaIndicadores } from "../ui.js";
 
 const { estado } = montarShell();
 
-let busca = "";
-let filtro = "todos";
 const programasAbertos = new Set([noPlano(estado).programas[0]?.id]);
 const orgaosAbertos = new Set();
 
 /* ---------- dados da tela ---------- */
 
-function linhas() {
-    const q = busca.trim().toLowerCase();
-
-    return noPlano(estado).programas
-        .filter((p) => !q || p.nome.toLowerCase().includes(q) || p.codigo.includes(q))
-        .map((p) => {
-            const inis = estado.iniciativas.filter((i) => i.programaId === p.id);
-            const conta = (status) => inis.filter((i) => i.status === status).length;
-            return {
-                programa: p,
-                inis,
-                orgaos: [...new Set(inis.map((i) => i.orgao))],
-                emPreenchimento: conta("em_preenchimento"),
-                enviadas: conta("enviada"),
-                emAnalise: conta("em_analise"),
-                devolvidas: conta("devolvida"),
-                validadas: conta("validada"),
-            };
-        })
-        .filter((l) =>
-            filtro === "com_analise"
-                ? l.enviadas + l.emAnalise > 0
-                : filtro === "com_devolucao"
-                  ? l.devolvidas > 0
-                  : true
-        );
+function linhasBase() {
+    return noPlano(estado).programas.map((p) => {
+        const inis = estado.iniciativas.filter((i) => i.programaId === p.id);
+        const conta = (status) => inis.filter((i) => i.status === status).length;
+        return {
+            programa: p,
+            inis,
+            orgaos: [...new Set(inis.map((i) => i.orgao))],
+            emPreenchimento: conta("em_preenchimento"),
+            enviadas: conta("enviada"),
+            emAnalise: conta("em_analise"),
+            devolvidas: conta("devolvida"),
+            validadas: conta("validada"),
+        };
+    });
 }
+
+const linhas = () => linhasBase().filter((l) => filtros.passa(l));
+
+// O mesmo componente de filtros das demais telas: campos com rótulo, e o filtro só vale ao clicar em Filtrar.
+const filtros = criarFiltros({
+    livre: { rotulo: "Programa", texto: (l) => `${l.programa.codigo} ${l.programa.nome}` },
+    campos: [
+        {
+            id: "situacao",
+            rotulo: "Situação",
+            opcoes: () => [
+                { valor: "com_analise", rotulo: "Com Iniciativas aguardando análise" },
+                { valor: "com_devolucao", rotulo: "Com Iniciativas devolvidas" },
+            ],
+            valorDe: (l) => [...(l.enviadas + l.emAnalise > 0 ? ["com_analise"] : []), ...(l.devolvidas > 0 ? ["com_devolucao"] : [])],
+        },
+    ],
+    exportar: "programas-do-ppa",
+});
 
 /* ---------- pedaços de markup ---------- */
 
@@ -70,19 +77,6 @@ function totais(ls) {
         ],
         "Contagens do recorte atual. Uma Iniciativa em preenchimento ainda não chegou à Área Central."
     );
-}
-
-function filtros() {
-    return `
-    <div class="app-search">
-        <input type="search" id="busca" class="form-control form-control-sm" placeholder="Buscar por código ou nome" value="${esc(busca)}" />
-        <i class="ti ti-search app-search-icon text-muted"></i>
-    </div>
-    <select class="form-select form-select-sm w-auto" id="filtro">
-        <option value="todos">Todos os Programas</option>
-        <option value="com_analise">Com Iniciativas aguardando análise</option>
-        <option value="com_devolucao">Com Iniciativas devolvidas</option>
-    </select>`;
 }
 
 /**
@@ -175,7 +169,7 @@ function linhaPrograma(l) {
         <td class="num">${l.validadas || "—"}</td>
         <td>
             <div class="dropdown">
-                <button class="btn btn-sm btn-light btn-icon" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Ações do Programa">
+                <button class="btn btn-sm btn-terciario btn-icon" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Ações do Programa" title="Mais ações">
                     <i class="ti ti-dots-vertical"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end fs-13">
@@ -226,17 +220,13 @@ function abrirCobertura(programaId) {
 
 /* ---------- render ---------- */
 
-function render() {
-    const ls = linhas();
-
+/** Monta a tela uma vez: a barra de filtros fica de pé, e só a faixa e o corpo da tabela se refazem. */
+function montar() {
     document.getElementById("conteudo").innerHTML = `
-    ${cabecalhoPagina(
-        "Programas do PPA",
-        "Participação dos órgãos e situação das Iniciativas encaminhadas.",
-        filtros()
-    )}
-    ${totais(ls)}
+    ${barraTitulo("Programas do PPA")}
+    <div id="faixa" class="mt-3"></div>
     <div class="card">
+        ${filtros.html()}
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
@@ -254,19 +244,20 @@ function render() {
                         <th style="width:4rem">Ações</th>
                     </tr>
                 </thead>
-                <tbody>
-                    ${
-                        ls.length === 0
-                            ? '<tr><td colspan="11" class="text-center text-muted py-4 fs-12">Nenhum Programa corresponde ao filtro.</td></tr>'
-                            : ls.map(linhaPrograma).join("")
-                    }
-                </tbody>
+                <tbody id="corpo-programas"></tbody>
             </table>
         </div>
     </div>`;
+    filtros.ligar(() => render());
+}
 
-    document.getElementById("busca").value = busca;
-    document.getElementById("filtro").value = filtro;
+function render() {
+    const ls = linhas();
+    document.getElementById("faixa").innerHTML = totais(ls);
+    document.getElementById("corpo-programas").innerHTML =
+        ls.length === 0
+            ? '<tr><td colspan="11" class="text-center text-muted py-4 fs-12">Nenhum Programa corresponde ao filtro.</td></tr>'
+            : ls.map(linhaPrograma).join("");
 }
 
 /* ---------- eventos ---------- */
@@ -292,23 +283,5 @@ document.getElementById("conteudo").addEventListener("click", (e) => {
     if (cobertura) abrirCobertura(cobertura.dataset.cobertura);
 });
 
-document.getElementById("conteudo").addEventListener("input", (e) => {
-    if (e.target.id === "busca") {
-        busca = e.target.value;
-        render();
-        // O campo é recriado a cada tecla: sem devolver o cursor ao fim, o
-        // texto digitado sai embaralhado.
-        const campo = document.getElementById("busca");
-        campo.focus();
-        campo.setSelectionRange(campo.value.length, campo.value.length);
-    }
-});
-
-document.getElementById("conteudo").addEventListener("change", (e) => {
-    if (e.target.id === "filtro") {
-        filtro = e.target.value;
-        render();
-    }
-});
-
+montar();
 render();

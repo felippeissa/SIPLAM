@@ -25,7 +25,7 @@ import {
 import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { esc, chip } from "../ui.js";
 import { catalogo } from "../catalogo.js";
-import { confirmarExclusao } from "../confirmar.js";
+import { confirmarExclusao, confirmarSalvarEdicao } from "../confirmar.js";
 import { avisar, avisarDepois } from "../toast.js";
 import { campoErro, validar, limparAoDigitar } from "../validacao.js";
 
@@ -171,7 +171,7 @@ export function montarFormularioIniciativa({ novo }) {
     }
 
     function acoes() {
-        if (leitura) return `<a href="${voltar}" class="btn btn-light">Voltar</a>`;
+        if (leitura) return `<a href="${voltar}" class="btn btn-outline-primary">Voltar</a>`;
         const excluir = novo
             ? ""
             : `<button type="button" class="btn btn-danger" id="excluir"
@@ -180,8 +180,8 @@ export function montarFormularioIniciativa({ novo }) {
             </button>`;
         return `
         ${excluir}
-        <a href="${voltar}" class="btn btn-light">Cancelar</a>
-        <button type="button" class="btn btn-primary" id="salvar">${novo ? "Cadastrar" : "Salvar"}</button>`;
+        <a href="${voltar}" class="btn btn-outline-primary" data-cancelar="${novo ? "cadastro" : "edicao"}">Cancelar</a>
+        <button type="button" class="btn btn-primary" id="salvar">Salvar</button>`;
     }
 
     function ler() {
@@ -224,7 +224,7 @@ export function montarFormularioIniciativa({ novo }) {
         catalogoCausas.ligar(escopo);
         catalogoIndicadores.ligar(escopo);
 
-        document.getElementById("salvar").addEventListener("click", () => {
+        document.getElementById("salvar").addEventListener("click", async () => {
             const dados = ler();
             const ok = validar(escopo, [
                 { campo: "f-nome", valido: !!dados.nome, mensagem: "Informe o nome da iniciativa." },
@@ -237,6 +237,7 @@ export function montarFormularioIniciativa({ novo }) {
                 },
             ]);
             if (!ok) return;
+            if (!novo && !(await confirmarSalvarEdicao())) return;
 
             const { causaIds, ...campos } = dados;
             // `causas` é o espelho antigo, com o id local da causa dentro do
@@ -262,7 +263,7 @@ export function montarFormularioIniciativa({ novo }) {
                 if (escolhidas.has(c.id) && !tem) updItem("causas", c.id, { iniciativaIds: [...(c.iniciativaIds ?? []), iniId] });
                 if (!escolhidas.has(c.id) && tem) updItem("causas", c.id, { iniciativaIds: c.iniciativaIds.filter((x) => x !== iniId) });
             }
-            avisarDepois(`Iniciativa ${novo ? "criada" : "editada"} com sucesso.`);
+            avisarDepois(`Iniciativa ${novo ? "criada" : "atualizada"} com sucesso.`);
             window.location.href = voltar;
         });
 
