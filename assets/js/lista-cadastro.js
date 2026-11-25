@@ -142,7 +142,7 @@ export function montarLista(cfg) {
                 (i) => `
             <tr>
                 ${cfg.codigo ? `<td class="codigo text-muted">${esc(cfg.codigo(i, estado))}</td>` : ""}
-                <td class="fw-medium">${esc(i.nome)}</td>
+                <td class="fw-medium">${cfg.nomeHtml ? cfg.nomeHtml(i, estado) : esc(i.nome)}</td>
                 ${cfg.pai ? `<td class="fs-13 text-muted">${esc(nomeDoPai(i))}</td>` : ""}
                 ${extras.map((c) => `<td class="fs-13 text-muted">${c.valor(i, estado)}</td>`).join("")}
                 ${cfg.semDescricao ? "" : `<td class="fs-13 text-muted">${esc(i.descricao || "—")}</td>`}

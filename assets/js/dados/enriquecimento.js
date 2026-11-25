@@ -195,3 +195,24 @@ export function enriquecerCadastros(base) {
         if (ESTIMATIVAS[p.id]) preencher(p, "estimativa", ESTIMATIVAS[p.id]);
     }
 }
+
+/* ---------- perfil que vê cada marcador ---------- */
+// Os de exemplo que só fazem sentido para um perfil. Os demais valem para todos.
+const PERFIL_DO_MARCADOR = {
+    "marcadores-ex01": "gestao-central",
+    "marcadores-ex06": "setorial",
+    "marcadores-ex07": "admin-central",
+    "marcadores-ex08": "setorial",
+    "marcadores-ex19": "gestao-central",
+    "marcadores-ex22": "gestao-central",
+    "marcadores-ex24": "gestao-central",
+    "marcadores-ex40": "setorial",
+    "marcadores-ex49": "gestao-central",
+};
+
+/** Todo marcador tem um perfil que o vê. Idempotente: só preenche quem ainda não tem. */
+export function garantirPerfilDosMarcadores(base) {
+    for (const m of base.marcadores ?? []) {
+        if (!m.perfil) m.perfil = PERFIL_DO_MARCADOR[m.id] ?? "todos";
+    }
+}

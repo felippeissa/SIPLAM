@@ -13,6 +13,13 @@ export const FUNCOES = ["Coordenação do plano", "Planejamento", "Análise téc
 
 const aprovados = (estado) => (estado.usuarios ?? []).filter((u) => u.situacao === "aprovado");
 
+/**
+ * A pessoa pode ter mais de uma função na equipe. Elas moram juntas em `funcao`, separadas por vírgula, para que
+ * quem só mostra o texto (o card do plano, o chat) continue funcionando; aqui se separam e se juntam de volta.
+ */
+export const funcoesDe = (texto) => String(texto ?? "").split(/\s*,\s*/).filter(Boolean);
+export const juntarFuncoes = (lista) => lista.join(", ");
+
 /** Os vínculos da equipe: `{ id, funcao }`. */
 export function vinculosDaEquipe(estado, ppa) {
     if (ppa.equipe) return ppa.equipe.filter((m) => aprovados(estado).some((u) => u.id === m.id)).map((m) => ({ ...m }));

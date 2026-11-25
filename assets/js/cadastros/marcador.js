@@ -2,6 +2,11 @@ import { esc } from "../ui.js";
 import { perfilAtual, somenteLeitura, url } from "../shell.js";
 import { nomeDoPerfil } from "../usuarios-decisao.js";
 import { campoErro } from "../validacao.js";
+import { catalogo } from "../catalogo.js";
+import { DIMENSOES } from "../dados/dimensoes-marcador.js";
+import { obterEstado } from "../dados/store.js";
+
+export { DIMENSOES };
 
 /**
  * Cadastro de Marcadores (Gestão).
@@ -17,31 +22,74 @@ import { campoErro } from "../validacao.js";
 /** As cores que a pessoa escolhe: as do tema, escuras o bastante para o texto branco do selo. */
 export const CORES = ["#1AB394", "#1C84C6", "#E08E1B", "#ED5565", "#7266BA", "#23A6A8", "#6C757D", "#E0559A", "#8B5E3C", "#343A40"];
 
-/** Dimensões e, dentro de cada uma, os tipos de marcador. O select de tipo só oferece os da dimensão escolhida. */
-export const DIMENSOES = {
-    ambiental: {
-        rotulo: "Dimensão ambiental",
-        tipos: ["Sustentabilidade ambiental", "Mudanças climáticas", "Biodiversidade", "Gestão de resíduos", "Poluição ambiental", "Eficiência no uso de recursos"],
-    },
-    social: {
-        rotulo: "Dimensão social",
-        tipos: ["Igualdade de gênero", "Inclusão social", "Direitos humanos", "Saúde e bem-estar", "Trabalho e emprego", "Proteção a grupos vulneráveis"],
-    },
-    governanca: {
-        rotulo: "Dimensão de governança",
-        tipos: ["Governança pública", "Integridade pública", "Compliance público", "Gestão de riscos", "Transparência pública", "Controle interno", "Prestação de contas", "Políticas baseadas em evidências"],
-    },
-};
+/**
+ * Dimensão e tipo do marcador: busca no que já existe e, se o que se digitou não existe, cadastra ali mesmo (o padrão
+ * de vínculo do sistema). O tipo pertence a uma dimensão e só oferece os da dimensão escolhida.
+ */
+const dimensaoEscolhida = () => catalogoDimensao.ler()[0] ?? "";
 
-const opcoesDeTipo = (dimensao, tipo) =>
-    `<option value="">Selecione</option>` +
-    (DIMENSOES[dimensao]?.tipos ?? []).map((t) => `<option value="${esc(t)}"${t === tipo ? " selected" : ""}>${esc(t)}</option>`).join("");
+const catalogoDimensao = catalogo({
+    colecao: "dimensoesMarcador",
+    singular: "Dimensão",
+    plural: "Dimensão",
+    artigo: "a",
+    prefixo: "mdim",
+    unico: true,
+    obrigatorio: true,
+    campos: [],
+    colunasExtra: [],
+    aoCriar: () => ({ ppaId: "" }),
+    aoMudar: () => {
+        // Trocar a dimensão invalida o tipo: ele pertence à dimensão antiga.
+        catalogoTipo.definir([]);
+        ajustarBuscaDoTipo();
+    },
+});
+
+const catalogoTipo = catalogo({
+    colecao: "tiposMarcador",
+    singular: "Tipo do marcador",
+    plural: "Tipo do marcador",
+    artigo: "o",
+    prefixo: "mtip",
+    unico: true,
+    obrigatorio: true,
+    campos: [],
+    colunasExtra: [],
+    filtro: (t) => !!dimensaoEscolhida() && t.dimensaoId === dimensaoEscolhida(),
+    aoCriar: () => ({ ppaId: "", dimensaoId: dimensaoEscolhida() }),
+});
+
+/** Sem dimensão escolhida, o tipo não tem o que oferecer: a busca avisa em vez de listar nada. */
+function ajustarBuscaDoTipo() {
+    const busca = document.getElementById("mtip-busca");
+    if (!busca) return;
+    const sem = !dimensaoEscolhida();
+    busca.readOnly = sem;
+    busca.placeholder = sem ? "Escolha a dimensão primeiro" : "Digite e selecione";
+}
+
+const nomeDaDimensao = (estado, id) => (estado?.dimensoesMarcador ?? []).find((d) => d.id === id)?.nome ?? DIMENSOES[id]?.rotulo ?? "";
 
 /** Administrador: o Administrador central e a Alta gestão central, que faz tudo que ele faz. */
 export const ehAdmin = () => ["admin-central", "gestao-central"].includes(perfilAtual());
 
-/** Todos os perfis veem todos os marcadores. */
-export const visivel = () => true;
+/** Os perfis para os quais um marcador pode ser aberto. "todos" é o valor de quem não restringe. */
+export const PERFIS_DE_MARCADOR = ["setorial", "gestao-setorial", "admin-central", "gestao-central", "controle"];
+
+/** "eu" é o marcador só para quem o criou. */
+const rotuloDoPerfil = (perfil) => (perfil === "eu" ? "Só para mim" : !perfil || perfil === "todos" ? "Todos os perfis" : nomeDoPerfil(perfil));
+
+/**
+ * Quem vê o marcador: o perfil escolhido no cadastro (ou todos), o dono e o administrador, que administra todos.
+ * Não há identidade de usuário no protótipo, então "dono" é o perfil com que se entrou.
+ */
+export function visivel(marcador) {
+    const eu = perfilAtual();
+    // "Só para mim" é de quem criou, nem o administrador o vê; os demais seguem o perfil escolhido.
+    if (marcador.perfil === "eu") return marcador.dono === eu;
+    return ehAdmin() || marcador.dono === eu || !marcador.perfil || marcador.perfil === "todos" || marcador.perfil === eu;
+}
 
 /** Edita quem criou e o administrador. Os demais só veem. */
 export function soLeitura(marcador) {
@@ -62,9 +110,14 @@ export const marcador = {
     rotuloNome: "Nome do marcador",
     exemplo: "Revisar com o órgão",
     podeExcluir: true,
+    // A bolinha na cor do marcador vem antes do nome; a cor não precisa de coluna.
+    nomeHtml: (item) =>
+        `<span class="d-inline-flex align-items-center"><span class="rounded-circle flex-shrink-0 me-2" style="width:10px;height:10px;background:${esc(item.cor ?? CORES[0])}"></span>${esc(item.nome)}</span>`,
+
     filtros: [
-        { tipo: "texto", id: "dimensao", rotulo: "Dimensão", campo: "dimensao", opcoes: () => Object.entries(DIMENSOES).map(([valor, d]) => ({ valor, rotulo: d.rotulo })) },
-        { tipo: "texto", id: "tipo", rotulo: "Tipo", campo: "tipo", opcoes: () => [...new Set(Object.values(DIMENSOES).flatMap((d) => d.tipos))].map((t) => ({ valor: t, rotulo: t })) },
+        { tipo: "texto", id: "perfil", rotulo: "Perfil", campo: "perfil", opcoes: () => [{ valor: "eu", rotulo: "Só para mim" }, { valor: "todos", rotulo: "Todos os perfis" }, ...PERFIS_DE_MARCADOR.map((p) => ({ valor: p, rotulo: nomeDoPerfil(p) }))] },
+        { tipo: "texto", id: "dimensao", rotulo: "Dimensão", campo: "dimensao", opcoes: () => (obterEstado().dimensoesMarcador ?? []).map((d) => ({ valor: d.id, rotulo: d.nome })) },
+        { tipo: "texto", id: "tipo", rotulo: "Tipo", campo: "tipo", opcoes: () => [...new Set((obterEstado().tiposMarcador ?? []).map((t) => t.nome))].sort((a, b) => a.localeCompare(b, "pt-BR")).map((t) => ({ valor: t, rotulo: t })) },
     ],
 
     visivel,
@@ -72,34 +125,45 @@ export const marcador = {
 
     extra: {
         colunas: [
-            { rotulo: "Cor", valor: (item) => selo(item.nome, item.cor ?? CORES[0]) },
-            { rotulo: "Dimensão", valor: (item) => esc(DIMENSOES[item.dimensao]?.rotulo ?? "—") },
+            { rotulo: "Perfil", valor: (item) => esc(rotuloDoPerfil(item.perfil)) },
+            { rotulo: "Dimensão", valor: (item, estado) => esc(nomeDaDimensao(estado, item.dimensao) || "—") },
             { rotulo: "Tipo", valor: (item) => esc(item.tipo || "—") },
         ],
 
-        html: (edicao) => {
+        html: (edicao, estado) => {
             const leitura = somenteLeitura() || (edicao.id && soLeitura(edicao));
             const cor = edicao.cor || CORES[0];
             const dono = edicao.dono || perfilAtual();
 
-            const dimOpcoes =
-                `<option value="">Selecione</option>` +
-                Object.entries(DIMENSOES)
-                    .map(([id, d]) => `<option value="${id}"${edicao.dimensao === id ? " selected" : ""}>${esc(d.rotulo)}</option>`)
-                    .join("");
+            // O administrador abre o marcador para qualquer perfil, ou todos. Quem não é administrador escolhe entre
+            // guardá-lo só para si e abri-lo para o próprio perfil.
+            const perfilAtualDoMarcador = edicao.perfil || (ehAdmin() ? "todos" : "eu");
+            const perfilTravado = leitura;
+            const perfisQuePodeEscolher = ehAdmin() ? ["todos", ...PERFIS_DE_MARCADOR] : [perfilAtual()];
+            const perfilCampo = `
+            <div class="mb-3">
+                <label class="form-label" for="f-perfil">Perfil que vê o marcador <span class="text-danger">*</span></label>
+                <select class="form-select" id="f-perfil" ${perfilTravado ? "disabled" : ""}>
+                    <option value="eu"${perfilAtualDoMarcador === "eu" ? " selected" : ""}>Só para mim</option>
+                    ${perfisQuePodeEscolher.map((p) => `<option value="${p}"${perfilAtualDoMarcador === p ? " selected" : ""}>${esc(rotuloDoPerfil(p))}</option>`).join("")}
+                </select>
+                ${campoErro("f-perfil")}
+            </div>`;
+
+            const tipoAtual = (estado?.tiposMarcador ?? []).find((t) => t.dimensaoId === edicao.dimensao && t.nome === edicao.tipo);
+            // Visualização: rótulo e texto, como nos demais campos.
+            const dimensaoCampo = leitura
+                ? `<div class="mb-3"><label class="form-label">Dimensão</label><div class="form-control-plaintext campo-estatico">${esc(nomeDaDimensao(estado, edicao.dimensao) || "—")}</div></div>`
+                : catalogoDimensao.html(edicao.dimensao ? [edicao.dimensao] : []);
+            const tipoCampo = leitura
+                ? `<div class="mb-3"><label class="form-label">Tipo do marcador</label><div class="form-control-plaintext campo-estatico">${esc(edicao.tipo || "—")}</div></div>`
+                : catalogoTipo.html(tipoAtual ? [tipoAtual.id] : []);
 
             return `
             <input type="hidden" id="f-dono" value="${esc(dono)}" />
-            <div class="mb-3">
-                <label class="form-label" for="f-dimensao">Dimensão <span class="text-danger">*</span></label>
-                <select class="form-select" id="f-dimensao" ${leitura ? "disabled" : ""}>${dimOpcoes}</select>
-                ${campoErro("f-dimensao")}
-            </div>
-            <div class="mb-3">
-                <label class="form-label" for="f-tipo">Tipo do marcador <span class="text-danger">*</span></label>
-                <select class="form-select" id="f-tipo" ${leitura ? "" : "data-mantem-campo"}${leitura || !edicao.dimensao ? "disabled" : ""}>${opcoesDeTipo(edicao.dimensao, edicao.tipo)}</select>
-                ${campoErro("f-tipo")}
-            </div>
+            ${perfilCampo}
+            ${dimensaoCampo}
+            ${tipoCampo}
             <div class="mb-3">
                 <label class="form-label d-block">Cor do marcador <span class="text-danger">*</span></label>
                 <div class="d-flex flex-wrap align-items-center gap-2" id="f-cores" role="radiogroup" aria-label="Cor do marcador">
@@ -128,27 +192,25 @@ export const marcador = {
                     c.style.borderColor = c.dataset.cor.toLowerCase() === corAtual().toLowerCase() ? "#343a40" : "transparent";
                 });
             };
-            const dimensao = escopo.querySelector("#f-dimensao");
-            const tipo = escopo.querySelector("#f-tipo");
-            dimensao.addEventListener("change", () => {
-                tipo.innerHTML = opcoesDeTipo(dimensao.value, "");
-                tipo.disabled = !dimensao.value;
-            });
+            catalogoDimensao.ligar(escopo);
+            catalogoTipo.ligar(escopo);
+            ajustarBuscaDoTipo();
             nome.addEventListener("input", pintar);
             escopo.querySelectorAll('input[name="f-cor"]').forEach((r) => r.addEventListener("change", pintar));
             pintar();
         },
 
         ler: () => ({
-            dimensao: document.getElementById("f-dimensao")?.value || "",
-            tipo: document.getElementById("f-tipo")?.value || "",
+            perfil: document.getElementById("f-perfil")?.value || (ehAdmin() ? "todos" : "eu"),
+            dimensao: dimensaoEscolhida(),
+            tipo: obterEstado().tiposMarcador?.find((t) => t.id === catalogoTipo.ler()[0])?.nome ?? "",
             cor: document.querySelector('input[name="f-cor"]:checked')?.value ?? CORES[0],
             dono: document.getElementById("f-dono")?.value || perfilAtual(),
         }),
 
         regras: (dados) => [
-            { campo: "f-dimensao", valido: !!DIMENSOES[dados.dimensao], mensagem: "Escolha a dimensão do marcador." },
-            { campo: "f-tipo", valido: !!DIMENSOES[dados.dimensao]?.tipos.includes(dados.tipo), mensagem: "Escolha o tipo do marcador." },
+            { campo: "mdim-busca", valido: !!dados.dimensao, mensagem: "Escolha a dimensão do marcador." },
+            { campo: "mtip-busca", valido: !!dados.tipo, mensagem: "Escolha o tipo do marcador." },
         ],
     },
 

@@ -8,7 +8,8 @@
  * Quem altera o estado deve fazê-lo pelas funções daqui — elas cuidam de
  * registrar evento, tocar a data de atualização e gravar.
  */
-import { enriquecerCadastros } from "./enriquecimento.js";
+import { enriquecerCadastros, garantirPerfilDosMarcadores } from "./enriquecimento.js";
+import { garantirDimensoes } from "./dimensoes-marcador.js";
 import { estadoInicial, ANOS, REGIOES, ACOES } from "./seed.js";
 import { anosDoPlano } from "./anos.js";
 import { iconeDeExemplo } from "../icone-programa.js";
@@ -659,7 +660,9 @@ function carregar() {
         if (!base.auditoria.length) base.auditoria = historicoDeExemplo(base);
     }
     // Cadastros de demonstração mais completos (tipo, linha de base e metas dos indicadores, dimensão dos marcadores…).
+    garantirDimensoes(base);
     enriquecerCadastros(base);
+    garantirPerfilDosMarcadores(base);
 
     return base;
 }

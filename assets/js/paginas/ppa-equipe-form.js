@@ -9,7 +9,7 @@ import { esc } from "../ui.js";
 import { avisar, avisarDepois } from "../toast.js";
 import { confirmarExclusao, confirmarSalvarEdicao } from "../confirmar.js";
 import { nomeDoPerfil } from "../usuarios-decisao.js";
-import { FUNCOES, vinculosDaEquipe, equipeDoPlano, livresParaEquipe, salvarEquipe } from "../ppa-equipe-dados.js";
+import { FUNCOES, funcoesDe, juntarFuncoes, vinculosDaEquipe, equipeDoPlano, livresParaEquipe, salvarEquipe } from "../ppa-equipe-dados.js";
 
 const { estado } = montarShell();
 const params = new URLSearchParams(location.search);
@@ -63,18 +63,41 @@ function montar() {
         <div class="card-body">
             <div class="mb-3">${campoNome}<div class="invalid-feedback d-block" id="f-nome-erro"></div></div>
             <div class="mb-3">
-                <label class="form-label" for="f-funcao">Função <span class="text-danger">*</span></label>
-                <select class="form-select" id="f-funcao" ${leitura ? "disabled" : ""}>
-                    <option value="">Selecione</option>
-                    ${FUNCOES.map((f) => `<option value="${esc(f)}">${esc(f)}</option>`).join("")}
-                    ${atual && !FUNCOES.includes(atual.funcao) ? `<option value="${esc(atual.funcao)}">${esc(atual.funcao)}</option>` : ""}
-                </select>
+                <label class="form-label" for="f-funcao">Funções ${leitura ? "" : '<span class="text-danger">*</span>'}</label>
+                ${
+                    leitura
+                        ? `<div class="form-control-plaintext campo-estatico">${esc(funcoesDe(atual?.funcao).join(", ") || "—")}</div>`
+                        : `<select class="form-control" id="f-funcao" multiple data-placeholder="Selecione">
+                    ${[...new Set([...FUNCOES, ...funcoesDe(atual?.funcao)])].map((f) => `<option value="${esc(f)}">${esc(f)}</option>`).join("")}
+                </select>`
+                }
                 <div class="invalid-feedback d-block" id="f-funcao-erro"></div>
             </div>
         </div>
     </div></div></div>`;
 
-    if (atual) document.getElementById("f-funcao").value = atual.funcao;
+    // Mais de uma função: seleção múltipla, como os demais campos de escolha do sistema.
+    let escolhasFuncao = null;
+    const campoFuncao = document.getElementById("f-funcao");
+    if (campoFuncao) {
+        const marcadas = new Set(funcoesDe(atual?.funcao));
+        for (const o of campoFuncao.options) o.selected = marcadas.has(o.value);
+        if (typeof Choices !== "undefined") {
+            escolhasFuncao = new Choices(campoFuncao, {
+                removeItemButton: true,
+                shouldSort: false,
+                searchEnabled: true,
+                placeholderValue: "Selecione",
+                searchPlaceholderValue: "Digite e selecione",
+                noResultsText: "Nada encontrado",
+                noChoicesText: "Nada a escolher",
+                itemSelectText: "",
+            });
+            // As funções que o membro já tem entram como escolhidas.
+            escolhasFuncao.setChoiceByValue([...marcadas]);
+        }
+    }
+    const funcoesEscolhidas = () => [...(campoFuncao?.selectedOptions ?? [])].map((o) => o.value);
     if (novo) ligarBusca();
 
     function ligarBusca() {
@@ -109,9 +132,9 @@ function montar() {
     }
 
     document.getElementById("salvar")?.addEventListener("click", async () => {
-        const funcao = document.getElementById("f-funcao").value;
+        const funcao = juntarFuncoes(funcoesEscolhidas());
         document.getElementById("f-nome-erro").textContent = novo && !escolhida ? "Escolha uma pessoa da lista." : "";
-        document.getElementById("f-funcao-erro").textContent = !funcao ? "Escolha a função." : "";
+        document.getElementById("f-funcao-erro").textContent = !funcao ? "Escolha ao menos uma função." : "";
         if ((novo && !escolhida) || !funcao) return;
         if (!novo && !(await confirmarSalvarEdicao())) return;
 

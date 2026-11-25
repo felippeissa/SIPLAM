@@ -7,7 +7,7 @@
 import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { esc } from "../ui.js";
 import { criarFiltros, opcoesDe } from "../filtros.js";
-import { equipeDoPlano } from "../ppa-equipe-dados.js";
+import { equipeDoPlano, funcoesDe } from "../ppa-equipe-dados.js";
 
 const { estado } = montarShell();
 const id = new URLSearchParams(location.search).get("id");
@@ -33,10 +33,10 @@ function montar() {
         campos: [
             {
                 id: "funcao",
-                rotulo: "Função",
+                rotulo: "Funções",
                 icone: "ti-briefcase",
-                opcoes: () => opcoesDe(membros(), (m) => m.funcao),
-                valorDe: (m) => [m.funcao],
+                opcoes: () => opcoesDe(membros(), (m) => funcoesDe(m.funcao)),
+                valorDe: (m) => funcoesDe(m.funcao),
             },
         ],
         exportar: "equipe",
@@ -82,7 +82,7 @@ function montar() {
                 <thead><tr>
                     <th style="width:22rem">Nome</th>
                     <th style="width:18rem">Perfil</th>
-                    <th>Função</th>
+                    <th>Funções</th>
                     <th class="text-end coluna-acoes" style="width:7rem">Ações</th>
                 </tr></thead>
                 <tbody id="corpo-lista">${linhas()}</tbody>
