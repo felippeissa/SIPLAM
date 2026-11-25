@@ -48,6 +48,20 @@ const normal = (t) =>
  * @param {object} [cfg.paginacao] A de `criarPaginacao`, quando a tabela é paginada:
  *   a exportação a desliga enquanto lê, para levar todas as páginas.
  */
+/**
+ * As `<option>` de um filtro. Opção com `grupo` entra num `<optgroup>` com esse nome (a ordem de chegada se mantém), e
+ * `expande` (lista de valores) faz a opção selecionar todos esses de uma vez, em vez de ser escolhida ela mesma;
+ * `busca` é texto extra em que a busca do campo também procura, sem aparecer na lista.
+ */
+function opcoesHtml(lista) {
+    const opcao = (o) =>
+        `<option value="${esc(o.valor)}"${o.busca || o.expande ? ` data-custom-properties='${esc(JSON.stringify({ busca: o.busca, expande: o.expande }))}'` : ""}>${esc(o.rotulo)}</option>`;
+    if (!lista?.some((o) => o.grupo)) return (lista ?? []).map(opcao).join("");
+    const grupos = new Map();
+    for (const o of lista) grupos.set(o.grupo ?? "", [...(grupos.get(o.grupo ?? "") ?? []), o]);
+    return [...grupos].map(([g, os]) => (g ? `<optgroup label="${esc(g)}">${os.map(opcao).join("")}</optgroup>` : os.map(opcao).join(""))).join("");
+}
+
 export function criarFiltros(cfg) {
     const campos = (cfg.campos ?? []).filter(Boolean);
 
@@ -137,7 +151,7 @@ export function criarFiltros(cfg) {
                         <select class="form-control" id="filtro-${esc(c.id)}" data-filtro="${esc(c.id)}"
                                 data-choices data-choices-removeItem multiple
                                 aria-label="Filtrar por ${esc(c.rotulo)}" data-placeholder="${dica(c.rotulo, "Selecione")}">
-                            ${lista.map((o) => `<option value="${esc(o.valor)}">${esc(o.rotulo)}</option>`).join("")}
+                            ${opcoesHtml(lista)}
                         </select>
                         <i class="ti ${esc(icone(c))} app-search-icon text-muted"></i>
                     </div>
@@ -214,6 +228,7 @@ export function criarFiltros(cfg) {
                         removeItemButton: true,
                         shouldSort: false,
                         searchEnabled: true,
+                        searchFields: ["label", "value", "customProperties.busca"],
                         placeholderValue: cfg.comRotulos !== false ? "Selecione" : c.rotulo,
                         searchPlaceholderValue: cfg.comRotulos !== false ? "Digite e selecione" : c.rotulo,
                         noResultsText: "Nada encontrado",
@@ -222,6 +237,17 @@ export function criarFiltros(cfg) {
                     })
                 );
             }
+        }
+
+        // Opção com `expande` (uma dimensão, um tipo) não fica escolhida: troca-se pelos valores que ela reúne.
+        for (const [id, escolha] of escolhas) {
+            barra.querySelector(`#filtro-${id}`).addEventListener("addItem", (e) => {
+                const props = e.detail.customProperties;
+                const valores = typeof props === "string" ? JSON.parse(props || "{}").expande : props?.expande;
+                if (!valores?.length) return;
+                escolha.removeActiveItemsByValue(e.detail.value);
+                escolha.setChoiceByValue(valores);
+            });
         }
 
         const lerCampo = (c) => {

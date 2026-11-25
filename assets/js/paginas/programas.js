@@ -27,7 +27,7 @@ import { criarFiltros, opcoesDe } from "../filtros.js";
 import { chip, statusChip, esc, faixaIndicadores } from "../ui.js";
 import { chipsPendencias } from "../ui-financeiro.js";
 import { seloDoIcone } from "../icone-programa.js";
-import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro, abrirJanelaDeMarcadores } from "../cadastros/marcador.js";
+import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro, opcoesDeMarcadorParaFiltro, abrirJanelaDeMarcadores } from "../cadastros/marcador.js";
 
 const { estado } = montarShell();
 const orgao = estado.orgaoAtual;
@@ -100,7 +100,7 @@ const filtros = criarFiltros({
         {
             id: "marcador",
             rotulo: "Marcador",
-            opcoes: () => marcadoresParaFiltro(linhasBase().map((l) => l.programa), estado).map((m) => ({ valor: m.id, rotulo: m.nome })),
+            opcoes: () => opcoesDeMarcadorParaFiltro(linhasBase().map((l) => l.programa), estado),
             valorDe: (l) => l.programa.marcadorIds ?? [],
         },
     ],

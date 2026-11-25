@@ -11,7 +11,7 @@ import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { chip, esc, faixaIndicadores, criarPaginacao, listaResumida } from "../ui.js";
 import { criarFiltros, opcoesDe } from "../filtros.js";
 import { seloDoIcone } from "../icone-programa.js";
-import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro, abrirJanelaDeMarcadores } from "../cadastros/marcador.js";
+import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro, opcoesDeMarcadorParaFiltro, abrirJanelaDeMarcadores } from "../cadastros/marcador.js";
 
 const { estado } = montarShell();
 const leitura = somenteLeitura();
@@ -69,7 +69,7 @@ const filtros = criarFiltros({
             // Os que a pessoa pode usar e os que já estão postos nos Programas: o selo que ela vê ela também filtra.
             id: "marcador",
             rotulo: "Marcador",
-            opcoes: () => marcadoresParaFiltro(programasDoPlano(), estado).map((m) => ({ valor: m.id, rotulo: m.nome })),
+            opcoes: () => opcoesDeMarcadorParaFiltro(programasDoPlano(), estado),
             valorDe: (p) => p.marcadorIds ?? [],
         },
         {

@@ -17,7 +17,7 @@ import { montarShell, barraTitulo, somenteLeitura, url } from "../shell.js";
 import { esc, statusChip, criarPaginacao, listaResumida, textoLongo } from "../ui.js";
 import { criarFiltros, opcoesDe } from "../filtros.js";
 import { listaPendencias } from "../ui-financeiro.js";
-import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro, abrirJanelaDeMarcadores } from "../cadastros/marcador.js";
+import { selosDeMarcadores, iniciarDicasDeMarcador, marcadoresParaFiltro, opcoesDeMarcadorParaFiltro, abrirJanelaDeMarcadores } from "../cadastros/marcador.js";
 import { avisar, avisarDepois } from "../toast.js";
 import { pedirJustificativa } from "../justificar.js";
 import { STATUS_CENTRAL } from "../iniciativa-campos.js";
@@ -76,7 +76,7 @@ export function montarListaDeIniciativas({ visao }) {
                 // Os que a pessoa pode usar e os que já estão postos nas Iniciativas: o selo que ela vê ela também filtra.
                 id: "marcador",
                 rotulo: "Marcador",
-                opcoes: () => marcadoresParaFiltro(iniciativasDoPlano(), estado).map((m) => ({ valor: m.id, rotulo: m.nome })),
+                opcoes: () => opcoesDeMarcadorParaFiltro(iniciativasDoPlano(), estado),
                 valorDe: (i) => i.marcadorIds ?? [],
             },
             {

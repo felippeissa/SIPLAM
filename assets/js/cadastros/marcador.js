@@ -235,6 +235,33 @@ export function marcadoresParaFiltro(registros, estado) {
 }
 
 /**
+ * As opções do filtro de Marcador, agrupadas por dimensão e tipo ("Dimensão social › Saúde e bem-estar"). A busca do campo
+ * também acha pelo nome da dimensão e do tipo, não só pelo do marcador.
+ */
+export function opcoesDeMarcadorParaFiltro(registros, estado) {
+    const marcadores = marcadoresParaFiltro(registros, estado);
+    const cmp = (a, b) => a.localeCompare(b, "pt-BR");
+    const unicos = (pares) => [...new Map(pares).entries()].sort((a, b) => cmp(a[1], b[1]));
+
+    // Escolher uma dimensão ou um tipo seleciona de uma vez todos os marcadores dela (`expande`; o filtro faz a troca).
+    const dosGrupo = (campo, valor) => marcadores.filter((m) => m[campo] === valor).map((m) => m.id);
+    const dimensoes = unicos(marcadores.filter((m) => m.dimensao).map((m) => [m.dimensao, nomeDaDimensao(estado, m.dimensao)]));
+    const tipos = unicos(marcadores.filter((m) => m.tipo).map((m) => [m.tipo, m.tipo]));
+    const todos = [
+        ...dimensoes.map(([id, rotulo]) => ({ valor: `dimensao:${id}`, rotulo, grupo: "Por dimensão", busca: "dimensão", expande: dosGrupo("dimensao", id) })),
+        ...tipos.map(([nome, rotulo]) => ({ valor: `tipo:${nome}`, rotulo, grupo: "Por tipo", busca: "tipo", expande: dosGrupo("tipo", nome) })),
+    ];
+
+    const individuais = marcadores
+        .map((m) => {
+            const dimensao = nomeDaDimensao(estado, m.dimensao);
+            return { valor: m.id, rotulo: m.nome, grupo: [dimensao, m.tipo].filter(Boolean).join(" › ") || "Sem classificação", busca: `${dimensao} ${m.tipo ?? ""}` };
+        })
+        .sort((a, b) => cmp(a.grupo, b.grupo) || cmp(a.rotulo, b.rotulo));
+    return [...todos, ...individuais];
+}
+
+/**
  * O selo do marcador numa tabela: um ícone de tag na cor escolhida. O nome, a descrição e a observação aparecem ao
  * passar o mouse (`iniciarDicasDeMarcador` liga a dica).
  *
@@ -249,7 +276,7 @@ export function selosDeMarcadores(ids, estado, observacoes = {}) {
         .map(
             (m) => `<span class="badge rounded-pill d-inline-flex align-items-center justify-content-center p-0"
                   style="background:${esc(m.cor ?? CORES[0])};width:24px;height:24px" tabindex="0"
-                  data-marcador-nome="${esc(m.nome)}" data-marcador-desc="${esc(m.descricao ?? "")}" data-marcador-obs="${esc(observacoes?.[m.id] ?? "")}" aria-label="Marcador ${esc(m.nome)}">
+                  data-marcador-nome="${esc(m.nome)}" data-marcador-desc="${esc(m.descricao ?? "")}" data-marcador-dimensao="${esc(nomeDaDimensao(estado, m.dimensao))}" data-marcador-tipo="${esc(m.tipo ?? "")}" data-marcador-obs="${esc(observacoes?.[m.id] ?? "")}" aria-label="Marcador ${esc(m.nome)}">
                 <i class="ti ti-tag fs-14 text-white"></i></span>`
         )
         .join("")}</span>`;
@@ -260,8 +287,13 @@ export function iniciarDicasDeMarcador(raiz = document) {
     raiz.querySelectorAll("[data-marcador-nome]").forEach((el) => {
         const nome = esc(el.dataset.marcadorNome);
         const desc = el.dataset.marcadorDesc ? `<div class="mt-1">${esc(el.dataset.marcadorDesc)}</div>` : "";
+        // Dimensão e tipo, pedido do GP do projeto: entre o nome e a descrição.
+        const classe = [["Dimensão", el.dataset.marcadorDimensao], ["Tipo", el.dataset.marcadorTipo]]
+            .filter(([, v]) => v)
+            .map(([r, v]) => `<div class="mt-1"><strong>${r}:</strong> ${esc(v)}</div>`)
+            .join("");
         const obs = el.dataset.marcadorObs ? `<div class="mt-1 fst-italic">Observação: ${esc(el.dataset.marcadorObs)}</div>` : "";
-        window.bootstrap?.Tooltip.getOrCreateInstance(el, { html: true, title: `<strong>${nome}</strong>${desc}${obs}`, placement: "right" });
+        window.bootstrap?.Tooltip.getOrCreateInstance(el, { html: true, title: `<strong>${nome}</strong>${classe}${desc}${obs}`, placement: "right" });
     });
 }
 
