@@ -298,6 +298,8 @@ export function catalogo(cfg) {
 
             modal.hide();
             redesenhar();
+            // Criar também é escolher: quem depende da escolha (o tipo depende da dimensão) precisa saber.
+            if (!registro) cfg.aoMudar?.([...escolhidos]);
         });
 
         el.addEventListener("hidden.bs.modal", () => el.remove());
