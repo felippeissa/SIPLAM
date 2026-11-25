@@ -8,7 +8,7 @@
  * Quem altera o estado deve fazê-lo pelas funções daqui — elas cuidam de
  * registrar evento, tocar a data de atualização e gravar.
  */
-import { enriquecerCadastros, garantirPerfilDosMarcadores } from "./enriquecimento.js";
+import { enriquecerCadastros, garantirPerfilDosMarcadores, garantirClassificacaoDosMarcadores } from "./enriquecimento.js";
 import { garantirDimensoes } from "./dimensoes-marcador.js";
 import { estadoInicial, ANOS, REGIOES, ACOES } from "./seed.js";
 import { anosDoPlano } from "./anos.js";
@@ -663,6 +663,7 @@ function carregar() {
     garantirDimensoes(base);
     enriquecerCadastros(base);
     garantirPerfilDosMarcadores(base);
+    garantirClassificacaoDosMarcadores(base);
 
     return base;
 }

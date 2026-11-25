@@ -216,3 +216,55 @@ export function garantirPerfilDosMarcadores(base) {
         if (!m.perfil) m.perfil = PERFIL_DO_MARCADOR[m.id] ?? "todos";
     }
 }
+
+/* ---------- dimensão e tipo de todo marcador ---------- */
+// Os marcadores de exemplo que `MARCADORES_CLASSIFICADOS` não cobre: situação e fluxo viram governança; os temas de
+// política pública, a dimensão que mais se aproxima deles.
+const CLASSIFICACAO_DOS_DEMAIS = {
+    "marcadores-ex02": ["governanca", "Prestação de contas"],
+    "marcadores-ex03": ["governanca", "Governança pública"],
+    "marcadores-ex04": ["governanca", "Governança pública"],
+    "marcadores-ex05": ["governanca", "Governança pública"],
+    "marcadores-ex06": ["governanca", "Governança pública"],
+    "marcadores-ex07": ["governanca", "Governança pública"],
+    "marcadores-ex08": ["governanca", "Compliance público"],
+    "marcadores-ex11": ["governanca", "Governança pública"],
+    "marcadores-ex12": ["governanca", "Governança pública"],
+    "marcadores-ex13": ["governanca", "Governança pública"],
+    "marcadores-ex14": ["governanca", "Governança pública"],
+    "marcadores-ex15": ["governanca", "Prestação de contas"],
+    "marcadores-ex16": ["governanca", "Políticas baseadas em evidências"],
+    "marcadores-ex17": ["governanca", "Políticas baseadas em evidências"],
+    "marcadores-ex18": ["governanca", "Controle interno"],
+    "marcadores-ex21": ["governanca", "Controle interno"],
+    "marcadores-ex22": ["governanca", "Controle interno"],
+    "marcadores-ex24": ["governanca", "Transparência pública"],
+    "marcadores-ex26": ["social", "Inclusão social"],
+    "marcadores-ex27": ["social", "Direitos humanos"],
+    "marcadores-ex28": ["ambiental", "Eficiência no uso de recursos"],
+    "marcadores-ex31": ["ambiental", "Sustentabilidade ambiental"],
+    "marcadores-ex32": ["social", "Inclusão social"],
+    "marcadores-ex33": ["governanca", "Políticas baseadas em evidências"],
+    "marcadores-ex35": ["governanca", "Governança pública"],
+    "marcadores-ex36": ["governanca", "Governança pública"],
+    "marcadores-ex37": ["governanca", "Governança pública"],
+    "marcadores-ex38": ["governanca", "Governança pública"],
+    "marcadores-ex39": ["governanca", "Controle interno"],
+    "marcadores-ex40": ["governanca", "Controle interno"],
+    "marcadores-ex41": ["governanca", "Governança pública"],
+    "marcadores-ex43": ["governanca", "Compliance público"],
+    "marcadores-ex45": ["governanca", "Políticas baseadas em evidências"],
+    "marcadores-ex46": ["governanca", "Prestação de contas"],
+    "marcadores-ex48": ["governanca", "Controle interno"],
+    "marcadores-ex49": ["governanca", "Governança pública"],
+    "marcadores-ex50": ["governanca", "Governança pública"],
+};
+
+/** Todo marcador tem dimensão e tipo. Idempotente: só preenche o que está vazio; sem classificação conhecida, governança pública. */
+export function garantirClassificacaoDosMarcadores(base) {
+    for (const m of base.marcadores ?? []) {
+        const [dimensao, tipo] = CLASSIFICACAO_DOS_DEMAIS[m.id] ?? MARCADORES_CLASSIFICADOS[m.id] ?? ["governanca", "Governança pública"];
+        preencher(m, "dimensao", dimensao);
+        preencher(m, "tipo", tipo);
+    }
+}

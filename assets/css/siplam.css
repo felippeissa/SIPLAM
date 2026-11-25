@@ -805,10 +805,8 @@ html[data-skin][data-bs-theme="light"][data-menu-color="light"] { --theme-sidena
 /* Campo travado mostrado como texto (campo-estatico.js): quebra linha e mantém a altura de uma linha. */
 .campo-estatico { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 2rem; }
 
-/* Texto longo em célula (celula-longa.js): duas linhas, reticências, e o ícone de detalhe ao lado quando cortou. */
+/* Texto longo em célula (celula-longa.js): duas linhas, reticências, e dica com o texto completo quando cortou. */
 /* O teto de largura evita que o texto longo alargue a tabela inteira: sem ele a coluna pede a largura do texto numa linha só. */
 .celula-truncada { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 44rem; white-space: normal; }
-td.celula-com-detalhe { display: table-cell; }
-td.celula-com-detalhe > .celula-truncada { display: -webkit-box; padding-right: 2rem; }
-td.celula-com-detalhe { position: relative; }
-td.celula-com-detalhe > [data-ver-detalhes] { position: absolute; right: .25rem; top: 50%; transform: translateY(-50%); }
+
+.dica-celula .tooltip-inner { max-width: 28rem; text-align: left; }

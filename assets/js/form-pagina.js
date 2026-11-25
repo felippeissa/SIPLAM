@@ -53,6 +53,8 @@ export function montarFormulario(cfg) {
     // `leituraDoItem`: o registro é visível, mas não é desta pessoa editar (o marcador que o administrador pôs no perfil).
     if (!novo && cfg.leituraDoItem?.(original, estado)) leitura = true;
 
+    const opcoesPai = () => (cfg.pai ? (estado[cfg.pai.colecao] ?? []) : []);
+
     const edicao = novo ? vazio() : structuredClone(original);
 
     function vazio() {
@@ -60,8 +62,6 @@ export function montarFormulario(cfg) {
         if (cfg.pai) base[cfg.pai.campo] = cfg.pai.opcional ? "" : (opcoesPai()[0]?.id ?? "");
         return base;
     }
-
-    const opcoesPai = () => (cfg.pai ? (estado[cfg.pai.colecao] ?? []) : []);
 
     /** Quem aponta para este registro: enquanto houver, ele não se exclui. */
     const vinculos = novo ? [] : vinculosDe(cfg.colecao, edicao.id);

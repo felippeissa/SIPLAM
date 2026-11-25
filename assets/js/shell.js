@@ -71,6 +71,7 @@ const MENU_CENTRAL = [
         itens: [
             { href: "central-usuarios.html", rotulo: "Usuários", icone: "ti-users" },
             { href: "central-marcador.html", rotulo: "Marcadores", icone: "ti-tag" },
+            { href: "central-dimensao.html", rotulo: "Dimensões", icone: "ti-category" },
             // Não há tela de histórico: o store registra quem fez o quê (eventosDeAuditoria), sem mostrar ao usuário.
             // O componente de tramitação da aprovação virá depois, e lê esse mesmo registro.
         ],
