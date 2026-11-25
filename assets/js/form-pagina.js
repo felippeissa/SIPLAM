@@ -24,6 +24,9 @@ import { confirmarExclusao, confirmarSalvarEdicao } from "./confirmar.js";
 import { avisar, avisarDepois } from "./toast.js";
 import { campoErro, validar, limparAoDigitar } from "./validacao.js";
 
+/** Posto no `extra.html` de um cadastro, marca onde o campo de nome entra em vez do topo do formulário. */
+export const MARCA_NOME = "<!--campo-nome-->";
+
 /**
  * @param {object} cfg          a mesma configuração da listagem
  * @param {boolean} cfg.novo    true em `criar.html`, false em `editar.html`
@@ -73,6 +76,17 @@ export function montarFormulario(cfg) {
     const fim = cfg.genero === "f" ? "a" : "o";
     const artigo = cfg.genero === "f" ? "a" : "o";
 
+    // O nome vem primeiro, salvo quando o cadastro marca outro lugar para ele no próprio trecho (`MARCA_NOME`).
+    const campoNome = `
+                <div class="mb-3">
+                    <label class="form-label" for="f-nome">${esc(rotuloNome)} <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="f-nome" value="${esc(edicao.nome ?? "")}"
+                           placeholder="${esc(cfg.exemplo ?? "")}" ${leitura ? "disabled" : ""} />
+                    ${campoErro("f-nome")}
+                </div>`;
+    const extraHtml = cfg.extra?.html?.(edicao, estado) ?? "";
+    const nomeNoExtra = extraHtml.includes(MARCA_NOME);
+
     /* ---------- desenho ---------- */
 
     function camposPrincipais() {
@@ -84,14 +98,7 @@ export function montarFormulario(cfg) {
                     : ""
             }
             ${cfg.antes ? `<div class="col-12">${cfg.antes(edicao, estado)}</div>` : ""}
-            <div class="col-12">
-                <div class="mb-3">
-                    <label class="form-label" for="f-nome">${esc(rotuloNome)} <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="f-nome" value="${esc(edicao.nome ?? "")}"
-                           placeholder="${esc(cfg.exemplo ?? "")}" ${leitura ? "disabled" : ""} />
-                    ${campoErro("f-nome")}
-                </div>
-            </div>
+            ${nomeNoExtra ? "" : `<div class="col-12">${campoNome}</div>`}
 
             ${
                 cfg.pai
@@ -113,7 +120,7 @@ export function montarFormulario(cfg) {
                     : ""
             }
 
-            ${cfg.extra?.html ? `<div class="col-12"><div class="mb-3">${cfg.extra.html(edicao, estado)}</div></div>` : ""}
+            ${extraHtml ? `<div class="col-12"><div class="mb-3">${nomeNoExtra ? extraHtml.replace(MARCA_NOME, campoNome) : extraHtml}</div></div>` : ""}
 
             ${
                 // Alguns cadastros põem a descrição no meio do formulário, e não no

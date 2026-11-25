@@ -30,7 +30,7 @@ const MENU_SETORIAL = [
     { href: "iniciativas.html", rotulo: "Iniciativas", icone: "ti-list-check" },
     { href: "entregas.html", rotulo: "Entregas", icone: "ti-box" },
     { href: "indicadores.html", rotulo: "Indicadores", icone: "ti-target" },
-    { href: "central-marcador.html", rotulo: "Marcadores", icone: "ti-tag" },
+    { href: "central-marcador.html", rotulo: "Etiquetas", icone: "ti-tag" },
 ];
 
 /**
@@ -70,8 +70,15 @@ const MENU_CENTRAL = [
         icone: "ti-adjustments",
         itens: [
             { href: "central-usuarios.html", rotulo: "Usuários", icone: "ti-users" },
-            { href: "central-marcador.html", rotulo: "Marcadores", icone: "ti-tag" },
-            { href: "central-dimensao.html", rotulo: "Dimensões", icone: "ti-category" },
+            {
+                grupo: "Marcadores",
+                icone: "ti-tags",
+                itens: [
+                    { href: "central-grupo.html", rotulo: "Grupos", icone: "ti-category" },
+                    { href: "central-dimensao.html", rotulo: "Dimensão", icone: "ti-category-2" },
+                    { href: "central-marcador.html", rotulo: "Etiquetas", icone: "ti-tag" },
+                ],
+            },
             // Não há tela de histórico: o store registra quem fez o quê (eventosDeAuditoria), sem mostrar ao usuário.
             // O componente de tramitação da aprovação virá depois, e lê esse mesmo registro.
         ],
@@ -82,6 +89,7 @@ const MENU_CENTRAL = [
         itens: [
             { href: "central-relatorio-lei.html", rotulo: "Relatório final da lei do PPA", icone: "ti-file-text" },
             { href: "central-relatorio-finalisticas.html", rotulo: "Relatório consolidado de finalísticas", icone: "ti-report" },
+            { href: "central-relatorio-etiquetas.html", rotulo: "Relatório de etiquetas", icone: "ti-tags" },
         ],
     },
 ];
@@ -95,7 +103,7 @@ function telasDoMenu(menu) {
                 for (const tela of g.itens) telas.push({ ...tela, modulo: item.modulo, grupo: g.grupo });
             }
         } else if (item.secao) {
-            for (const tela of item.itens) telas.push({ ...tela, grupo: item.secao });
+            for (const tela of item.itens.flatMap((t) => t.itens ?? [t])) telas.push({ ...tela, grupo: item.secao });
         } else if (item.href) {
             telas.push(item);
         }
@@ -544,7 +552,31 @@ function modulo(item, atual) {
  */
 function secaoDoMenu(item, atual) {
     const id = `menu-${item.secao.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-")}`;
-    const aberto = item.itens.some((tela) => tela.href === atual);
+    // Uma tela da seção pode ser um subgrupo (Marcadores › Etiquetas, Grupos, Dimensão), que abre quando a tela mora nele.
+    const contem = (t) => (t.itens ? t.itens.some((x) => x.href === atual) : t.href === atual);
+    const aberto = item.itens.some(contem);
+    const link = (tela) => `
+                        <li class="side-nav-item">
+                            <a href="${url(tela.href)}" class="side-nav-link${tela.href === atual ? " active" : ""}">
+                                <span class="menu-icon"><i class="ti ${tela.icone}"></i></span>
+                                <span class="menu-text">${tela.rotulo}</span>
+                            </a>
+                        </li>`;
+    const subgrupo = (g) => {
+        const gid = `${id}-${g.grupo.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "-")}`;
+        const dentro = contem(g);
+        return `
+                        <li class="side-nav-item">
+                            <a data-bs-toggle="collapse" href="#${gid}" aria-expanded="${dentro}" aria-controls="${gid}" class="side-nav-link${dentro ? "" : " collapsed"}">
+                                <span class="menu-icon"><i class="ti ${g.icone}"></i></span>
+                                <span class="menu-text">${g.grupo}</span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse${dentro ? " show" : ""}" id="${gid}">
+                                <ul class="sub-menu">${g.itens.map(link).join("")}</ul>
+                            </div>
+                        </li>`;
+    };
     return `
             <li class="side-nav-item">
                 <a data-bs-toggle="collapse" href="#${id}" aria-expanded="${aberto}" aria-controls="${id}" class="side-nav-link${aberto ? "" : " collapsed"}">
@@ -554,17 +586,7 @@ function secaoDoMenu(item, atual) {
                 </a>
                 <div class="collapse${aberto ? " show" : ""}" id="${id}">
                     <ul class="sub-menu">
-                        ${item.itens
-                            .map(
-                                (tela) => `
-                        <li class="side-nav-item">
-                            <a href="${url(tela.href)}" class="side-nav-link${tela.href === atual ? " active" : ""}">
-                                <span class="menu-icon"><i class="ti ${tela.icone}"></i></span>
-                                <span class="menu-text">${tela.rotulo}</span>
-                            </a>
-                        </li>`
-                            )
-                            .join("")}
+                        ${item.itens.map((t) => (t.itens ? subgrupo(t) : link(t))).join("")}
                     </ul>
                 </div>
             </li>`;

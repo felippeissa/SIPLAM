@@ -1246,7 +1246,7 @@ export const ROTULO_CADASTRO = {
     iniciativas: "Iniciativa",
     entregas: "Entrega",
     diagnosticos: "Diagnóstico",
-    marcadores: "Marcador",
+    marcadores: "Etiqueta",
     vinculos: "Vínculo de Projeto",
     vinculosAcao: "Vínculo de Ação Orçamentária",
 };

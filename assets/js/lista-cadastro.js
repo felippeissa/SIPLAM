@@ -52,7 +52,7 @@ export function montarLista(cfg) {
                 rotulo: f.rotulo,
                 // `f.opcoes` fixa a lista quando ela vem do próprio cadastro (como as dimensões); sem ela, vêm dos registros.
                 opcoes: f.opcoes ?? (() => opcoesDe(itens(), (i) => i[f.campo])),
-                valorDe: (i) => (i[f.campo] ? [String(i[f.campo])] : []),
+                valorDe: (i) => [i[f.campo]].flat().filter(Boolean).map(String),
             };
         }
 
@@ -88,6 +88,7 @@ export function montarLista(cfg) {
     const refazer = () => {
         document.getElementById("corpo-lista").innerHTML = linhas();
         paginacao.atualizar();
+        atualizarLote();
     };
     const paginacao = criarPaginacao(refazer);
 
@@ -111,7 +112,7 @@ export function montarLista(cfg) {
         acao: () =>
             leitura
                 ? `<span class="fs-12 text-muted">${esc(cfg.avisoLeitura ?? "Perfil sem edição neste cadastro.")}</span>`
-                : `<a href="${criar}" class="btn btn-primary ${semPai() ? "disabled" : ""}">
+                : `${loteHtml()}<a href="${criar}" class="btn btn-primary ${semPai() ? "disabled" : ""}">
                     ${esc(cfg.novoRotulo)}
                 </a>`,
     });
@@ -124,11 +125,44 @@ export function montarLista(cfg) {
 
     const soVer = (i) => leitura || !!cfg.leituraDoItem?.(i, estado);
 
+    /**
+     * Alteração em lote (`cfg.emLote.acoes`): uma caixa no começo de cada linha e, com alguma marcada, um botão ao lado
+     * de "Novo…" com as ações. Só se marca o que a pessoa pode editar. A seleção sobrevive a filtro e paginação.
+     */
+    const lote = !leitura && cfg.emLote?.acoes?.length ? cfg.emLote.acoes : null;
+    const selecionados = new Set();
+    const loteHtml = () =>
+        lote
+            ? `<div class="dropdown d-none" id="lote-acoes">
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    Alterar selecionados (<span id="lote-qtd">0</span>)</button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    ${lote.map((a, n) => `<li><button type="button" class="dropdown-item" data-lote="${n}">${esc(a.rotulo)}</button></li>`).join("")}
+                </ul>
+            </div>`
+            : "";
+    const marcaveis = () => itens().filter((i) => filtros.passa(i) && !soVer(i));
+    function atualizarLote() {
+        if (!lote) return;
+        // O que saiu da lista (excluído) sai da seleção.
+        for (const id of [...selecionados]) if (!itens().some((i) => i.id === id)) selecionados.delete(id);
+        document.getElementById("lote-acoes")?.classList.toggle("d-none", selecionados.size === 0);
+        const qtd = document.getElementById("lote-qtd");
+        if (qtd) qtd.textContent = selecionados.size;
+        const todos = document.getElementById("lote-todos");
+        if (todos) {
+            const visiveis = marcaveis();
+            const marcados = visiveis.filter((i) => selecionados.has(i.id)).length;
+            todos.checked = visiveis.length > 0 && marcados === visiveis.length;
+            todos.indeterminate = marcados > 0 && marcados < visiveis.length;
+        }
+    }
+
     /** Corpo da tabela — é só ele que se refaz quando um filtro muda. */
     function linhas() {
         const lista = itens().filter((i) => filtros.passa(i));
 
-        const colunas = 2 + (cfg.semDescricao ? 0 : 1) + (cfg.pai ? 1 : 0) + extras.length + (cfg.codigo ? 1 : 0);
+        const colunas = (lote ? 1 : 0) + 2 + (cfg.semDescricao ? 0 : 1) + (cfg.pai ? 1 : 0) + extras.length + (cfg.codigo ? 1 : 0);
 
         if (lista.length === 0) {
             return `<tr><td colspan="${colunas}" class="text-center text-muted py-4 fs-12">
@@ -141,6 +175,12 @@ export function montarLista(cfg) {
             .map(
                 (i) => `
             <tr>
+                ${
+                    lote
+                        ? `<td style="width:2.5rem"><input class="form-check-input" type="checkbox" data-sel="${esc(i.id)}" aria-label="Selecionar ${esc(i.nome)}"
+                            ${selecionados.has(i.id) ? "checked" : ""} ${soVer(i) ? 'disabled title="Sem permissão para alterar este registro"' : ""} /></td>`
+                        : ""
+                }
                 ${cfg.codigo ? `<td class="codigo text-muted">${esc(cfg.codigo(i, estado))}</td>` : ""}
                 <td class="fw-medium">${cfg.nomeHtml ? cfg.nomeHtml(i, estado) : esc(i.nome)}</td>
                 ${cfg.pai ? `<td class="fs-13 text-muted">${esc(nomeDoPai(i))}</td>` : ""}
@@ -175,6 +215,7 @@ export function montarLista(cfg) {
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
+                            ${lote ? '<th style="width:2.5rem"><input class="form-check-input" type="checkbox" id="lote-todos" aria-label="Selecionar todos os da lista" /></th>' : ""}
                             ${cfg.codigo ? '<th class="codigo" style="width:5rem">Nº</th>' : ""}
                             <th style="width:22rem">${esc(cfg.singular)}</th>
                             ${cfg.pai ? `<th style="width:18rem">${esc(cfg.pai.rotulo)}</th>` : ""}
@@ -190,6 +231,28 @@ export function montarLista(cfg) {
         </div>`;
 
         paginacao.ligar();
+        if (lote) {
+            const conteudo = document.getElementById("conteudo");
+            conteudo.addEventListener("change", (e) => {
+                const caixa = e.target.closest("[data-sel]");
+                if (caixa) {
+                    caixa.checked ? selecionados.add(caixa.dataset.sel) : selecionados.delete(caixa.dataset.sel);
+                    atualizarLote();
+                } else if (e.target.id === "lote-todos") {
+                    // "Todos" vale para a lista filtrada inteira, não só para a página.
+                    for (const i of marcaveis()) e.target.checked ? selecionados.add(i.id) : selecionados.delete(i.id);
+                    refazer();
+                }
+            });
+            conteudo.addEventListener("click", (e) => {
+                const botao = e.target.closest("[data-lote]");
+                if (!botao) return;
+                lote[Number(botao.dataset.lote)].abrir([...selecionados], () => {
+                    selecionados.clear();
+                    refazer();
+                });
+            });
+        }
         filtros.ligar(() => {
             paginacao.inicio();
             refazer();

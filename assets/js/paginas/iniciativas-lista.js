@@ -75,7 +75,7 @@ export function montarListaDeIniciativas({ visao }) {
             {
                 // Os que a pessoa pode usar e os que já estão postos nas Iniciativas: o selo que ela vê ela também filtra.
                 id: "marcador",
-                rotulo: "Marcador",
+                rotulo: "Etiqueta",
                 opcoes: () => opcoesDeMarcadorParaFiltro(iniciativasDoPlano(), estado),
                 valorDe: (i) => i.marcadorIds ?? [],
             },
@@ -189,7 +189,7 @@ export function montarListaDeIniciativas({ visao }) {
         if (i.status === "inativa") {
             const so = [{ link: ficha, icone: "ti-eye", rotulo: "Visualizar" }];
             if (central && !leitura) so.push({ acao: "reativar", icone: "ti-player-play", rotulo: "Reativar" });
-            if (!leitura) so.push({ acao: "marcar", icone: "ti-tag-plus", rotulo: "Adicionar marcadores" });
+            if (!leitura) so.push({ acao: "marcar", icone: "ti-tag-plus", rotulo: "Adicionar etiquetas" });
             return so;
         }
         const abertaParaEditar = podeEditar(i.status);
@@ -202,7 +202,7 @@ export function montarListaDeIniciativas({ visao }) {
         } else {
             itens.push(!leitura && abertaParaEditar ? { link: ficha, icone: "ti-pencil", rotulo: "Editar" } : { link: ficha, icone: "ti-eye", rotulo: "Visualizar" });
         }
-        if (!leitura) itens.push({ acao: "marcar", icone: "ti-tag-plus", rotulo: "Adicionar marcadores" });
+        if (!leitura) itens.push({ acao: "marcar", icone: "ti-tag-plus", rotulo: "Adicionar etiquetas" });
         const pendencias = pendDe(i).length;
         if (abertaParaEditar && pendencias) itens.push({ acao: "pendencias", icone: "ti-alert-triangle", rotulo: `Ver pendências (${pendencias})`, classe: "text-danger" });
         // Só a Central inativa e reativa.
@@ -270,7 +270,7 @@ export function montarListaDeIniciativas({ visao }) {
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th style="width:9rem">Marcador</th>
+                            <th style="width:9rem">Etiqueta</th>
                             <th>Iniciativa</th>
                             <th>Programa</th>
                             ${central ? `<th>Órgão</th>` : ""}
@@ -354,21 +354,21 @@ export function montarListaDeIniciativas({ visao }) {
         });
     });
 
-    // "Adicionar marcadores": pôr ou tirar marcadores de uma Iniciativa sem abrir a ficha dela.
+    // "Adicionar etiquetas": pôr ou tirar marcadores de uma Iniciativa sem abrir a ficha dela.
     document.addEventListener("click", (e) => {
         const botao = e.target.closest("[data-marcar]");
         if (!botao) return;
         const ini = estado.iniciativas.find((x) => x.id === botao.dataset.marcar);
         if (!ini) return;
         abrirJanelaDeMarcadores({
-            titulo: `Marcadores — ${ini.nome}`,
+            titulo: `Etiquetas — ${ini.nome}`,
             selecionados: ini.marcadorIds ?? [],
             observacoes: ini.marcadorObs ?? {},
             estado,
             aoSalvar: (ids, observacoes) => {
                 updIniciativa(ini.id, { marcadorIds: ids, marcadorObs: observacoes });
                 repintarCorpo();
-                avisar("Marcadores da Iniciativa atualizados.");
+                avisar("Etiquetas da Iniciativa atualizadas.");
             },
         });
     });

@@ -214,6 +214,9 @@ const PERFIL_DO_MARCADOR = {
 export function garantirPerfilDosMarcadores(base) {
     for (const m of base.marcadores ?? []) {
         if (!m.perfil) m.perfil = PERFIL_DO_MARCADOR[m.id] ?? "todos";
+        // Perfis que veem e que gerem passaram a ser listas (pedido de 25/11/2026).
+        if (!Array.isArray(m.perfis)) m.perfis = m.perfil === "todos" ? ["setorial", "gestao-setorial", "admin-central", "gestao-central", "controle"] : [m.perfil];
+        if (!Array.isArray(m.gestores)) m.gestores = [];
     }
 }
 

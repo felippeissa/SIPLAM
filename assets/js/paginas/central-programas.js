@@ -68,7 +68,7 @@ const filtros = criarFiltros({
         {
             // Os que a pessoa pode usar e os que já estão postos nos Programas: o selo que ela vê ela também filtra.
             id: "marcador",
-            rotulo: "Marcador",
+            rotulo: "Etiqueta",
             opcoes: () => opcoesDeMarcadorParaFiltro(programasDoPlano(), estado),
             valorDe: (p) => p.marcadorIds ?? [],
         },
@@ -168,7 +168,7 @@ function corpo() {
                     : `<div class="d-inline-flex gap-1">
                         <a href="${url(`central-programas/editar.html?id=${p.id}`)}" class="btn btn-sm btn-icon btn-terciario" title="Editar" aria-label="Editar ${esc(p.nome)}"><i class="ti ti-pencil fs-16"></i></a>
                         <button type="button" class="btn btn-sm btn-icon btn-terciario" data-marcar="${esc(p.id)}"
-                                title="Adicionar marcadores" aria-label="Adicionar marcadores a ${esc(p.nome)}"><i class="ti ti-tag-plus fs-16"></i></button>
+                                title="Adicionar etiquetas" aria-label="Adicionar etiquetas a ${esc(p.nome)}"><i class="ti ti-tag-plus fs-16"></i></button>
                     </div>`
             }</td>
             `;
@@ -212,7 +212,7 @@ function render() {
                 <thead>
                     <tr>
                         ${ACOES_ESQUERDA ? '<th class="text-start coluna-acoes" style="width:9rem">Ações</th>' : ""}
-                        <th style="width:9rem">Marcador</th>
+                        <th style="width:9rem">Etiqueta</th>
                         <th style="width:5rem">Código</th>
                         <th>Programa</th>
                         <th style="width:16rem">Causas</th>
@@ -242,21 +242,21 @@ function render() {
         document.getElementById("faixa").innerHTML = faixa();
     });
 
-    // "Adicionar marcadores": pôr ou tirar marcadores de um Programa sem abrir o formulário dele.
+    // "Adicionar etiquetas": pôr ou tirar marcadores de um Programa sem abrir o formulário dele.
     document.getElementById("corpo-lista").addEventListener("click", (e) => {
         const botao = e.target.closest("[data-marcar]");
         if (!botao) return;
         const programa = estado.programas.find((p) => p.id === botao.dataset.marcar);
         if (!programa) return;
         abrirJanelaDeMarcadores({
-            titulo: `Marcadores — ${programa.nome}`,
+            titulo: `Etiquetas — ${programa.nome}`,
             selecionados: programa.marcadorIds ?? [],
             observacoes: programa.marcadorObs ?? {},
             estado,
             aoSalvar: (ids, observacoes) => {
                 updPrograma(programa.id, { marcadorIds: ids, marcadorObs: observacoes });
                 pintarCorpo();
-                avisar("Marcadores do Programa atualizados.");
+                avisar("Etiquetas do Programa atualizadas.");
             },
         });
     });

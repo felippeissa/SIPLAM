@@ -99,7 +99,7 @@ const filtros = criarFiltros({
         },
         {
             id: "marcador",
-            rotulo: "Marcador",
+            rotulo: "Etiqueta",
             opcoes: () => opcoesDeMarcadorParaFiltro(linhasBase().map((l) => l.programa), estado),
             valorDe: (l) => l.programa.marcadorIds ?? [],
         },
@@ -141,7 +141,7 @@ function linhaPrograma(l) {
         <td>
             <div class="d-flex gap-1">
                 ${somenteLeitura() ? "" : `<button class="btn btn-sm btn-primary" data-nova="${p.id}" title="Nova Iniciativa"><i class="ti ti-plus"></i></button>`}
-                ${somenteLeitura() ? "" : `<button class="btn btn-sm btn-terciario btn-icon" data-marcar="${p.id}" title="Adicionar marcadores" aria-label="Adicionar marcadores a ${esc(p.nome)}"><i class="ti ti-tag-plus"></i></button>`}
+                ${somenteLeitura() ? "" : `<button class="btn btn-sm btn-terciario btn-icon" data-marcar="${p.id}" title="Adicionar etiquetas" aria-label="Adicionar etiquetas a ${esc(p.nome)}"><i class="ti ti-tag-plus"></i></button>`}
                 <div class="dropdown">
                     <button class="btn btn-sm btn-terciario btn-icon" data-bs-toggle="dropdown" aria-label="Mais ações" title="Mais ações"><i class="ti ti-dots-vertical"></i></button>
                     <ul class="dropdown-menu dropdown-menu-end fs-13">
@@ -214,7 +214,7 @@ function montar() {
                 <thead>
                     <tr>
                         <th></th>
-                        <th style="width:9rem">Marcador</th>
+                        <th style="width:9rem">Etiqueta</th>
                         <th>Programa</th>
                         <th style="width:12rem">Participação</th>
                         <th class="num" style="width:6rem">Iniciativas</th>
@@ -267,20 +267,20 @@ document.addEventListener("click", (e) => {
         return render();
     }
 
-    // "Adicionar marcadores": pôr ou tirar marcadores de um Programa sem sair da lista.
+    // "Adicionar etiquetas": pôr ou tirar marcadores de um Programa sem sair da lista.
     const marcar = e.target.closest("[data-marcar]");
     if (marcar) {
         const programa = estado.programas.find((x) => x.id === marcar.dataset.marcar);
         if (!programa) return;
         return abrirJanelaDeMarcadores({
-            titulo: `Marcadores — ${programa.nome}`,
+            titulo: `Etiquetas — ${programa.nome}`,
             selecionados: programa.marcadorIds ?? [],
             observacoes: programa.marcadorObs ?? {},
             estado,
             aoSalvar: (ids, observacoes) => {
                 updPrograma(programa.id, { marcadorIds: ids, marcadorObs: observacoes });
                 render();
-                avisar("Marcadores do Programa atualizados.");
+                avisar("Etiquetas do Programa atualizadas.");
             },
         });
     }

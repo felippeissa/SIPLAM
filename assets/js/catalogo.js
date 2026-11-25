@@ -35,12 +35,15 @@ import { avisar } from "./toast.js";
  *                                o que se deriva do registro e não se digita nele
  * @param {(ids: string[]) => void} [cfg.aoMudar]  chamada quando a pessoa escolhe ou desvincula
  * @param {string} cfg.prefixo    prefixo dos ids no HTML, para dois catálogos na mesma tela
+ * @param {boolean} [cfg.comoCampo] com `unico`: sem tabela; o próprio campo mostra o escolhido, e digitar busca de
+ *                                novo (o Grupo e a Dimensão da etiqueta). Mesma oferta de cadastrar o que falta.
  */
 export function catalogo(cfg) {
     const { colecao, singular, plural, campos } = cfg;
     const extras = cfg.colunasExtra ?? [];
     const artigo = cfg.artigo ?? "a";
     const px = cfg.prefixo ?? "cat";
+    const comoCampo = !!(cfg.comoCampo && cfg.unico);
 
     let escolhidos = [];
     let termo = "";
@@ -178,16 +181,16 @@ export function catalogo(cfg) {
                 e convidaria a cadastrar antes de procurar — que é como nasce
                 duplicata.
             -->
-            <div class="position-relative mb-2 ${leitura || (cfg.unico && escolhidos.length) ? "d-none" : ""}" id="${px}-caixa">
+            <div class="position-relative ${comoCampo ? "" : "mb-2"} ${leitura || (cfg.unico && !comoCampo && escolhidos.length) ? "d-none" : ""}" id="${px}-caixa">
                 <input type="text" class="form-control pe-5" id="${px}-busca" autocomplete="off"
-                       placeholder="Digite e selecione" />
+                       placeholder="Digite e selecione" value="${comoCampo ? esc(porId(escolhidos[0])?.nome ?? "") : ""}" />
                 <i class="ti ti-search position-absolute top-50 end-0 translate-middle-y me-3 text-muted" style="pointer-events:none"></i>
                 <div class="list-group position-absolute w-100 shadow-sm d-none" id="${px}-sugestoes"
                      style="z-index:5; max-height:16rem; overflow:auto"></div>
             </div>
 
 
-            <div class="table-responsive border rounded">
+            ${comoCampo ? "" : `<div class="table-responsive border rounded">
                 <table class="table table-sm mb-0">
                     <thead>
                         <tr>
@@ -199,7 +202,7 @@ export function catalogo(cfg) {
                     </thead>
                     <tbody id="${px}-corpo">${linhas()}</tbody>
                 </table>
-            </div>
+            </div>`}
             <!-- O slot de erro leva o id do campo de busca para que a validação
                  do formulário, que escreve no id do campo mais "-erro", alcance
                  este vínculo como alcança qualquer outro campo. -->
@@ -314,7 +317,13 @@ export function catalogo(cfg) {
         // No vínculo de um só, a busca some enquanto houver escolha: para trocar,
         // a pessoa desvincula primeiro, e a troca vira um ato deliberado.
         const busca = document.getElementById(`${px}-caixa`);
-        if (busca && cfg.unico) busca.classList.toggle("d-none", escolhidos.length > 0);
+        if (busca && cfg.unico && !comoCampo) busca.classList.toggle("d-none", escolhidos.length > 0);
+        // Como campo, o texto do campo é o nome do escolhido; sem escolha, o que a pessoa digitou.
+        const entrada = document.getElementById(`${px}-busca`);
+        if (comoCampo && entrada) {
+            const texto = escolhidos.length ? porId(escolhidos[0])?.nome ?? "" : termo;
+            if (entrada.value !== texto) entrada.value = texto;
+        }
         const caixa = document.getElementById(`${px}-sugestoes`);
         if (caixa) {
             caixa.innerHTML = sugestoes();
@@ -330,7 +339,11 @@ export function catalogo(cfg) {
         busca?.addEventListener("input", () => {
             termo = busca.value;
             aberto = true;
+            // Como campo, mexer no texto desfaz a escolha: o que vale é o que está escrito até escolher de novo.
+            const desfez = comoCampo && escolhidos.length > 0;
+            if (desfez) escolhidos = [];
             redesenhar();
+            if (desfez) cfg.aoMudar?.([]);
         });
         busca?.addEventListener("focus", () => {
             aberto = true;

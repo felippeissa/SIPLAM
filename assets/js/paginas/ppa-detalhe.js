@@ -8,7 +8,7 @@
 import { situacaoPpa, ppaCorrente, updPpa, updPrograma, SITUACOES_PPA } from "../dados/store.js";
 import { recursosDaIniciativa, moeda } from "../dados/regras.js";
 import { montarShell, barraTitulo, somenteLeitura, perfilAtual, visaoAtual, url } from "../shell.js";
-import { esc, chip } from "../ui.js";
+import { esc, chip, criarPaginacao } from "../ui.js";
 import { confirmarExclusao } from "../confirmar.js";
 import { avisar } from "../toast.js";
 import { seloDoIcone } from "../icone-programa.js";
@@ -109,10 +109,10 @@ function render() {
             ? ""
             : `<td class="text-end coluna-acoes"><div class="d-inline-flex gap-1">
                 <a href="${url(`central-programas/editar.html?id=${encodeURIComponent(p.id)}`)}" class="btn btn-sm btn-icon btn-terciario" title="Editar" aria-label="Editar"><i class="ti ti-pencil fs-16"></i></a>
-                <button type="button" class="btn btn-sm btn-icon btn-terciario" data-marcar="${esc(p.id)}" title="Adicionar marcadores" aria-label="Adicionar marcadores a ${esc(p.nome)}"><i class="ti ti-tag-plus fs-16"></i></button>
+                <button type="button" class="btn btn-sm btn-icon btn-terciario" data-marcar="${esc(p.id)}" title="Adicionar etiquetas" aria-label="Adicionar etiquetas a ${esc(p.nome)}"><i class="ti ti-tag-plus fs-16"></i></button>
             </div></td>`;
     const abaProgramas = tabela(
-        ["Marcador", "Programa", "Eixo", "Iniciativas", "Previsto"],
+        ["Etiqueta", "Programa", "Eixo", "Iniciativas", "Previsto"],
         programas.map(
             (p) => `<tr data-eixo="${esc(p.eixo ?? "")}" data-marcadores="${esc((p.marcadorIds ?? []).join(","))}">
             <td>${selosDeMarcadores(p.marcadorIds, estado, p.marcadorObs)}</td>
@@ -156,6 +156,37 @@ function render() {
 
     // Cada aba tem o seu filtro: busca por texto e, nos Programas, também por eixo.
     const eixosDosProgramas = [...new Set(programas.map((p) => p.eixo).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+    /* Documentos do plano: os arquivos anexados, os mesmos do cartão ao lado, numa tabela. */
+    const documentosDoPlano = [
+        ...(ppa.documentos ?? []).map((d, i) => ({ nome: d.nome, detalhe: tamanhoLegivel(d.tamanho), descricao: d.descricao, em: d.em, indice: i, baixavel: !!d.dados })),
+    ];
+    const abaDocumentos = `
+        ${gerenciaDocumentos ? '<div class="d-flex justify-content-end mb-3"><button type="button" class="btn btn-primary" data-adicionar-documento>Adicionar documento</button></div>' : ""}
+        ${
+            documentosDoPlano.length
+                ? `<div class="table-responsive"><table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Documento</th><th>Descrição</th><th style="width:9rem">Tamanho</th><th style="width:8rem">Data</th><th class="text-end coluna-acoes" style="width:6rem">Ações</th></tr></thead>
+            <tbody>${documentosDoPlano
+                .map(
+                    (d) => `<tr>
+                <td class="fw-medium"><i class="ti ti-file-text text-muted me-1"></i>${esc(d.nome)}</td>
+                <td class="fs-13 text-muted">${esc(d.descricao || "—")}</td>
+                <td class="fs-13 text-muted">${esc(d.detalhe || "—")}</td>
+                <td class="fs-13 text-muted">${esc(d.em || "—")}</td>
+                <td class="text-end coluna-acoes"><div class="d-inline-flex gap-1">${
+                    d.indice !== undefined
+                        ? `<button type="button" class="btn btn-sm btn-icon btn-terciario" data-baixar="${d.indice}" ${d.baixavel ? "" : "disabled"} title="${d.baixavel ? "Baixar documento" : "Arquivo não guardado"}" aria-label="Baixar documento"><i class="ti ti-download fs-16"></i></button>${
+                              gerenciaDocumentos
+                                  ? `<button type="button" class="btn btn-sm btn-icon btn-terciario" data-remover="${d.indice}" title="Excluir documento" aria-label="Excluir documento"><i class="ti ti-trash fs-16"></i></button>`
+                                  : ""
+                          }`
+                        : ""
+                }</div></td></tr>`
+                )
+                .join("")}</tbody></table></div>`
+                : vazio("Nenhum documento.")
+        }`;
+
     const filtroDaAba = (idAba) => `
         <div class="filtros mb-3" data-filtros="${idAba}">
             <div class="d-flex flex-wrap align-items-center gap-2">
@@ -179,7 +210,7 @@ function render() {
                     </div>
                 </div>
                 <div class="filtro-campo">
-                    <label class="form-label">Marcador</label>
+                    <label class="form-label">Etiqueta</label>
                     <div class="app-search">
                         <select class="form-select form-control" data-marcador aria-label="Filtrar por marcador">
                             <option value="">Selecione</option>
@@ -297,6 +328,7 @@ function render() {
                             ["t-causas", "ti-git-branch", "Causas", causas.length],
                             ["t-indicadores", "ti-chart-line", "Indicadores", indicadores.length],
                             ["t-problemas", "ti-alert-triangle", "Problemas", problemas.length],
+                            ["t-documentos", "ti-file-text", "Documentos", documentosDoPlano.length],
                         ]
                             .map(([aba, icone, r, n]) => `<li class="nav-item"><a class="nav-link${aba === "t-programas" ? " active" : ""}" data-bs-toggle="tab" href="#${aba}" role="tab"><i class="ti ${icone} fs-lg me-md-1 align-middle"></i><span class="d-none d-md-inline-block align-middle">${r} (${n})</span></a></li>`)
                             .join("")}
@@ -308,6 +340,7 @@ function render() {
                         <div class="tab-pane fade" id="t-causas" role="tabpanel">${filtroDaAba("t-causas")}${simples(causas, "Causa", "Este plano ainda não tem Causas.", "central-causa")}</div>
                         <div class="tab-pane fade" id="t-indicadores" role="tabpanel">${filtroDaAba("t-indicadores")}${simples(indicadores, "Indicador", "Este plano ainda não tem Indicadores.", "central-indicador")}</div>
                         <div class="tab-pane fade" id="t-problemas" role="tabpanel">${filtroDaAba("t-problemas")}${simples(problemas, "Problema", "Este plano ainda não tem Problemas.", "central-problema")}</div>
+                        <div class="tab-pane fade" id="t-documentos" role="tabpanel">${abaDocumentos}</div>
                     </div>
                 </div>
             </div>
@@ -364,7 +397,6 @@ function render() {
                             }
                         </div>
                         ${[
-                            ...(ppa.processoSei ? [{ nome: "Processo SEI", detalhe: ppa.processoSei, descricao: "Número do processo no SEI." }] : []),
                             ...(ppa.documentos ?? []).map((d, i) => ({ nome: d.nome, detalhe: `${tamanhoLegivel(d.tamanho)} · ${d.em}`, descricao: d.descricao, indice: i, baixavel: !!d.dados })),
                         ]
                             .map(
@@ -400,20 +432,20 @@ function render() {
         });
     }
 
-    // Marcadores dos Programas: a dica dos selos e a janela de "Adicionar marcadores".
+    // Marcadores dos Programas: a dica dos selos e a janela de "Adicionar etiquetas".
     iniciarDicasDeMarcador(document.getElementById("conteudo"));
     document.querySelectorAll("[data-marcar]").forEach((b) =>
         b.addEventListener("click", () => {
             const programa = estado.programas.find((p) => p.id === b.dataset.marcar);
             if (!programa) return;
             abrirJanelaDeMarcadores({
-                titulo: `Marcadores — ${programa.nome}`,
+                titulo: `Etiquetas — ${programa.nome}`,
                 selecionados: programa.marcadorIds ?? [],
                 observacoes: programa.marcadorObs ?? {},
                 estado,
                 aoSalvar: (ids, observacoes) => {
                     updPrograma(programa.id, { marcadorIds: ids, marcadorObs: observacoes });
-                    avisar("Marcadores do Programa atualizados.");
+                    avisar("Etiquetas do Programa atualizadas.");
                     render();
                 },
             });
@@ -424,6 +456,7 @@ function render() {
     const LIMITE_ARQUIVO = 1024 * 1024;
     const seletor = document.getElementById("arquivo-documento");
     document.getElementById("add-documento")?.addEventListener("click", () => seletor.click());
+    document.querySelector("[data-adicionar-documento]")?.addEventListener("click", () => seletor.click());
     document.querySelectorAll("[data-baixar]").forEach((b) =>
         b.addEventListener("click", () => {
             const d = (ppa.documentos ?? [])[Number(b.dataset.baixar)];
@@ -525,6 +558,30 @@ function render() {
         );
     }
 
+    /*
+     * Paginação das abas: cada aba com tabela ganha o rodapé de paginação das listagens. O filtro marca as linhas que
+     * casam (`data-fora`); a paginação mostra só a página da vez entre elas.
+     */
+    const paginacoes = new Map();
+    document.querySelectorAll(".tab-pane").forEach((painel) => {
+        const tabela = painel.querySelector("table");
+        if (!tabela) return;
+        const pag = criarPaginacao(() => mostrarPagina(painel));
+        paginacoes.set(painel, pag);
+        tabela.closest(".table-responsive").insertAdjacentHTML("afterend", pag.html());
+        pag.ligar();
+        mostrarPagina(painel);
+    });
+    function mostrarPagina(painel) {
+        const pag = paginacoes.get(painel);
+        if (!pag) return;
+        const linhas = [...painel.querySelectorAll("tbody tr:not([data-vazio])")];
+        const casam = linhas.filter((tr) => !tr.dataset.fora);
+        const pagina = new Set(pag.fatia(casam));
+        linhas.forEach((tr) => tr.classList.toggle("d-none", !pagina.has(tr)));
+        pag.atualizar();
+    }
+
     // Filtros das abas: escondem as linhas que não casam e avisam quando nenhuma casa.
     const norm = (v) => String(v ?? "").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[̀-ͯ]/g, "");
     document.querySelectorAll("[data-filtros]").forEach((barra) => {
@@ -537,10 +594,13 @@ function render() {
             painel.querySelectorAll("tbody tr").forEach((tr) => {
                 if (tr.dataset.vazio) return;
                 const ok = (!termo || norm(tr.textContent).includes(termo)) && (!eixo || tr.dataset.eixo === eixo) && (!marcador || (tr.dataset.marcadores ?? "").split(",").includes(marcador));
-                tr.classList.toggle("d-none", !ok);
+                if (ok) delete tr.dataset.fora;
+                else tr.dataset.fora = "1";
                 if (ok) visiveis++;
             });
             painel.querySelector("[data-vazio]")?.remove();
+            paginacoes.get(painel)?.inicio();
+            mostrarPagina(painel);
             const corpo = painel.querySelector("tbody");
             if (corpo && !visiveis) {
                 corpo.insertAdjacentHTML("beforeend", `<tr data-vazio="1"><td colspan="${painel.querySelectorAll("thead th").length}" class="text-center text-muted py-4 fs-12">Nada encontrado para este filtro.</td></tr>`);
@@ -559,7 +619,12 @@ function render() {
             aplicar();
         });
         barra.querySelectorAll("[data-exportar]").forEach((b) =>
-            b.addEventListener("click", () => exportarAba(painel, barra.dataset.filtros, b.dataset.exportar))
+            b.addEventListener("click", () => {
+                // O arquivo leva todas as linhas do filtro, e não só a página da vez.
+                const pag = paginacoes.get(painel);
+                if (pag) pag.todas(() => exportarAba(painel, barra.dataset.filtros, b.dataset.exportar));
+                else exportarAba(painel, barra.dataset.filtros, b.dataset.exportar);
+            })
         );
     });
 }
