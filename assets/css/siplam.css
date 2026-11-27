@@ -838,3 +838,6 @@ body.carregando #conteudo { visibility: hidden; height: 0; overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
     .auth-box *, #grade-planos > * { animation: none !important; }
 }
+
+/* Dica do selo de etiqueta: o dobro da largura padrão do tooltip (200px), para nome, grupo, dimensão e descrição. */
+.dica-etiqueta .tooltip-inner { max-width: 400px; text-align: left; }

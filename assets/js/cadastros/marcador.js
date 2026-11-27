@@ -376,7 +376,7 @@ export function iniciarDicasDeMarcador(raiz = document) {
             .map(([r, v]) => `<div class="mt-1"><strong>${r}:</strong> ${esc(v)}</div>`)
             .join("");
         const obs = el.dataset.marcadorObs ? `<div class="mt-1 fst-italic">Observação: ${esc(el.dataset.marcadorObs)}</div>` : "";
-        window.bootstrap?.Tooltip.getOrCreateInstance(el, { html: true, title: `<strong>${nome}</strong>${classe}${desc}${obs}`, placement: "right" });
+        window.bootstrap?.Tooltip.getOrCreateInstance(el, { html: true, title: `<strong>${nome}</strong>${classe}${desc}${obs}`, placement: "right", customClass: "dica-etiqueta" });
     });
 }
 
