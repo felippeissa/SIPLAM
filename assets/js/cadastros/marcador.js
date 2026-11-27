@@ -487,7 +487,12 @@ export function abrirJanelaDeMarcadores({ titulo, selecionados, observacoes, est
                         meus.length
                             ? `
                     <label class="form-label" for="mm-escolha">Adicionar etiqueta</label>
-                    <select class="form-select" id="mm-escolha"></select>
+                    <div class="position-relative" id="mm-caixa">
+                        <input type="text" class="form-control pe-5" id="mm-escolha" autocomplete="off" placeholder="Digite e selecione"
+                               role="combobox" aria-autocomplete="list" aria-controls="mm-sugestoes" aria-expanded="false" />
+                        <i class="ti ti-search position-absolute top-50 end-0 translate-middle-y me-3 text-muted" style="pointer-events:none"></i>
+                        <div class="list-group position-absolute w-100 shadow-sm d-none" id="mm-sugestoes" role="listbox" style="z-index:5; max-height:16rem; overflow:auto"></div>
+                    </div>
 
                     <div id="mm-previa" class="border rounded p-2 mt-2 d-none">
                         <div class="d-flex align-items-start gap-2" id="mm-previa-cartao"></div>
@@ -521,15 +526,53 @@ export function abrirJanelaDeMarcadores({ titulo, selecionados, observacoes, est
         const previa = el.querySelector("#mm-previa");
         const obs = el.querySelector("#mm-obs");
 
-        /** O dropdown só oferece o que ainda não está no registro. */
+        /*
+         * Autocomplete: digita-se parte do nome, do grupo ou da dimensão e escolhe-se na lista. Só oferece o que ainda
+         * não está no registro. `escolhido` é a etiqueta da vez; mexer no texto a desfaz.
+         */
+        const caixa = el.querySelector("#mm-sugestoes");
+        let escolhido = "";
+        const norm = (v) => String(v ?? "").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[̀-ͯ]/g, "");
+        const livres = () => meus.filter((m) => !itens.some((i) => i.id === m.id));
+        const classe = (m) => [nomeDaDimensao(estado, m.dimensao), m.tipo].filter(Boolean).join(" › ");
+        const fecharSugestoes = () => {
+            caixa.classList.add("d-none");
+            escolha.setAttribute("aria-expanded", "false");
+        };
+        const abrirSugestoes = () => {
+            const termo = norm(escolha.value.trim());
+            const achados = livres().filter((m) => !termo || norm(`${m.nome} ${classe(m)}`).includes(termo));
+            caixa.innerHTML = achados.length
+                ? achados
+                      .map(
+                          (m) => `<button type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-2" role="option" data-escolher="${esc(m.id)}">
+                    <span class="rounded-circle flex-shrink-0" style="width:10px;height:10px;background:${esc(m.cor ?? CORES[0])}"></span>
+                    <span class="flex-grow-1" style="min-width:0"><span class="d-block fs-13">${esc(m.nome)}</span>${classe(m) ? `<span class="fs-12 text-muted">${esc(classe(m))}</span>` : ""}</span>
+                </button>`
+                      )
+                      .join("")
+                : `<div class="list-group-item fs-13 text-muted">${livres().length ? "Nenhuma etiqueta encontrada." : "Todas as suas etiquetas já estão na lista."}</div>`;
+            caixa.classList.remove("d-none");
+            escolha.setAttribute("aria-expanded", "true");
+        };
+        const escolher = (id) => {
+            const m = porId.get(id);
+            if (!m) return;
+            escolhido = id;
+            escolha.value = m.nome;
+            fecharSugestoes();
+            previa.classList.remove("d-none");
+            el.querySelector("#mm-previa-cartao").innerHTML = cartao(m);
+            obs.focus();
+        };
         const pintarEscolha = () => {
-            const livres = meus.filter((m) => !itens.some((i) => i.id === m.id));
-            escolha.innerHTML =
-                `<option value="">${livres.length ? "Selecione" : "Todas as suas etiquetas já estão na lista"}</option>` +
-                livres.map((m) => `<option value="${esc(m.id)}">${esc(m.nome)}</option>`).join("");
-            escolha.disabled = !livres.length;
+            escolhido = "";
+            escolha.value = "";
+            escolha.disabled = !livres().length;
+            escolha.placeholder = livres().length ? "Digite e selecione" : "Todas as suas etiquetas já estão na lista";
             previa.classList.add("d-none");
             obs.value = "";
+            fecharSugestoes();
         };
 
         const pintarLista = () => {
@@ -558,14 +601,30 @@ export function abrirJanelaDeMarcadores({ titulo, selecionados, observacoes, est
                 : '<p class="fs-13 text-muted mb-0">Nenhuma etiqueta neste registro ainda.</p>';
         };
 
-        escolha.addEventListener("change", () => {
-            const m = porId.get(escolha.value);
-            previa.classList.toggle("d-none", !m);
-            if (m) el.querySelector("#mm-previa-cartao").innerHTML = cartao(m);
+        escolha.addEventListener("input", () => {
+            escolhido = "";
+            previa.classList.add("d-none");
+            abrirSugestoes();
         });
+        escolha.addEventListener("focus", abrirSugestoes);
+        escolha.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") return fecharSugestoes();
+            if (e.key !== "Enter") return;
+            e.preventDefault();
+            const primeiro = caixa.querySelector("[data-escolher]");
+            if (primeiro) escolher(primeiro.dataset.escolher);
+        });
+        // mousedown, e não click: o clique perderia para o blur que fecha a lista.
+        caixa.addEventListener("mousedown", (e) => {
+            const item = e.target.closest("[data-escolher]");
+            if (!item) return;
+            e.preventDefault();
+            escolher(item.dataset.escolher);
+        });
+        escolha.addEventListener("blur", () => setTimeout(fecharSugestoes, 100));
         el.querySelector("#mm-adicionar").addEventListener("click", () => {
-            if (!porId.has(escolha.value)) return;
-            itens.push({ id: escolha.value, obs: obs.value.trim() });
+            if (!porId.has(escolhido)) return;
+            itens.push({ id: escolhido, obs: obs.value.trim() });
             pintarEscolha();
             pintarLista();
         });
