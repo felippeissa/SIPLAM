@@ -725,7 +725,33 @@ function instalarTrocaDePerfil() {
 }
 
 /** Monta topbar, sidenav e rodapé nos pontos de ancoragem da página. */
+/** O esqueleto da tela: título, faixa de filtros e linhas de tabela, em blocos que pulsam. */
+const linhaEsqueleto = (w) => `<div class="d-flex gap-3 py-2 border-bottom"><span class="placeholder col-3"></span><span class="placeholder col-${w}"></span><span class="placeholder col-2 ms-auto"></span></div>`;
+const ESQUELETO = `
+<div id="esqueleto-tela" class="placeholder-glow" aria-hidden="true">
+    <div class="d-flex align-items-center py-3 mb-2"><span class="placeholder col-3" style="height:14px"></span><span class="placeholder col-2 ms-auto" style="height:10px"></span></div>
+    <div class="card"><div class="card-body">
+        <div class="d-flex gap-3 mb-4"><span class="placeholder col-3" style="height:34px"></span><span class="placeholder col-3" style="height:34px"></span><span class="placeholder col-2 ms-auto" style="height:34px"></span></div>
+        ${[6, 4, 5, 3, 6, 4, 5].map(linhaEsqueleto).join("")}
+    </div></div>
+</div>`;
+
 export function montarShell() {
+    // A tela se monta aos olhos de quem chega: os blocos sobem em sequência (`siplam.css`, "construindo").
+    // A classe sai depois, para que filtros e redesenhos posteriores não animem de novo.
+    // Antes, um instante de esqueleto: blocos cinza pulsando no lugar do conteúdo, como num carregamento.
+    const conteudo = document.getElementById("conteudo");
+    if (conteudo && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        document.body.classList.add("carregando");
+        conteudo.insertAdjacentHTML("beforebegin", ESQUELETO);
+        setTimeout(() => {
+            document.getElementById("esqueleto-tela")?.remove();
+            document.body.classList.remove("carregando");
+            document.body.classList.add("construindo");
+            setTimeout(() => document.body.classList.remove("construindo"), 1600);
+        }, 450);
+    }
+
     const estado = obterEstado();
     const visao = visaoAtual();
 

@@ -11,6 +11,7 @@ import { ppaCorrente } from "./dados/store.js";
 import { equipeDoPlano } from "./ppa-equipe-dados.js";
 import { perfilAtual, url } from "./shell.js";
 import { esc } from "./ui.js";
+import { CONTATOS_EXEMPLO, CONVERSAS_EXEMPLO } from "./dados/chat-exemplo.js";
 
 const CHAVE_CHAT = "siplam.chat";
 const CHAVE_ABERTO = "siplam.chatAberto"; // sessionStorage: conversa aberta, para seguir entre telas
@@ -35,6 +36,15 @@ const gravarSessao = (k, v) => {
         v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, JSON.stringify(v));
     } catch {}
 };
+
+/** "dd/mm/aaaa hh:mm" → número que ordena. */
+const ordem = (em) => {
+    const [d, h = "00:00"] = String(em ?? "").split(" ");
+    const [dia, mes, ano] = d.split("/");
+    return Number(`${ano ?? 0}${mes ?? 0}${dia ?? 0}${h.replace(":", "")}`) || 0;
+};
+/** Recebida e ainda não aberta. Mensagem sem `de` é das antigas, todas enviadas por quem escreveu. */
+const naoLida = (x) => x.de === "outro" && x.lida === false;
 
 const pagina = () => location.pathname.split("/").pop() || "index.html";
 
@@ -79,10 +89,31 @@ function destacar(seletor) {
 }
 
 const CSS_CHAT = `
-.chat-fab{position:fixed;right:20px;bottom:20px;z-index:1050;width:52px;height:52px;border-radius:50%;border:0;background:var(--theme-primary,#1ab394);color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:24px}
-.chat-fab .chat-nao-lidas{position:absolute;top:-2px;right:-2px}
-.chat-janela{position:fixed;right:20px;bottom:84px;z-index:1050;width:360px;max-width:calc(100vw - 24px);height:480px;max-height:calc(100vh - 110px);background:#fff;color:#4c4c5c;border:1px solid var(--theme-border-color,#edf2f9);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28);display:flex;flex-direction:column;overflow:hidden}
+.chat-fab{position:fixed;right:20px;bottom:20px;z-index:1050;height:42px;min-width:42px;padding:0 10px;border-radius:21px;border:1px solid var(--theme-border-color,#dfe3ea);background:var(--theme-body-bg,#fff);color:var(--theme-primary,#1ab394);box-shadow:0 2px 6px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;font-size:20px;transition:box-shadow .2s,padding .45s cubic-bezier(.3,1.3,.5,1)}
+.chat-fab:hover{box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.chat-fab .chat-nao-lidas{position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;padding:0 4px;font-size:10px;line-height:16px;font-weight:600}
+/* A bolinha se transforma: alonga-se numa pílula com "Chat da equipe" e volta a ser bolinha. */
+.chat-rotulo{display:inline-block;max-width:0;overflow:hidden;white-space:nowrap;opacity:0;font-size:12px;font-weight:600;color:var(--theme-body-color,#4c4c5c);transition:max-width .45s cubic-bezier(.3,1.3,.5,1),opacity .25s,margin .45s}
+.chat-rotulo b{color:var(--theme-primary,#1ab394);font-weight:600}
+.chat-fab:hover,.chat-fab.apresentando{padding:0 16px 0 12px}
+.chat-fab:hover .chat-rotulo,.chat-fab.apresentando .chat-rotulo{max-width:200px;opacity:1;margin-left:8px;transition-delay:0s,.12s,0s}
+.chat-fab.apresentando .ti{animation:chat-balao 1s ease-in-out 1}
+.chat-fab .chat-nao-lidas::after{content:"";position:absolute;inset:-3px;border-radius:999px;border:2px solid var(--theme-primary,#1ab394);opacity:0;animation:chat-onda 2.4s ease-out 3}
+@keyframes chat-balao{0%,100%{transform:rotate(0)}25%{transform:rotate(-14deg) scale(1.12)}50%{transform:rotate(10deg) scale(1.12)}75%{transform:rotate(-4deg)}}
+@keyframes chat-onda{0%{opacity:.6;transform:scale(1)}100%{opacity:0;transform:scale(1.9)}}
+@media (prefers-reduced-motion:reduce){.chat-fab,.chat-rotulo{transition:none}.chat-fab.apresentando .ti,.chat-fab .chat-nao-lidas::after{animation:none}}
+.chat-fab .chat-nao-lidas{position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;padding:0 4px;font-size:10px;line-height:16px;font-weight:600}
+.chat-janela{position:fixed;right:20px;bottom:20px;z-index:1051;width:360px;max-width:calc(100vw - 24px);height:480px;max-height:calc(100vh - 40px);background:#fff;color:#4c4c5c;border:1px solid var(--theme-border-color,#edf2f9);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.22);display:flex;flex-direction:column;overflow:hidden}
 .chat-janela[hidden]{display:none}
+/* A janela é a bolinha crescida: nasce do canto do botão, com a mesma curva do hover, e volta para ele ao fechar. */
+.chat-janela.abrindo{animation:chat-crescer .45s cubic-bezier(.3,1.15,.5,1) both}
+.chat-janela.fechando{animation:chat-crescer .3s cubic-bezier(.5,0,.75,0) reverse both}
+.chat-janela.abrindo>*,.chat-janela.fechando>*{animation:chat-conteudo .45s ease both}
+.chat-janela.fechando>*{animation-duration:.15s;animation-direction:reverse}
+@keyframes chat-crescer{from{clip-path:inset(calc(100% - 42px) 0 0 calc(100% - 42px) round 21px)}to{clip-path:inset(0 round 12px)}}
+@keyframes chat-conteudo{0%,35%{opacity:0}100%{opacity:1}}
+.chat-fab.escondido{opacity:0;transform:scale(.6);pointer-events:none;transition:opacity .15s,transform .15s}
+@media (prefers-reduced-motion:reduce){.chat-janela.abrindo,.chat-janela.fechando,.chat-janela.abrindo>*,.chat-janela.fechando>*{animation:none}}
 [data-bs-theme=dark] .chat-janela{background:#1f2227;color:#dee2e6}
 .chat-cab{background:#f6f7f9}
 [data-bs-theme=dark] .chat-cab{background:#272b31}
@@ -103,13 +134,25 @@ export function instalarChat(estado) {
     const ppa = ppaCorrente(estado);
     const eu = perfilAtual();
     if (!ppa || !eu) return;
-    const equipe = equipeDoPlano(estado, ppa);
-    if (!equipe.length) return;
+    // Com quem se conversa: a equipe do plano e, para o chat não nascer vazio, os contatos de exemplo.
+    const daEquipe = equipeDoPlano(estado, ppa);
+    const equipe = [...daEquipe, ...CONTATOS_EXEMPLO.filter((c) => !daEquipe.some((x) => x.id === c.id))];
+
+    // Na primeira vez de cada perfil, as conversas de exemplo entram — sem apagar nada do que já se escreveu.
+    try {
+        const marca = `siplam.chatExemplo|${eu}`;
+        if (!localStorage.getItem(marca)) {
+            const tudo = lerChat();
+            for (const [id, msgs] of Object.entries(CONVERSAS_EXEMPLO)) tudo[`${eu}|${id}`] ??= msgs.map((x) => ({ ...x }));
+            localStorage.setItem(CHAVE_CHAT, JSON.stringify(tudo));
+            localStorage.setItem(marca, "1");
+        }
+    } catch {}
 
     document.head.insertAdjacentHTML("beforeend", `<style>${CSS_CHAT}</style>`);
     document.body.insertAdjacentHTML(
         "beforeend",
-        `<button type="button" class="chat-fab" id="chat-fab" title="Chat da equipe" aria-label="Chat da equipe"><i class="ti ti-message-circle"></i></button>
+        `<button type="button" class="chat-fab" id="chat-fab" aria-label="Chat da equipe"><i class="ti ti-message-circle"></i><span class="chat-rotulo" aria-hidden="true">Chat da equipe</span></button>
         <div class="chat-janela" id="chat-janela" hidden role="dialog" aria-label="Chat da equipe"></div>`
     );
     const fab = document.getElementById("chat-fab");
@@ -123,21 +166,40 @@ export function instalarChat(estado) {
     const salvar = () => gravarSessao(CHAVE_ABERTO, aberto);
     const chaveDe = (id) => `${eu}|${id}`;
 
+    /** O número de não lidas no botão do chat. */
+    function pintarContador() {
+        const tudo = lerChat();
+        const n = equipe.reduce((t, m) => t + (tudo[chaveDe(m.id)] ?? []).filter(naoLida).length, 0);
+        fab.querySelector(".chat-nao-lidas")?.remove();
+        if (n) fab.insertAdjacentHTML("beforeend", `<span class="chat-nao-lidas badge rounded-pill text-bg-primary">${n}</span>`);
+        fab.querySelector(".chat-rotulo").innerHTML = n ? `Chat da equipe · <b>${n} nova${n > 1 ? "s" : ""}</b>` : "Chat da equipe";
+        fab.setAttribute("aria-label", n ? `Chat da equipe, ${n} mensagens não lidas` : "Chat da equipe");
+    }
+
     function pintarLista() {
         const tudo = lerChat();
-        janela.innerHTML = `
-        <div class="chat-cab"><i class="ti ti-messages fs-18"></i><div class="flex-grow-1"><div class="fw-semibold fs-14">Chat da equipe</div><div class="text-muted fs-xxs">PPA ${esc(String(ppa.primeiroAno))}–${esc(String(ppa.ultimoAno))}</div></div>
-            <button type="button" class="btn-close" data-fechar aria-label="Fechar"></button></div>
-        <div class="chat-lista flex-grow-1 overflow-auto">${equipe
+        // Mais recente primeiro; quem nunca conversou fica no fim.
+        const conversas = equipe
             .map((m) => {
                 const ms = tudo[chaveDe(m.id)] ?? [];
-                const ult = ms.at(-1);
+                return { m, ult: ms.at(-1), naoLidas: ms.filter(naoLida).length };
+            })
+            .sort((a, b) => ordem(b.ult?.em) - ordem(a.ult?.em));
+        const total = conversas.reduce((t, c) => t + c.naoLidas, 0);
+        janela.innerHTML = `
+        <div class="chat-cab"><i class="ti ti-message-circle fs-18 text-primary"></i><div class="flex-grow-1"><div class="fw-semibold fs-14">Chat da equipe</div><div class="text-muted fs-xxs">PPA ${esc(String(ppa.primeiroAno))}–${esc(String(ppa.ultimoAno))}${total ? ` · ${total} não lida${total > 1 ? "s" : ""}` : ""}</div></div>
+            <button type="button" class="btn-close" data-fechar aria-label="Fechar"></button></div>
+        <div class="chat-lista flex-grow-1 overflow-auto">${conversas
+            .map(({ m, ult, naoLidas }) => {
+                const hora = ult ? (ult.em.startsWith(new Date().toLocaleDateString("pt-BR")) ? ult.em.slice(11) : ult.em.slice(0, 5)) : "";
+                const previa = ult ? `${ult.de === "outro" ? "" : "Você: "}${ult.texto || "Trecho da tela"}` : m.funcao;
                 return `<button type="button" class="item" data-com="${esc(m.id)}">
-                    <span class="avatar avatar-sm"><span class="avatar-title rounded-circle text-bg-primary">${esc(m.nome.charAt(0))}</span></span>
-                    <span class="flex-grow-1" style="min-width:0"><span class="d-block fs-13 fw-medium text-truncate">${esc(m.nome)}</span>
-                    <span class="d-block fs-xxs text-muted text-truncate">${ult ? esc(ult.texto || "Trecho da tela") : esc(m.funcao)}</span></span></button>`;
+                    <span class="avatar avatar-sm flex-shrink-0"><span class="avatar-title rounded-circle text-bg-primary">${esc(m.nome.charAt(0))}</span></span>
+                    <span class="flex-grow-1" style="min-width:0"><span class="d-flex align-items-baseline gap-2"><span class="fs-13 ${naoLidas ? "fw-bold" : "fw-medium"} text-truncate flex-grow-1">${esc(m.nome)}</span><span class="fs-xxs ${naoLidas ? "text-primary fw-semibold" : "text-muted"} flex-shrink-0">${esc(hora)}</span></span>
+                    <span class="d-flex align-items-center gap-2"><span class="d-block fs-xxs ${naoLidas ? "text-body fw-semibold" : "text-muted"} text-truncate flex-grow-1">${esc(previa)}</span>${naoLidas ? `<span class="badge rounded-pill text-bg-primary flex-shrink-0">${naoLidas}</span>` : ""}</span></span></button>`;
             })
             .join("")}</div>`;
+        pintarContador();
     }
 
     function pintarConversa() {
@@ -147,7 +209,17 @@ export function instalarChat(estado) {
             salvar();
             return pintarLista();
         }
-        const ms = lerChat()[chaveDe(m.id)] ?? [];
+        // Abrir a conversa é ler o que chegou.
+        const tudoAgora = lerChat();
+        const ms = tudoAgora[chaveDe(m.id)] ?? [];
+        if (ms.some(naoLida)) {
+            ms.forEach((x) => naoLida(x) && (x.lida = true));
+            tudoAgora[chaveDe(m.id)] = ms;
+            try {
+                localStorage.setItem(CHAVE_CHAT, JSON.stringify(tudoAgora));
+            } catch {}
+        }
+        pintarContador();
         janela.innerHTML = `
         <div class="chat-cab"><button type="button" class="btn btn-light btn-sm btn-icon rounded-circle" data-voltar title="Conversas" aria-label="Voltar"><i class="ti ti-arrow-left"></i></button>
             <div class="flex-grow-1" style="min-width:0"><div class="fw-semibold fs-14 text-truncate">${esc(m.nome)}</div><div class="text-muted fs-xxs text-truncate">${esc(m.funcao)}</div></div>
@@ -156,9 +228,7 @@ export function instalarChat(estado) {
             ms.length
                 ? ms
                       .map(
-                          (x, i) => `<div class="d-flex flex-column align-items-end mb-2"><div class="chat-bolha rounded px-3 py-2 text-bg-primary fs-13">
-                        ${x.trecho ? `<button type="button" class="chat-trecho" data-trecho="${i}"><i class="ti ti-viewfinder me-1"></i>Trecho da tela: “${esc(x.trecho.texto || x.trecho.seletor)}”<span class="d-block fs-xxs opacity-75">${esc(x.trecho.titulo)} · Ver na tela</span></button>` : ""}
-                        ${x.texto ? esc(x.texto) : ""}</div><span class="text-muted fs-xxs mt-1">${esc(x.em)}</span></div>`
+                          (x, i) => `<div class="d-flex flex-column ${x.de === "outro" ? "align-items-start" : "align-items-end"} mb-2"><div class="chat-bolha rounded px-3 py-2 ${x.de === "outro" ? "bg-light-subtle border text-body" : "text-bg-primary"} fs-13">${x.trecho ? `<button type="button" class="chat-trecho" data-trecho="${i}"><i class="ti ti-viewfinder me-1"></i>Trecho da tela: “${esc(x.trecho.texto || x.trecho.seletor)}”<span class="d-block fs-xxs opacity-75">${esc(x.trecho.titulo)} · Ver na tela</span></button>` : ""}${x.texto ? esc(x.texto) : ""}</div><span class="text-muted fs-xxs mt-1">${esc(x.em)}</span></div>`
                       )
                       .join("")
                 : `<p class="text-muted fs-13 text-center py-4 mb-0">Nenhuma mensagem ainda. Comece a conversa com ${esc(m.nome)}.</p>`
@@ -182,7 +252,7 @@ export function instalarChat(estado) {
             const agora = new Date();
             tudo[chaveDe(m.id)] = [
                 ...(tudo[chaveDe(m.id)] ?? []),
-                { texto, trecho: pendente ?? undefined, em: `${agora.toLocaleDateString("pt-BR")} ${agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` },
+                { de: "eu", texto, trecho: pendente ?? undefined, em: `${agora.toLocaleDateString("pt-BR")} ${agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` },
             ];
             try {
                 localStorage.setItem(CHAVE_CHAT, JSON.stringify(tudo));
@@ -211,8 +281,26 @@ export function instalarChat(estado) {
     }
 
     function pintar() {
-        janela.hidden = !aberto.janela;
-        if (!aberto.janela) return;
+        const estava = !janela.hidden;
+        fab.classList.toggle("escondido", aberto.janela);
+        if (!aberto.janela) {
+            if (!estava) return;
+            // Fecha encolhendo de volta para o botão.
+            janela.classList.remove("abrindo");
+            janela.classList.add("fechando");
+            setTimeout(() => {
+                janela.classList.remove("fechando");
+                if (!aberto.janela) janela.hidden = true;
+            }, 300);
+            return;
+        }
+        janela.hidden = false;
+        if (!estava) {
+            janela.classList.remove("fechando", "abrindo");
+            void janela.offsetWidth;
+            janela.classList.add("abrindo");
+            setTimeout(() => janela.classList.remove("abrindo"), 500);
+        }
         aberto.com ? pintarConversa() : pintarLista();
     }
 
@@ -298,6 +386,14 @@ export function instalarChat(estado) {
     }
 
     pintar();
+    pintarContador();
+
+    // Na primeira tela da sessão, o botão se apresenta: o balão balança e o rótulo "Chat da equipe" desliza ao lado.
+    if (!aberto.janela && !lerSessao("siplam.chatApresentado")) {
+        gravarSessao("siplam.chatApresentado", true);
+        setTimeout(() => fab.classList.add("apresentando"), 800);
+        setTimeout(() => fab.classList.remove("apresentando"), 5000);
+    }
 
     // Chegou aqui por um “Ver na tela”.
     const destaque = lerSessao(CHAVE_DESTAQUE);

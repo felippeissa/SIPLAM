@@ -5,7 +5,7 @@
  * Programas, Eixos e Objetivos estratégicos. A lateral traz a situação, a
  * equipe e os documentos. Só leitura: editar o plano é no cadastro.
  */
-import { situacaoPpa, ppaCorrente, updPpa, updPrograma, SITUACOES_PPA } from "../dados/store.js";
+import { situacaoPpa, ppaCorrente, updPpa, updPrograma, SITUACOES_PPA, eventosDeAuditoria } from "../dados/store.js";
 import { recursosDaIniciativa, moeda } from "../dados/regras.js";
 import { montarShell, barraTitulo, somenteLeitura, perfilAtual, visaoAtual, url } from "../shell.js";
 import { esc, chip, criarPaginacao } from "../ui.js";
@@ -20,31 +20,68 @@ import { tamanhoLegivel, nomeDoPerfil } from "../usuarios-decisao.js";
  * está. O que já passou vem marcado, o atual vem em destaque, e o que falta vem apagado. O "Reprovado" é um ramo que
  * sai do "Submetido" e devolve o plano à elaboração.
  */
-const CURTO = {
-    elaboracao: "órgãos preenchem",
-    submetido: "congelado para edição",
-    aprovado: "aguarda a vigência",
-    reprovado: "volta para elaboração",
-    vigente: "só muda por alteração",
-    encerrado: "permanece para consulta",
-};
 const CAMINHO = ["elaboracao", "submetido", "aprovado", "vigente", "encerrado"];
 
-function linhaDoTempoDaSituacao(atual) {
-    // posição no caminho principal; reprovado passou por elaboração e submissão
+/**
+ * Quando o plano entrou em cada situação: "dd/mm/aaaa hh:mm". O registro de quem fez o quê (auditoria) manda; para os
+ * passos anteriores a ele — os planos de exemplo nasceram já adiante —, vale o calendário do PPA: elaborado no ano
+ * anterior, submetido em agosto, aprovado em dezembro, vigente em 1º de janeiro, encerrado no último dia do ciclo.
+ */
+function datasDaSituacao(ppa) {
+    const ini = Number(ppa.primeiroAno);
+    const datas = {
+        elaboracao: `03/02/${ini - 1} 09:00`,
+        submetido: `29/08/${ini - 1} 17:30`,
+        aprovado: `18/12/${ini - 1} 10:00`,
+        vigente: `01/01/${ini} 00:00`,
+        encerrado: `31/12/${ppa.ultimoAno} 23:59`,
+    };
+    // Do mais antigo para o mais recente: a última ida a uma situação é a que vale.
+    for (const ev of [...eventosDeAuditoria()].reverse()) {
+        if (ev.colecao !== "ppas" || ev.registroId !== ppa.id) continue;
+        const nova = ev.depois?.situacao;
+        if (nova) datas[nova] = ev.dataHora;
+        else if (ev.acao === "criou") datas.elaboracao = ev.dataHora;
+    }
+    return datas;
+}
+
+/** O tom da situação nas cores do tema (as mesmas dos selos de status). */
+const COR_DA_SITUACAO = { info: "primary", alerta: "warning", ok: "success", impeditivo: "danger", neutro: "secondary" };
+/** O ícone de cada situação no círculo da linha do tempo. */
+const ICONE_DA_SITUACAO = {
+    elaboracao: "ti-pencil",
+    submetido: "ti-send",
+    reprovado: "ti-arrow-back-up",
+    aprovado: "ti-circle-check",
+    vigente: "ti-player-play",
+    encerrado: "ti-archive",
+};
+
+/**
+ * A linha do tempo da situação, no componente `timeline-icon-based` do Inspinia: o ícone da situação na cor do tema e, ao lado, a situação
+ * com a data embaixo. O que já aconteceu leva a cor da situação; o atual, a cor com um halo; o que falta, ponto claro e
+ * data em branco ("--/--/---- 00:00"). O "Reprovado" é o ramo que sai do "Submetido".
+ */
+function linhaDoTempoDaSituacao(atual, datas = {}) {
     const posicao = atual === "reprovado" ? 1 : CAMINHO.indexOf(atual);
     const passo = (id, estado, ramo = false) => {
         const s = SITUACOES_PPA.find((x) => x.id === id);
-        const icone = estado === "feito" ? "ti-check" : estado === "atual" ? (ramo ? "ti-arrow-back-up" : "ti-point-filled") : "";
+        const cor = COR_DA_SITUACAO[s.tom] ?? "secondary";
+        const futuro = estado === "futuro";
         return `
-        <div class="tl-item tl-${s.tom} tl-${estado}${ramo ? " tl-ramo" : ""}"${estado === "atual" ? ' aria-current="step"' : ""}>
-            <span class="tl-marcador">${icone ? `<i class="ti ${icone}"></i>` : ""}</span>
-            <div class="tl-texto"><div class="tl-titulo">${esc(s.rotulo)}</div><div class="tl-sub">${esc(CURTO[id])}</div></div>
+        <div class="timeline-item d-flex align-items-stretch${estado === "atual" ? " timeline-atual" : ""}"${estado === "atual" ? ' aria-current="step"' : ""}>
+            <div class="timeline-dot ${futuro ? "bg-light border border-dashed" : estado === "atual" ? `text-bg-${cor}` : `bg-${cor}-subtle`}"${estado === "atual" ? ` style="box-shadow:0 0 0 4px var(--bs-${cor}-bg-subtle)"` : ""}>
+                <i class="ti ${ICONE_DA_SITUACAO[id]} fs-lg ${futuro ? "text-muted" : estado === "atual" ? "" : `text-${cor}`}"></i>
+            </div>
+            <div class="timeline-content ps-3 pb-3 pt-1">
+                <h5 class="mb-0 fs-13 ${estado === "atual" ? `fw-bold text-${cor}` : futuro ? "fw-normal text-muted" : "fw-medium"}">${esc(s.rotulo)}</h5>
+                <div class="fs-xxs text-muted">${esc(futuro ? "--/--/---- 00:00" : datas[id] ?? "--/--/---- 00:00")}</div>
+            </div>
         </div>`;
     };
-    return `<div class="linha-tempo">${CAMINHO.map((id, i) => {
+    return `<div class="timeline timeline-icon-based">${CAMINHO.map((id, i) => {
         const estado = id === atual ? "atual" : i < posicao || (atual === "reprovado" && i <= 1) ? "feito" : "futuro";
-        // o ramo "Reprovado" fica logo abaixo do "Submetido"
         return passo(id, estado) + (id === "submetido" ? passo("reprovado", atual === "reprovado" ? "atual" : "futuro", true) : "");
     }).join("")}</div>`;
 }
@@ -350,7 +387,7 @@ function render() {
                 <div class="ilhas">
                     <div class="card p-3 mb-0">
                         <h5 class="mb-3">Situação</h5>
-                        ${linhaDoTempoDaSituacao(ppa.situacao)}
+                        ${linhaDoTempoDaSituacao(ppa.situacao, datasDaSituacao(ppa))}
                     </div>
                     <div class="card p-3 mb-0">
                         <h5 class="mb-3">Informações Institucionais</h5>

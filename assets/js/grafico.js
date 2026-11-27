@@ -37,7 +37,14 @@ export function grafico(id, opcoes) {
         chart: {
             fontFamily: FONTE,
             toolbar: { show: false },
-            animations: { enabled: false },
+            // O gráfico se monta à vista: a pizza dá a volta, as barras crescem, as linhas se desenham.
+            animations: {
+                enabled: !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
+                easing: "easeinout",
+                speed: 900,
+                animateGradually: { enabled: true, delay: 120 },
+                dynamicAnimation: { enabled: true, speed: 350 },
+            },
             ...opcoes.chart,
         },
         colors: opcoes.colors ?? CORES,
@@ -70,7 +77,9 @@ export function grafico(id, opcoes) {
     }
 
     const desenho = new ApexCharts(alvo, { ...opcoes, ...base });
-    desenho.render();
+    // Enquanto a tela mostra o esqueleto, o gráfico espera: animar escondido seria animar para ninguém.
+    const desenhar = () => (document.body.classList.contains("carregando") ? setTimeout(desenhar, 60) : desenho.render());
+    desenhar();
     vivos.set(id, desenho);
     return desenho;
 }

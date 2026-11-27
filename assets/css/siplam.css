@@ -647,34 +647,6 @@ tr.linha-clicavel {
     opacity: 0.7;
 }
 
-/* ---------- Linha do tempo da situação do PPA (Home do plano) ---------- */
-.linha-tempo { display: flex; flex-direction: column; }
-.tl-item { --tl: #5b6873; --tl-bg: #eef1f5; position: relative; display: flex; gap: 12px; padding-bottom: 16px; }
-.tl-item:last-child { padding-bottom: 0; }
-.tl-item:not(:last-child)::before { content: ""; position: absolute; left: 10px; top: 24px; bottom: 2px; width: 2px; background: var(--theme-border-color, #e3e8ef); }
-.tl-info { --tl: #1f5c8b; --tl-bg: #e4eef6; }
-.tl-alerta { --tl: #8a5a12; --tl-bg: #f7eddb; }
-.tl-ok { --tl: #1f6b4d; --tl-bg: #e2f0e9; }
-.tl-impeditivo { --tl: #9b3324; --tl-bg: #f8e5e2; }
-.tl-neutro { --tl: #5b6873; --tl-bg: #eef1f5; }
-[data-bs-theme="dark"] .tl-info { --tl: #71b2df; --tl-bg: #17303f; }
-[data-bs-theme="dark"] .tl-alerta { --tl: #dcae63; --tl-bg: #332714; }
-[data-bs-theme="dark"] .tl-ok { --tl: #6fc79f; --tl-bg: #15302a; }
-[data-bs-theme="dark"] .tl-impeditivo { --tl: #e8897a; --tl-bg: #361d1b; }
-[data-bs-theme="dark"] .tl-neutro { --tl: #8492a0; --tl-bg: #222b34; }
-.tl-marcador { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; border: 2px solid var(--theme-border-color, #dde3ea); background: transparent; }
-.tl-feito .tl-marcador { background: var(--tl-bg); border-color: var(--tl); color: var(--tl); }
-.tl-atual .tl-marcador { background: var(--tl); border-color: var(--tl); color: var(--tl-bg); box-shadow: 0 0 0 4px var(--tl-bg); }
-.tl-titulo { font-size: 13px; font-weight: 500; line-height: 1.3; color: var(--theme-body-color, #4c4c5c); }
-.tl-sub { font-size: 11.5px; color: var(--theme-tertiary-color, #8a93a0); line-height: 1.3; }
-.tl-atual .tl-titulo { font-weight: 700; color: var(--tl); }
-.tl-futuro .tl-titulo { color: var(--theme-tertiary-color, #8a93a0); font-weight: 400; }
-/* o ramo "Reprovado": recuado, com marcador menor e tracejado */
-.tl-ramo { margin-left: 34px; padding-bottom: 16px; }
-/* a linha principal passa por trás do ramo, sem quebrar entre o Submetido e o Aprovado */
-.tl-ramo::before { left: -24px; top: 0; }
-.tl-ramo .tl-marcador { width: 18px; height: 18px; font-size: 11px; border-style: dashed; }
-.tl-ramo.tl-atual .tl-marcador { border-style: solid; }
 
 /* A coluna Marcador da Home comporta até cinco selos numa linha só. */
 #t-programas thead th:first-child { min-width: 9.5rem; }
@@ -810,3 +782,59 @@ html[data-skin][data-bs-theme="light"][data-menu-color="light"] { --theme-sidena
 .celula-truncada { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 44rem; white-space: normal; }
 
 .dica-celula .tooltip-inner { max-width: 28rem; text-align: left; }
+
+/* Troca de tela: a página se constrói. O título, os cartões e as linhas sobem e aparecem em sequência,
+   como peças sendo encaixadas. Só na chegada (shell.js tira a classe depois). */
+@keyframes tela-encaixar { from { opacity: 0; transform: translateY(14px) scale(.99); } to { opacity: 1; transform: none; } }
+@keyframes tela-linha { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+body.construindo #conteudo > *,
+body.construindo #conteudo > .row > [class*="col"],
+body.construindo #conteudo .ilhas > * { animation: tela-encaixar .5s cubic-bezier(.2,.8,.3,1) both; }
+body.construindo #conteudo > :nth-child(2), body.construindo #conteudo > .row > :nth-child(2), body.construindo #conteudo .ilhas > :nth-child(2) { animation-delay: .08s; }
+body.construindo #conteudo > :nth-child(3), body.construindo #conteudo > .row > :nth-child(3), body.construindo #conteudo .ilhas > :nth-child(3) { animation-delay: .16s; }
+body.construindo #conteudo > :nth-child(4), body.construindo #conteudo > .row > :nth-child(4), body.construindo #conteudo .ilhas > :nth-child(4) { animation-delay: .24s; }
+body.construindo #conteudo > :nth-child(n+5), body.construindo #conteudo > .row > :nth-child(n+5), body.construindo #conteudo .ilhas > :nth-child(n+5) { animation-delay: .32s; }
+body.construindo #conteudo tbody tr { animation: tela-linha .35s ease-out both; }
+body.construindo #conteudo tbody tr:nth-child(1) { animation-delay: .25s; }
+body.construindo #conteudo tbody tr:nth-child(2) { animation-delay: .29s; }
+body.construindo #conteudo tbody tr:nth-child(3) { animation-delay: .33s; }
+body.construindo #conteudo tbody tr:nth-child(4) { animation-delay: .37s; }
+body.construindo #conteudo tbody tr:nth-child(5) { animation-delay: .41s; }
+body.construindo #conteudo tbody tr:nth-child(6) { animation-delay: .45s; }
+body.construindo #conteudo tbody tr:nth-child(7) { animation-delay: .49s; }
+body.construindo #conteudo tbody tr:nth-child(8) { animation-delay: .53s; }
+body.construindo #conteudo tbody tr:nth-child(9) { animation-delay: .57s; }
+body.construindo #conteudo tbody tr:nth-child(n+10) { animation-delay: .61s; }
+@media (prefers-reduced-motion: reduce) {
+    body.construindo #conteudo *, body.construindo #conteudo > * { animation: none !important; }
+}
+/* Esqueleto enquanto a tela "carrega": o conteúdo real fica oculto até a montagem começar. */
+body.carregando #conteudo { visibility: hidden; height: 0; overflow: hidden; }
+#esqueleto-tela { color: var(--bs-secondary-color); }
+#esqueleto-tela .placeholder { border-radius: 4px; height: 12px; min-height: 0; background: rgba(120, 132, 150, .2) !important; }
+
+/* Telas de acesso (entrar, perfil, cadastro, senha): a tela também se constrói ao chegar.
+   O cartão sobe, e dentro dele a marca, os campos e os botões entram em sequência. Os cartões de plano do Perfil
+   entram um a um. */
+.auth-box .card,
+.auth-box .auth-brand { animation: tela-encaixar .55s cubic-bezier(.2,.8,.3,1) both; }
+.auth-box .card > *,
+.auth-box form > *,
+.auth-box form .row > [class*="col"],
+.auth-box .d-grid > * { animation: tela-encaixar .45s cubic-bezier(.2,.8,.3,1) both; }
+.auth-box .card > :nth-child(1) { animation-delay: .12s; }
+.auth-box .card > :nth-child(2), .auth-box form > :nth-child(1), .auth-box form .row > :nth-child(1) { animation-delay: .2s; }
+.auth-box .card > :nth-child(3), .auth-box form > :nth-child(2), .auth-box form .row > :nth-child(2) { animation-delay: .28s; }
+.auth-box .card > :nth-child(4), .auth-box form > :nth-child(3), .auth-box form .row > :nth-child(3) { animation-delay: .36s; }
+.auth-box .card > :nth-child(5), .auth-box form > :nth-child(4), .auth-box form .row > :nth-child(4) { animation-delay: .44s; }
+.auth-box .card > :nth-child(n+6), .auth-box form > :nth-child(n+5), .auth-box form .row > :nth-child(n+5) { animation-delay: .52s; }
+.auth-box .d-grid > :nth-child(2) { animation-delay: .6s; }
+#grade-planos > * { animation: tela-encaixar .5s cubic-bezier(.2,.8,.3,1) both; }
+#grade-planos > :nth-child(1) { animation-delay: .35s; }
+#grade-planos > :nth-child(2) { animation-delay: .45s; }
+#grade-planos > :nth-child(3) { animation-delay: .55s; }
+#grade-planos > :nth-child(4) { animation-delay: .65s; }
+#grade-planos > :nth-child(n+5) { animation-delay: .75s; }
+@media (prefers-reduced-motion: reduce) {
+    .auth-box *, #grade-planos > * { animation: none !important; }
+}
